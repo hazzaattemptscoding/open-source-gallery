@@ -16,7 +16,7 @@
     <div class="error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <a href="/admin/events/new" class="btn-pill btn-pill-gold">+ Create event</a>
+  <a href="/admin/events/new" class="btn-pill">+ Create event</a>
 
   <?php if (empty($events)): ?>
     <p>No events yet.</p>
