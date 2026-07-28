@@ -14,10 +14,14 @@ require __DIR__ . '/../app/lib/view.php';
 
 session_start_secure();
 
+// Security headers (docs/architecture.md section 6)
 header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'");
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()');
+header('X-Permitted-Cross-Domain-Policies: none');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 
 $path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/', '/');
 if ($path === '') {
