@@ -114,26 +114,62 @@ document.getElementById('lightboxCart').addEventListener('click', () => {
 
 // Progressive enhancement: filter changes re-fetch /api/photos instead of a full reload.
 const filterForm = document.getElementById('filterForm');
-filterForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const params = new URLSearchParams(new FormData(e.target));
-  const basePath = filterForm.dataset.basePath;
-  const eventSlug = filterForm.dataset.eventSlug;
-  const sessionSlug = filterForm.dataset.sessionSlug;
-  const url = `${basePath}?${params.toString()}`;
+if (filterForm) {
+  filterForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams(new FormData(e.target));
+    const basePath = filterForm.dataset.basePath;
+    const eventSlug = filterForm.dataset.eventSlug;
+    const sessionSlug = filterForm.dataset.sessionSlug;
+    const url = `${basePath}?${params.toString()}`;
 
-  const apiParams = new URLSearchParams(params);
-  apiParams.set('event', eventSlug);
-  if (sessionSlug) apiParams.set('session', sessionSlug);
-  const apiUrl = `/api/photos?${apiParams.toString()}`;
+    const apiParams = new URLSearchParams(params);
+    apiParams.set('event', eventSlug);
+    if (sessionSlug) apiParams.set('session', sessionSlug);
+    const apiUrl = `/api/photos?${apiParams.toString()}`;
 
-  try {
-    const response = await fetch(apiUrl);
-    if (!response.ok) throw new Error('Filter failed');
-    const html = await response.text();
-    photoGrid.innerHTML = html;
-    history.pushState({}, '', url);
-  } catch (err) {
-    window.location.href = url;
-  }
-});
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error('Filter failed');
+      const html = await response.text();
+      photoGrid.innerHTML = html;
+      history.pushState({}, '', url);
+    } catch (err) {
+      window.location.href = url;
+    }
+  });
+}
+
+// Search functionality: client-side filtering of photos by tag text
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    const thumbs = photoGrid.querySelectorAll('.photo-thumb');
+    let visibleCount = 0;
+
+    thumbs.forEach(thumb => {
+      const kart = (thumb.dataset.kartTags || '').toLowerCase();
+      const driver = (thumb.dataset.driverTags || '').toLowerCase();
+      const classList = (thumb.dataset.classTags || '').toLowerCase();
+      const matches = query === '' ||
+                      kart.includes(query) ||
+                      driver.includes(query) ||
+                      classList.includes(query);
+      thumb.style.display = matches ? '' : 'none';
+      if (matches) visibleCount++;
+    });
+
+    // Show/hide empty state
+    let emptyState = photoGrid.querySelector('.empty-state');
+    if (visibleCount === 0 && !emptyState) {
+      const div = document.createElement('div');
+      div.className = 'empty-state';
+      div.style.gridColumn = '1 / -1';
+      div.innerHTML = '<p>No photos match your search.</p><button type="button" class="clear-filters" onclick="document.getElementById(\'searchInput\').value = \'\'; document.getElementById(\'searchInput\').dispatchEvent(new Event(\'input\'))">Clear search</button>';
+      photoGrid.appendChild(div);
+    } else if (visibleCount > 0 && emptyState) {
+      emptyState.remove();
+    }
+  });
+}

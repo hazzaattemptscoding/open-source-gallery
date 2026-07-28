@@ -12,75 +12,91 @@
   <a href="/cart" class="cart-badge" id="cartBadge">Cart (<span id="cartCount"><?= (int)$cartCount ?></span>)</a>
 </header>
 
+<!-- Full-screen hero -->
 <section class="hero">
   <?php if ($heroToken): ?>
     <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="">
   <?php endif; ?>
   <div class="hero-overlay">
     <h1><?= e($event['title']) ?></h1>
-    <p class="hero-meta">
-      <?= e(date('j M Y', strtotime($event['event_date']))) ?>
-      <?php if ($event['venue']): ?> · <?= e($event['venue']) ?><?php endif; ?>
-    </p>
   </div>
 </section>
 
+<!-- Meta tags: date, venue, session/class -->
 <nav class="session-nav">
-  <a href="/e/<?= e($event['slug']) ?>" class="<?= $activeSession === null ? 'active' : '' ?>">All sessions</a>
-  <?php foreach ($sessions as $session): ?>
-    <a href="/e/<?= e($event['slug']) ?>/<?= e($session['slug']) ?>" class="<?= ($activeSession && $activeSession['id'] === $session['id']) ? 'active' : '' ?>">
-      <?= e($session['name']) ?>
-    </a>
-  <?php endforeach; ?>
+  <span><?= e(date('j M Y', strtotime($event['event_date']))) ?></span>
+  <?php if ($event['venue']): ?><span><?= e($event['venue']) ?></span><?php endif; ?>
+  <?php if ($activeSession): ?><span><?= e($activeSession['name']) ?></span><?php endif; ?>
 </nav>
 
-<?php if ($event['price_single_pence'] || $event['price_session_pence'] || $event['price_event_pence']): ?>
-<div class="price-banner">
-  <span>Single photo: <?= e(format_pence((int)$event['price_single_pence'], $currencyCode)) ?></span>
-  <?php if ($event['price_session_pence']): ?>
-    <span>Full session: <?= e(format_pence((int)$event['price_session_pence'], $currencyCode)) ?></span>
-  <?php endif; ?>
-  <?php if ($event['price_event_pence']): ?>
-    <span>Full event: <?= e(format_pence((int)$event['price_event_pence'], $currencyCode)) ?></span>
-  <?php endif; ?>
-</div>
-<?php endif; ?>
+<!-- Conditional filter dropdowns -->
+<?php
+$hasKartFilter = !empty($kartOptions);
+$hasDriverFilter = !empty($driverOptions);
+$hasClassFilter = !empty($classOptions);
+$hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
+?>
 
+<?php if ($hasAnyFilter): ?>
 <form class="filter-bar" id="filterForm" method="get"
       data-event-slug="<?= e($event['slug']) ?>"
       data-session-slug="<?= e($activeSession['slug'] ?? '') ?>"
       data-base-path="<?= e($basePath) ?>">
-  <select name="kart" id="filterKart">
-    <option value="">All karts</option>
-    <?php foreach ($kartOptions as $kart): ?>
-      <option value="<?= e($kart) ?>" <?= $filters['kart'] === $kart ? 'selected' : '' ?>><?= e($kart) ?></option>
-    <?php endforeach; ?>
-  </select>
-  <select name="driver" id="filterDriver">
-    <option value="">All drivers</option>
-    <?php foreach ($driverOptions as $driver): ?>
-      <option value="<?= e($driver) ?>" <?= $filters['driver'] === $driver ? 'selected' : '' ?>><?= e($driver) ?></option>
-    <?php endforeach; ?>
-  </select>
-  <select name="class" id="filterClass">
-    <option value="">All classes</option>
-    <?php foreach ($classOptions as $class): ?>
-      <option value="<?= e($class) ?>" <?= $filters['class'] === $class ? 'selected' : '' ?>><?= e($class) ?></option>
-    <?php endforeach; ?>
-  </select>
+  <?php if ($hasKartFilter): ?>
+    <select name="kart" id="filterKart">
+      <option value="">All karts</option>
+      <?php foreach ($kartOptions as $kart): ?>
+        <option value="<?= e($kart) ?>" <?= $filters['kart'] === $kart ? 'selected' : '' ?>><?= e($kart) ?></option>
+      <?php endforeach; ?>
+    </select>
+  <?php endif; ?>
+
+  <?php if ($hasDriverFilter): ?>
+    <select name="driver" id="filterDriver">
+      <option value="">All drivers</option>
+      <?php foreach ($driverOptions as $driver): ?>
+        <option value="<?= e($driver) ?>" <?= $filters['driver'] === $driver ? 'selected' : '' ?>><?= e($driver) ?></option>
+      <?php endforeach; ?>
+    </select>
+  <?php endif; ?>
+
+  <?php if ($hasClassFilter): ?>
+    <select name="class" id="filterClass">
+      <option value="">All classes</option>
+      <?php foreach ($classOptions as $class): ?>
+        <option value="<?= e($class) ?>" <?= $filters['class'] === $class ? 'selected' : '' ?>><?= e($class) ?></option>
+      <?php endforeach; ?>
+    </select>
+  <?php endif; ?>
+
   <button type="submit">Filter</button>
   <?php if ($filters['kart'] || $filters['driver'] || $filters['class']): ?>
-    <a href="<?= e($basePath) ?>" class="clear-filters">Clear</a>
+    <button type="button" class="clear-filters" onclick="location.href='<?= e($basePath) ?>'">Clear</button>
   <?php endif; ?>
 </form>
+<?php endif; ?>
+
+<!-- Search box (prominent) -->
+<div class="search-box">
+  <input type="text" id="searchInput" class="search-input" placeholder="Search by name, number, or class...">
+</div>
 
 <main>
+  <!-- Photo grid with empty state -->
   <div class="photo-grid" id="photoGrid"
        data-photo-ids="<?= e(json_encode(array_map('intval', array_column($photos, 'id')))) ?>"
        data-photo-tokens="<?= e(json_encode(array_column($photos, 'public_token'))) ?>">
-    <?php require __DIR__ . '/_photo_grid_items.php'; ?>
+    <?php if (!empty($photos)): ?>
+      <?php require __DIR__ . '/_photo_grid_items.php'; ?>
+    <?php else: ?>
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <p>No photos match your filters.</p>
+        <button type="button" class="clear-filters" onclick="location.href='<?= e($basePath) ?>'">Clear filters</button>
+      </div>
+    <?php endif; ?>
   </div>
 
+  <!-- Videos section -->
   <?php if (!empty($videos)): ?>
   <section class="video-section">
     <h2>Videos</h2>
@@ -97,6 +113,7 @@
   <?php endif; ?>
 </main>
 
+<!-- Lightbox for tap-to-enlarge -->
 <div class="lightbox" id="lightbox" hidden>
   <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
   <button class="lightbox-prev" id="lightboxPrev" aria-label="Previous">&#8249;</button>
