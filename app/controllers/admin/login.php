@@ -24,6 +24,7 @@ function admin_login_controller(PDO $pdo, array $config): void
     $error = null;
     $needsTotp = false;
     $emailValue = '';
+    $passwordValue = '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!csrf_verify($_POST['csrf_token'] ?? null)) {
@@ -46,7 +47,14 @@ function admin_login_controller(PDO $pdo, array $config): void
                     $error = 'Too many attempts. Try again in 15 minutes.';
                     break;
                 case 'totp_required':
+                    // The password field is `required`, so it must come back
+                    // filled or a real browser blocks the second submit via
+                    // HTML5 validation before the request ever reaches the
+                    // server — this isn't visible with a tool that skips
+                    // client-side validation (curl, direct POSTs), only with
+                    // an actual browser enforcing the `required` attribute.
                     $needsTotp = true;
+                    $passwordValue = $password;
                     $error = 'Enter the 6-digit code from your authenticator app.';
                     break;
                 default:
@@ -59,6 +67,7 @@ function admin_login_controller(PDO $pdo, array $config): void
         'error' => $error,
         'needsTotp' => $needsTotp,
         'emailValue' => $emailValue,
+        'passwordValue' => $passwordValue,
         'siteName' => $config['site']['name'],
         'csrfToken' => csrf_token(),
     ]);

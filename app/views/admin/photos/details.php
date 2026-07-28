@@ -5,18 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Photo — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
-<style>
-.photo-preview { max-width: 400px; margin: 2rem 0; }
-.photo-preview img { max-width: 100%; }
-.details { margin: 2rem 0; }
-.detail-row { display: flex; gap: 2rem; margin: 1rem 0; padding: 0.5rem 0; border-bottom: 1px solid rgba(109, 40, 217, 0.2); }
-.detail-label { font-weight: bold; min-width: 150px; }
-.detail-value { font-family: monospace; }
-.form-group { margin: 1.5rem 0; }
-select { padding: 0.5rem; border: 1px solid var(--purple); border-radius: 4px; }
-button { padding: 0.75rem 1.5rem; background: var(--gold); color: var(--ink); border: none; border-radius: 4px; cursor: pointer; }
-button:hover { opacity: 0.9; }
-</style>
+<link rel="stylesheet" href="/assets/css/admin.css">
 </head>
 <body>
 <div class="dashboard">
@@ -65,10 +54,11 @@ button:hover { opacity: 0.9; }
     <button type="submit">Update status</button>
   </form>
 
-  <form method="post" action="/admin/photos/<?= e($photo['id']) ?>/delete" style="margin-top: 2rem;">
+  <form method="post" action="/admin/photos/<?= e($photo['id']) ?>/delete" class="form-spaced">
     <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
-    <button type="submit" onclick="return confirm('Delete this photo? This cannot be undone.')">Delete photo</button>
+    <button type="submit" data-confirm="Delete this photo? This cannot be undone.">Delete photo</button>
   </form>
 </div>
+<script src="/assets/js/admin-common.js" defer></script>
 </body>
 </html>

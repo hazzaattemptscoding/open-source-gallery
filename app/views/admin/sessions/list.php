@@ -5,16 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sessions — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
-<style>
-table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
-th, td { border: 1px solid var(--purple-deep); padding: 0.75rem; text-align: left; }
-th { background: var(--purple); color: white; }
-tr:nth-child(even) { background: rgba(109, 40, 217, 0.05); }
-a { color: var(--gold); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.actions { display: flex; gap: 1rem; }
-button { cursor: pointer; }
-</style>
+<link rel="stylesheet" href="/assets/css/admin.css">
 </head>
 <body>
 <div class="dashboard">
@@ -25,12 +16,12 @@ button { cursor: pointer; }
     <div class="error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <a href="/admin/sessions/new?event=<?= e($eventId) ?>" style="display: inline-block; margin: 1rem 0; padding: 0.75rem 1.5rem; background: var(--gold); color: var(--ink); border-radius: 4px; text-decoration: none;">+ Create session</a>
+  <a href="/admin/sessions/new?event=<?= e($eventId) ?>" class="btn-pill btn-pill-gold">+ Create session</a>
 
   <?php if (empty($sessions)): ?>
     <p>No sessions yet.</p>
   <?php else: ?>
-    <table>
+    <table class="admin-table">
       <thead>
         <tr>
           <th>Name</th>
@@ -48,12 +39,12 @@ button { cursor: pointer; }
             <td><?= (int)$session['photo_count'] ?></td>
             <td><?= (int)$session['sort_order'] ?></td>
             <td>
-              <div class="actions">
+              <div class="row-actions">
                 <a href="/admin/sessions/<?= e($session['id']) ?>">Edit</a>
                 <a href="/admin/photos?session=<?= e($session['id']) ?>">View photos</a>
-                <form method="post" action="/admin/sessions/<?= e($session['id']) ?>/delete" style="display: inline;">
+                <form method="post" action="/admin/sessions/<?= e($session['id']) ?>/delete" class="form-inline">
                   <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
-                  <button type="submit" onclick="return confirm('Delete this session? This cannot be undone.')">Delete</button>
+                  <button type="submit" data-confirm="Delete this session? This cannot be undone.">Delete</button>
                 </form>
               </div>
             </td>
@@ -63,5 +54,6 @@ button { cursor: pointer; }
     </table>
   <?php endif; ?>
 </div>
+<script src="/assets/js/admin-common.js" defer></script>
 </body>
 </html>

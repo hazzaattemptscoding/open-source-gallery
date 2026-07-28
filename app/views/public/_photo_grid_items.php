@@ -9,7 +9,7 @@
   <p class="empty-state">No photos match these filters.</p>
 <?php else: ?>
   <?php foreach ($photos as $index => $photo): ?>
-    <div class="photo-thumb" data-index="<?= (int)$index ?>" style="aspect-ratio: <?= (int)$photo['width'] ?> / <?= (int)$photo['height'] ?>;">
+    <div class="photo-thumb" data-index="<?= (int)$index ?>">
       <img
         src="/media/d/<?= e($photo['public_token']) ?>-800.jpg"
         srcset="/media/d/<?= e($photo['public_token']) ?>-400.jpg 400w, /media/d/<?= e($photo['public_token']) ?>-800.jpg 800w, /media/d/<?= e($photo['public_token']) ?>-1600.jpg 1600w"

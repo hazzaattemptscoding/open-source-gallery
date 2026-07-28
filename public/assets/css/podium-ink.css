@@ -245,17 +245,29 @@ button:hover {
 .hero {
   position: relative;
   min-height: 45vh;
-  background-size: cover;
-  background-position: center;
   background-color: var(--ink-panel);
   display: flex;
   align-items: flex-end;
+  overflow: hidden;
+}
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-overlay {
+  position: relative;
   width: 100%;
   padding: 2rem 1.5rem;
   background: linear-gradient(to top, rgba(10, 10, 15, 0.92), rgba(10, 10, 15, 0.1));
+}
+
+body.lightbox-open {
+  overflow: hidden;
 }
 
 .hero-overlay h1 {
@@ -348,6 +360,7 @@ button:hover {
 
 .photo-thumb {
   position: relative;
+  aspect-ratio: 1;
   background: var(--ink-panel);
   border-radius: 6px;
   overflow: hidden;
