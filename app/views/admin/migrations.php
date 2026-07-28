@@ -5,11 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Migrations — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
-<style>
-ul { list-style: none; padding: 0; }
-li { padding: 0.5rem 0.75rem; border: 1px solid var(--dark-purple); border-radius: 4px; margin: 0.5rem 0; font-family: monospace; }
-.applied { background: rgba(109, 40, 217, 0.1); }
-</style>
+<link rel="stylesheet" href="/assets/css/admin.css">
 </head>
 <body>
 <div class="dashboard">
@@ -22,9 +18,9 @@ li { padding: 0.5rem 0.75rem; border: 1px solid var(--dark-purple); border-radiu
 
   <?php if (!empty($applied)): ?>
     <p>Applied:</p>
-    <ul>
+    <ul class="migration-list">
       <?php foreach ($applied as $filename): ?>
-        <li class="applied"><?= e($filename) ?></li>
+        <li class="migration-item applied"><?= e($filename) ?></li>
       <?php endforeach; ?>
     </ul>
   <?php endif; ?>
@@ -33,16 +29,17 @@ li { padding: 0.5rem 0.75rem; border: 1px solid var(--dark-purple); border-radiu
     <p>Database is up to date. No pending migrations.</p>
   <?php else: ?>
     <p><?= count($pending) ?> pending migration(s):</p>
-    <ul>
+    <ul class="migration-list">
       <?php foreach ($pending as $filename): ?>
-        <li><?= e($filename) ?></li>
+        <li class="migration-item"><?= e($filename) ?></li>
       <?php endforeach; ?>
     </ul>
     <form method="post">
       <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
-      <button type="submit" onclick="return confirm('Apply all pending migrations? This changes the database schema and cannot be undone automatically.')">Apply pending migrations</button>
+      <button type="submit" data-confirm="Apply all pending migrations? This changes the database schema and cannot be undone automatically.">Apply pending migrations</button>
     </form>
   <?php endif; ?>
 </div>
+<script src="/assets/js/admin-common.js" defer></script>
 </body>
 </html>

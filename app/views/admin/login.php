@@ -23,7 +23,7 @@
       <input type="email" id="email" name="email" value="<?= e($emailValue) ?>" required autofocus>
 
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" required>
+      <input type="password" id="password" name="password" value="<?= e($passwordValue) ?>" required>
 
       <?php if ($needsTotp): ?>
         <label for="totp_code">Authenticator code</label>

@@ -42,6 +42,36 @@ if (preg_match('#^/cron/(.+)$#', $path, $cronMatch)) {
 }
 
 switch ($path) {
+    case '/':
+        require __DIR__ . '/../app/controllers/public/home.php';
+        public_home_controller($pdo, $config);
+        break;
+
+    case '/cart':
+        require __DIR__ . '/../app/controllers/public/cart.php';
+        public_cart_page_controller($pdo, $config);
+        break;
+
+    case '/cart/add':
+        require __DIR__ . '/../app/controllers/public/cart.php';
+        public_cart_add_controller($pdo, $config);
+        break;
+
+    case '/cart/remove':
+        require __DIR__ . '/../app/controllers/public/cart.php';
+        public_cart_remove_controller($pdo, $config);
+        break;
+
+    case '/api/photos':
+        require __DIR__ . '/../app/controllers/public/api_photos.php';
+        public_api_photos_controller($pdo, $config);
+        break;
+
+    case '/api/photos/view':
+        require __DIR__ . '/../app/controllers/public/api_photos.php';
+        public_api_photo_view_controller($pdo, $config);
+        break;
+
     case '/admin/setup':
         require __DIR__ . '/../app/controllers/admin/setup.php';
         admin_setup_controller($pdo, $config);
@@ -98,6 +128,9 @@ switch ($path) {
         } elseif (strpos($path, '/admin/upload') === 0) {
             require __DIR__ . '/../app/controllers/admin/upload.php';
             admin_upload_controller($pdo, $config);
+        } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/event.php';
+            public_event_controller($pdo, $config, $m[1], $m[2] ?? null);
         } else {
             http_response_code(404);
             echo '404 Not Found';

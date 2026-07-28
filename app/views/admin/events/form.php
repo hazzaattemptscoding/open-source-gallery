@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($isNew ? 'Create event' : 'Edit event') ?> — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 </head>
 <body>
 <div class="dashboard">
@@ -15,7 +16,7 @@
     <div class="error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <form method="post" style="max-width: 600px;">
+  <form method="post" class="form-narrow">
     <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
 
     <label for="title">Event title</label>

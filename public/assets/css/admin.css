@@ -1,0 +1,421 @@
+/*
+ * Admin panel layout/component styles. Kept separate from podium-ink.css
+ * (the theme file) because none of this is theme-specific — swapping
+ * branding.theme in config.php never needs to touch these rules, only
+ * the CSS variables they reference (--purple, --gold, etc).
+ */
+
+.btn-pill {
+  display: inline-block;
+  margin: 1rem 0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-pill-gold {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.btn-pill-purple {
+  background: var(--purple);
+  color: white;
+}
+
+.panel {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: rgba(109, 40, 217, 0.1);
+  border-radius: 4px;
+}
+
+.list-plain {
+  list-style: none;
+  padding: 0;
+}
+
+.link-gold {
+  color: var(--gold);
+}
+
+.form-narrow {
+  max-width: 600px;
+}
+
+.form-inline {
+  display: inline;
+}
+
+.form-spaced {
+  margin-top: 2rem;
+}
+
+/* Admin data tables (events, sessions, photos lists) */
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+}
+
+.admin-table th,
+.admin-table td {
+  border: 1px solid var(--purple-deep);
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  background: var(--purple);
+  color: white;
+}
+
+.admin-table tr:nth-child(even) {
+  background: rgba(109, 40, 217, 0.05);
+}
+
+.admin-table a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.admin-table a:hover {
+  text-decoration: underline;
+}
+
+.row-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Admin photo grid (distinct from the public .photo-grid: shows a status badge, click-to-edit) */
+
+.admin-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.admin-photo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border: 2px solid var(--purple);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.admin-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-status-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  text-align: center;
+  color: white;
+}
+
+.photo-status-badge.status-live { background: var(--purple); }
+.photo-status-badge.status-processing { background: orange; }
+.photo-status-badge.status-hidden { background: gray; }
+.photo-status-badge.status-failed { background: var(--error); }
+
+/* Photo details page */
+
+.photo-preview {
+  max-width: 400px;
+  margin: 2rem 0;
+}
+
+.photo-preview img {
+  max-width: 100%;
+}
+
+.detail-row {
+  display: flex;
+  gap: 2rem;
+  margin: 1rem 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(109, 40, 217, 0.2);
+}
+
+.detail-label {
+  font-weight: bold;
+  min-width: 150px;
+}
+
+.detail-value {
+  font-family: ui-monospace, monospace;
+}
+
+.form-group {
+  margin: 1.5rem 0;
+}
+
+.form-group select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--ink);
+  color: var(--text);
+}
+
+/* Migrations page */
+
+.migration-list {
+  list-style: none;
+  padding: 0;
+}
+
+.migration-item {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--purple-deep);
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  font-family: ui-monospace, monospace;
+}
+
+.migration-item.applied {
+  background: rgba(109, 40, 217, 0.1);
+}
+
+/* Upload page */
+
+.upload-zone {
+  border: 2px dashed var(--purple);
+  border-radius: 8px;
+  padding: 3rem;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.upload-zone.dragover {
+  background: rgba(109, 40, 217, 0.1);
+}
+
+.upload-zone input[type="file"] {
+  display: none;
+}
+
+.btn-choose {
+  padding: 1rem 2rem;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.upload-files-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+}
+
+.upload-file-item {
+  background: rgba(109, 40, 217, 0.05);
+  border: 1px solid var(--purple-deep);
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.upload-progress {
+  margin: 0.5rem 0;
+  background: var(--border);
+  height: 20px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.upload-progress-bar {
+  background: var(--purple);
+  height: 100%;
+  transition: width 0.2s;
+}
+
+.upload-file-status {
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.upload-file-status.status-pending { color: var(--purple); }
+.upload-file-status.status-uploading { color: orange; }
+.upload-file-status.status-done { color: #4ade80; }
+.upload-file-status.status-error { color: var(--error); }
+
+.session-select-row {
+  margin: 2rem 0;
+  display: none;
+}
+
+.session-select-row select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--ink);
+  color: var(--text);
+}
+
+.btn-start-upload {
+  margin-left: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.job-drain-notice {
+  display: none;
+  color: var(--purple);
+  margin-top: 2rem;
+}
+
+/* Tagging page */
+
+.tag-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.tag-photo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border: 3px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.tag-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tag-photo-thumb.selected {
+  border-color: var(--gold);
+}
+
+.tag-photo-thumb input[type="checkbox"] {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  cursor: pointer;
+}
+
+.bulk-panel {
+  background: rgba(109, 40, 217, 0.1);
+  border: 1px solid var(--purple);
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.bulk-panel h3 {
+  margin-top: 0;
+}
+
+.tag-input-group {
+  margin: 1rem 0;
+}
+
+.tag-input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.tag-input-group input {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--ink);
+  color: var(--text);
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+}
+
+.tag-list {
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag-list-item {
+  background: var(--ink-panel);
+  border: 1px solid var(--purple-deep);
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tag-list-item code {
+  font-family: ui-monospace, monospace;
+}
+
+.tag-remove-btn {
+  width: auto;
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  background: var(--error);
+  color: white;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-add-tag {
+  background: var(--purple);
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-apply {
+  width: auto;
+  padding: 0.75rem 1.5rem;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.btn-apply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kart-lookup-hint {
+  display: none;
+}

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 </head>
 <body>
 <div class="dashboard">
@@ -12,15 +13,15 @@
   <p>Logged in as <?= e($adminEmail) ?>.</p>
 
   <?php if (!$totpEnabled): ?>
-    <p class="error">Two-factor authentication is not enabled on this account. <a href="/admin/totp/enroll" style="color: var(--gold)">Set it up now</a>.</p>
+    <p class="error">Two-factor authentication is not enabled on this account. <a href="/admin/totp/enroll" class="link-gold">Set it up now</a>.</p>
   <?php endif; ?>
 
-  <div style="margin: 2rem 0; padding: 1rem; background: rgba(109, 40, 217, 0.1); border-radius: 4px;">
+  <div class="panel">
     <h2>Manage content</h2>
-    <ul style="list-style: none; padding: 0;">
-      <li><a href="/admin/events" style="color: var(--gold);">→ Events</a> — Create and manage events, sessions, prices</li>
-      <li><a href="/admin/upload" style="color: var(--gold);">→ Upload photos</a> — Chunked upload with derivative generation</li>
-      <li><a href="/admin/migrations" style="color: var(--gold);">→ Migrations</a> — Apply pending database schema changes</li>
+    <ul class="list-plain">
+      <li><a href="/admin/events" class="link-gold">→ Events</a> — Create and manage events, sessions, prices</li>
+      <li><a href="/admin/upload" class="link-gold">→ Upload photos</a> — Chunked upload with derivative generation</li>
+      <li><a href="/admin/migrations" class="link-gold">→ Migrations</a> — Apply pending database schema changes</li>
     </ul>
   </div>
 
