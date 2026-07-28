@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/../../lib/auth.php';
-require __DIR__ . '/../../lib/view.php';
-require __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/view.php';
+require_once __DIR__ . '/../../lib/audit.php';
 
 function admin_tagging_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -41,7 +41,7 @@ function show_tagging_ui(PDO $pdo, array $config, ?int $sessionId): void {
     }
 
     $eventId = (int)$session['event_id'];
-    $siteName = $config['site_name'] ?? 'Gallery';
+    $siteName = $config['site']['name'] ?? 'Gallery';
 
     $stmt = $pdo->prepare('SELECT id, public_token FROM photos WHERE session_id = ? ORDER BY id ASC');
     $stmt->execute([$sessionId]);
@@ -52,7 +52,7 @@ function show_tagging_ui(PDO $pdo, array $config, ?int $sessionId): void {
     $eventEntries = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $selectedPhotos = [];
-    render('/admin/photos/tags.php', compact('siteName', 'sessionId', 'photos', 'eventEntries', 'selectedPhotos'));
+    render(__DIR__ . '/../../views/admin/photos/tags.php', compact('siteName', 'sessionId', 'photos', 'eventEntries', 'selectedPhotos'));
 }
 
 function handle_bulk_tagging(PDO $pdo, array $config, int $adminId, string $ip): void {
@@ -103,7 +103,7 @@ function handle_bulk_tagging(PDO $pdo, array $config, int $adminId, string $ip):
             $successCount++;
         }
 
-        audit_log($pdo, $adminId, 'photo_tagged', 'photo', $photoId, ['tag_count' => count($tags)], $ip);
+        audit_log($pdo, 'admin', 'photo_tagged', 'photo', $photoId, ['tag_count' => count($tags)], $ip);
     }
 
     http_response_code(200);

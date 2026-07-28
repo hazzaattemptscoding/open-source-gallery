@@ -19,6 +19,10 @@
     <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
     <input type="hidden" name="event_id" value="<?= e($eventId) ?>">
 
+    <label for="name">Session name</label>
+    <input type="text" id="name" name="name" value="<?= e($session['name'] ?? '') ?>" required maxlength="190">
+    <p class="hint">Shown to customers. Example: Morning Practice</p>
+
     <label for="slug">Session slug (unique within this event)</label>
     <input type="text" id="slug" name="slug" value="<?= e($session['slug'] ?? '') ?>" required pattern="[a-z0-9-]+">
     <p class="hint">Lowercase, hyphens, no spaces. Example: practice-morning</p>

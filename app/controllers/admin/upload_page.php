@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/../../lib/auth.php';
-require __DIR__ . '/../../lib/view.php';
+require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/view.php';
 
 function admin_upload_page_controller(PDO $pdo, array $config): void {
     require_admin();
-    $siteName = $config['site_name'] ?? 'Gallery';
+    $siteName = $config['site']['name'] ?? 'Gallery';
 
     $stmt = $pdo->prepare('
         SELECT e.id as event_id, e.slug as event_slug, s.id as session_id, s.slug as session_slug
@@ -32,5 +32,5 @@ function admin_upload_page_controller(PDO $pdo, array $config): void {
         }
     }
 
-    render('/admin/upload.php', compact('siteName', 'sessionsByEvent'));
+    render(__DIR__ . '/../../views/admin/upload.php', compact('siteName', 'sessionsByEvent'));
 }

@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
 
-function init_upload_batch(PDO $pdo): int {
-    $stmt = $pdo->prepare('INSERT INTO upload_batches DEFAULT VALUES');
-    $stmt->execute();
+function init_upload_batch(PDO $pdo, int $sessionId): int {
+    $stmt = $pdo->prepare('INSERT INTO upload_batches (session_id) VALUES (?)');
+    $stmt->execute([$sessionId]);
     return (int)$pdo->lastInsertId();
 }
 
-function register_upload_file(PDO $pdo, int $batchId, int $chunksTotal): int {
+function register_upload_file(PDO $pdo, int $batchId, string $clientName, int $sizeBytes, int $chunksTotal): int {
     $stmt = $pdo->prepare('
-        INSERT INTO upload_files (batch_id, chunks_total, chunks_received, status)
-        VALUES (?, ?, 0, ?)
+        INSERT INTO upload_files (batch_id, client_name, size_bytes, chunk_size, chunks_total, chunks_received, status)
+        VALUES (?, ?, ?, ?, ?, 0, ?)
     ');
-    $stmt->execute([$batchId, $chunksTotal, 'uploading']);
+    $stmt->execute([$batchId, $clientName, $sizeBytes, CHUNK_SIZE, $chunksTotal, 'uploading']);
     return (int)$pdo->lastInsertId();
 }
 
@@ -67,27 +67,23 @@ function extract_exif_taken_at(string $filePath): ?string {
         return null;
     }
 
-    if (isset($exif['DateTimeOriginal'])) {
-        $dt = $exif['DateTimeOriginal'];
-        if (preg_match('/^(\d{4}):(\d{2}):(\d{2})/', $dt, $m)) {
-            return "{$m[1]}-{$m[2]}-{$m[3]}";
-        }
-    }
-
-    if (isset($exif['DateTime'])) {
-        $dt = $exif['DateTime'];
-        if (preg_match('/^(\d{4}):(\d{2}):(\d{2})/', $dt, $m)) {
-            return "{$m[1]}-{$m[2]}-{$m[3]}";
+    foreach (['DateTimeOriginal', 'DateTime'] as $field) {
+        if (isset($exif[$field]) && preg_match('/^(\d{4}):(\d{2}):(\d{2}) (\d{2}:\d{2}:\d{2})$/', $exif[$field], $m)) {
+            return "{$m[1]}-{$m[2]}-{$m[3]} {$m[4]}";
         }
     }
 
     return null;
 }
 
-function sanitize_filename(string $original): string {
-    $name = pathinfo($original, PATHINFO_FILENAME);
-    $name = preg_replace('/[^a-zA-Z0-9._-]/', '-', $name);
-    $name = preg_replace('/-+/', '-', $name);
-    $name = trim($name, '-');
-    return $name ?: 'upload';
+/**
+ * original_filename is display/reference only, never used as a path (see
+ * migrations/001_initial_schema.sql). Strip control characters and cap
+ * length to fit the column; anything else in the client-supplied name is
+ * safe because it's always escaped through e() on output.
+ */
+function safe_original_filename(string $original): string {
+    $name = preg_replace('/[\x00-\x1F\x7F]/', '', $original);
+    $name = trim((string)$name);
+    return $name !== '' ? mb_substr($name, 0, 255) : 'upload.jpg';
 }

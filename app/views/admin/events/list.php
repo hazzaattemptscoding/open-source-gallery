@@ -21,6 +21,10 @@ button { cursor: pointer; }
   <h1>Events</h1>
   <p><a href="/admin">← Back to dashboard</a></p>
 
+  <?php if ($error): ?>
+    <div class="error"><?= e($error) ?></div>
+  <?php endif; ?>
+
   <a href="/admin/events/new" style="display: inline-block; margin: 1rem 0; padding: 0.75rem 1.5rem; background: var(--gold); color: var(--ink); border-radius: 4px; text-decoration: none;">+ Create event</a>
 
   <?php if (empty($events)): ?>
@@ -29,6 +33,7 @@ button { cursor: pointer; }
     <table>
       <thead>
         <tr>
+          <th>Title</th>
           <th>Slug</th>
           <th>Date</th>
           <th>Published</th>
@@ -41,12 +46,13 @@ button { cursor: pointer; }
       <tbody>
         <?php foreach ($events as $event): ?>
           <tr>
+            <td><?= e($event['title']) ?></td>
             <td><?= e($event['slug']) ?></td>
             <td><?= e($event['event_date']) ?></td>
             <td><?= $event['is_published'] ? '✓' : '–' ?></td>
-            <td><?= $event['price_single_pence'] ? e((int)$event['price_single_pence']) . ' ' . e($currencySymbol) : '–' ?></td>
-            <td><?= $event['price_session_pence'] ? e((int)$event['price_session_pence']) . ' ' . e($currencySymbol) : '–' ?></td>
-            <td><?= $event['price_event_pence'] ? e((int)$event['price_event_pence']) . ' ' . e($currencySymbol) : '–' ?></td>
+            <td><?= e(format_pence((int)$event['price_single_pence'], $currencyCode)) ?></td>
+            <td><?= $event['price_session_pence'] ? e(format_pence((int)$event['price_session_pence'], $currencyCode)) : '–' ?></td>
+            <td><?= $event['price_event_pence'] ? e(format_pence((int)$event['price_event_pence'], $currencyCode)) : '–' ?></td>
             <td>
               <div class="actions">
                 <a href="/admin/events/<?= e($event['id']) ?>">Edit</a>

@@ -21,6 +21,10 @@ button { cursor: pointer; }
   <h1>Sessions in "<?= e($eventSlug) ?>"</h1>
   <p><a href="/admin/events">← Back to events</a></p>
 
+  <?php if ($error): ?>
+    <div class="error"><?= e($error) ?></div>
+  <?php endif; ?>
+
   <a href="/admin/sessions/new?event=<?= e($eventId) ?>" style="display: inline-block; margin: 1rem 0; padding: 0.75rem 1.5rem; background: var(--gold); color: var(--ink); border-radius: 4px; text-decoration: none;">+ Create session</a>
 
   <?php if (empty($sessions)): ?>
@@ -29,6 +33,7 @@ button { cursor: pointer; }
     <table>
       <thead>
         <tr>
+          <th>Name</th>
           <th>Slug</th>
           <th>Photos</th>
           <th>Sort order</th>
@@ -38,6 +43,7 @@ button { cursor: pointer; }
       <tbody>
         <?php foreach ($sessions as $session): ?>
           <tr>
+            <td><?= e($session['name']) ?></td>
             <td><?= e($session['slug']) ?></td>
             <td><?= (int)$session['photo_count'] ?></td>
             <td><?= (int)$session['sort_order'] ?></td>

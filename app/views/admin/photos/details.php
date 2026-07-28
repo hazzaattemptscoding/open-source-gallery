@@ -33,12 +33,16 @@ button:hover { opacity: 0.9; }
       <span class="detail-value"><?= e($photo['public_token']) ?></span>
     </div>
     <div class="detail-row">
+      <span class="detail-label">Original filename:</span>
+      <span class="detail-value"><?= e($photo['original_filename']) ?></span>
+    </div>
+    <div class="detail-row">
       <span class="detail-label">Size:</span>
       <span class="detail-value"><?= e(number_format((int)$photo['hires_size_bytes'] / 1024 / 1024, 1)) ?> MB</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Dimensions:</span>
-      <span class="detail-value"><?= (int)$photo['width_height'] ?> × <?= (int)$photo['width_height'] ?> px</span>
+      <span class="detail-value"><?= (int)$photo['width'] ?> × <?= (int)$photo['height'] ?> px</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Views:</span>

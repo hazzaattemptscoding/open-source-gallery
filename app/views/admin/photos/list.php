@@ -44,6 +44,8 @@ a:hover { text-decoration: underline; }
       <thead>
         <tr>
           <th>Token</th>
+          <th>Filename</th>
+          <th>Dimensions</th>
           <th>Size</th>
           <th>Status</th>
           <th>Views</th>
@@ -54,6 +56,8 @@ a:hover { text-decoration: underline; }
         <?php foreach ($photos as $photo): ?>
           <tr>
             <td><code><?= e($photo['public_token']) ?></code></td>
+            <td><?= e($photo['original_filename']) ?></td>
+            <td><?= (int)$photo['width'] ?> × <?= (int)$photo['height'] ?></td>
             <td><?= e(number_format((int)$photo['hires_size_bytes'] / 1024 / 1024, 1)) ?> MB</td>
             <td><?= e(ucfirst($photo['status'])) ?></td>
             <td><?= (int)$photo['view_count'] ?></td>

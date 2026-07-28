@@ -121,6 +121,7 @@ function startUpload() {
 
 async function initBatch() {
   const formData = new FormData();
+  formData.append('session_id', sessionId);
   selectedFiles.forEach(file => {
     formData.append('files[]', JSON.stringify({
       name: file.name,

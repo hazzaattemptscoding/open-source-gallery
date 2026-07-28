@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/../../lib/auth.php';
-require __DIR__ . '/../../lib/csrf.php';
-require __DIR__ . '/../../lib/view.php';
-require __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/csrf.php';
+require_once __DIR__ . '/../../lib/view.php';
+require_once __DIR__ . '/../../lib/audit.php';
 
 function admin_sessions_controller(PDO $pdo, array $config): void {
     require_admin();
     $adminId = current_admin_id();
     $ip = client_ip();
     $csrfToken = csrf_token();
-    $siteName = $config['site_name'] ?? 'Gallery';
+    $siteName = $config['site']['name'] ?? 'Gallery';
 
     $path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/', '/');
     $method = $_SERVER['REQUEST_METHOD'];
@@ -22,13 +22,13 @@ function admin_sessions_controller(PDO $pdo, array $config): void {
     } elseif ($path === '/admin/sessions/new' && $method === 'GET') {
         show_session_form($pdo, $siteName, $csrfToken, $eventId, isNew: true);
     } elseif ($path === '/admin/sessions' && $method === 'POST') {
-        create_session($pdo, $config, $adminId, $ip, $siteName, $csrfToken, $eventId);
+        create_session($pdo, $adminId, $ip, $siteName, $csrfToken);
     } elseif (preg_match('#^/admin/sessions/(\d+)$#', $path, $m) && $method === 'GET') {
         show_session_form($pdo, $siteName, $csrfToken, $eventId, isNew: false, sessionId: (int)$m[1]);
     } elseif (preg_match('#^/admin/sessions/(\d+)$#', $path, $m) && $method === 'POST') {
-        update_session($pdo, $config, $adminId, $ip, $siteName, $csrfToken, sessionId: (int)$m[1]);
+        update_session($pdo, $adminId, $ip, $siteName, $csrfToken, sessionId: (int)$m[1]);
     } elseif (preg_match('#^/admin/sessions/(\d+)/delete$#', $path, $m) && $method === 'POST') {
-        delete_session($pdo, $config, $adminId, $ip, sessionId: (int)$m[1]);
+        delete_session($pdo, $adminId, $ip, sessionId: (int)$m[1]);
     } else {
         http_response_code(404);
         echo '404 Not Found';
@@ -52,18 +52,19 @@ function list_sessions(PDO $pdo, string $siteName, string $csrfToken, ?int $even
     }
 
     $stmt = $pdo->prepare('
-        SELECT s.id, s.slug, s.sort_order, COUNT(p.id) as photo_count
+        SELECT s.id, s.slug, s.name, s.sort_order, COUNT(p.id) as photo_count
         FROM sessions s
         LEFT JOIN photos p ON p.session_id = s.id
         WHERE s.event_id = ?
-        GROUP BY s.id, s.slug, s.sort_order
+        GROUP BY s.id, s.slug, s.name, s.sort_order
         ORDER BY s.sort_order ASC
     ');
     $stmt->execute([$eventId]);
     $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $eventSlug = $event['slug'];
-    render('/admin/sessions/list.php', compact('siteName', 'csrfToken', 'eventId', 'eventSlug', 'sessions'));
+    $error = ($_GET['error'] ?? '') === 'has_photos' ? 'Cannot delete: this session still has photos. Delete the photos first.' : '';
+    render(__DIR__ . '/../../views/admin/sessions/list.php', compact('siteName', 'csrfToken', 'eventId', 'eventSlug', 'sessions', 'error'));
 }
 
 function show_session_form(PDO $pdo, string $siteName, string $csrfToken, ?int $eventId, bool $isNew, ?int $sessionId = null): void {
@@ -77,7 +78,7 @@ function show_session_form(PDO $pdo, string $siteName, string $csrfToken, ?int $
     }
 
     if (!$isNew && $sessionId) {
-        $stmt = $pdo->prepare('SELECT id, event_id, slug, sort_order FROM sessions WHERE id = ?');
+        $stmt = $pdo->prepare('SELECT id, event_id, slug, name, sort_order FROM sessions WHERE id = ?');
         $stmt->execute([$sessionId]);
         $session = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$session) {
@@ -96,14 +97,16 @@ function show_session_form(PDO $pdo, string $siteName, string $csrfToken, ?int $
         return;
     }
 
-    render('/admin/sessions/form.php', compact('siteName', 'csrfToken', 'eventId', 'session', 'error', 'isNew'));
+    render(__DIR__ . '/../../views/admin/sessions/form.php', compact('siteName', 'csrfToken', 'eventId', 'session', 'error', 'isNew'));
 }
 
-function create_session(PDO $pdo, array $config, int $adminId, string $ip, string $siteName, string $csrfToken, ?int $eventId): void {
+function create_session(PDO $pdo, int $adminId, string $ip, string $siteName, string $csrfToken): void {
     csrf_verify($_POST['csrf_token'] ?? '');
+    $isNew = true;
 
-    $eventId = isset($_POST['event_id']) ? (int)$_POST['event_id'] : null;
+    $eventId = isset($_POST['event_id']) ? (int)$_POST['event_id'] : 0;
     $slug = (string)($_POST['slug'] ?? '');
+    $name = trim((string)($_POST['name'] ?? ''));
     $sortOrder = isset($_POST['sort_order']) ? (int)$_POST['sort_order'] : 0;
 
     $stmt = $pdo->prepare('SELECT id FROM events WHERE id = ?');
@@ -115,23 +118,29 @@ function create_session(PDO $pdo, array $config, int $adminId, string $ip, strin
     }
 
     $error = validate_session_slug($pdo, $slug, $eventId);
+    if (!$error && empty($name)) {
+        $error = 'Session name is required.';
+    }
+
     if ($error) {
-        render('/admin/sessions/form.php', compact('siteName', 'csrfToken', 'eventId', 'error', 'isNew'));
+        $session = compact('slug', 'name', 'sortOrder');
+        render(__DIR__ . '/../../views/admin/sessions/form.php', compact('siteName', 'csrfToken', 'eventId', 'session', 'error', 'isNew'));
         return;
     }
 
-    $stmt = $pdo->prepare('INSERT INTO sessions (event_id, slug, sort_order) VALUES (?, ?, ?)');
-    $stmt->execute([$eventId, $slug, $sortOrder]);
+    $stmt = $pdo->prepare('INSERT INTO sessions (event_id, slug, name, sort_order) VALUES (?, ?, ?, ?)');
+    $stmt->execute([$eventId, $slug, $name, $sortOrder]);
     $sessionId = (int)$pdo->lastInsertId();
 
-    audit_log($pdo, $adminId, 'session_created', 'session', $sessionId, ['event_id' => $eventId, 'slug' => $slug], $ip);
+    audit_log($pdo, 'admin', 'session_created', 'session', $sessionId, ['event_id' => $eventId, 'slug' => $slug], $ip);
 
     header("Location: /admin/sessions/{$sessionId}");
     exit;
 }
 
-function update_session(PDO $pdo, array $config, int $adminId, string $ip, string $siteName, string $csrfToken, int $sessionId): void {
+function update_session(PDO $pdo, int $adminId, string $ip, string $siteName, string $csrfToken, int $sessionId): void {
     csrf_verify($_POST['csrf_token'] ?? '');
+    $isNew = false;
 
     $stmt = $pdo->prepare('SELECT event_id, slug FROM sessions WHERE id = ?');
     $stmt->execute([$sessionId]);
@@ -144,31 +153,35 @@ function update_session(PDO $pdo, array $config, int $adminId, string $ip, strin
 
     $eventId = (int)$current['event_id'];
     $slug = (string)($_POST['slug'] ?? '');
+    $name = trim((string)($_POST['name'] ?? ''));
     $sortOrder = isset($_POST['sort_order']) ? (int)$_POST['sort_order'] : 0;
 
     $error = '';
     if ($slug !== $current['slug']) {
         $error = validate_session_slug($pdo, $slug, $eventId);
     }
+    if (!$error && empty($name)) {
+        $error = 'Session name is required.';
+    }
 
     if ($error) {
-        $session = compact('slug', 'sortOrder');
+        $session = compact('slug', 'name', 'sortOrder');
         $session['id'] = $sessionId;
         $session['event_id'] = $eventId;
-        render('/admin/sessions/form.php', compact('siteName', 'csrfToken', 'eventId', 'session', 'error', 'isNew'));
+        render(__DIR__ . '/../../views/admin/sessions/form.php', compact('siteName', 'csrfToken', 'eventId', 'session', 'error', 'isNew'));
         return;
     }
 
-    $stmt = $pdo->prepare('UPDATE sessions SET slug = ?, sort_order = ? WHERE id = ?');
-    $stmt->execute([$slug, $sortOrder, $sessionId]);
+    $stmt = $pdo->prepare('UPDATE sessions SET slug = ?, name = ?, sort_order = ? WHERE id = ?');
+    $stmt->execute([$slug, $name, $sortOrder, $sessionId]);
 
-    audit_log($pdo, $adminId, 'session_updated', 'session', $sessionId, ['slug' => $slug], $ip);
+    audit_log($pdo, 'admin', 'session_updated', 'session', $sessionId, ['slug' => $slug], $ip);
 
     header("Location: /admin/sessions/{$sessionId}");
     exit;
 }
 
-function delete_session(PDO $pdo, array $config, int $adminId, string $ip, int $sessionId): void {
+function delete_session(PDO $pdo, int $adminId, string $ip, int $sessionId): void {
     csrf_verify($_POST['csrf_token'] ?? '');
 
     $stmt = $pdo->prepare('SELECT event_id FROM sessions WHERE id = ?');
@@ -181,8 +194,18 @@ function delete_session(PDO $pdo, array $config, int $adminId, string $ip, int $
     }
 
     $eventId = (int)$row['event_id'];
-    $pdo->prepare('DELETE FROM sessions WHERE id = ?')->execute([$sessionId]);
-    audit_log($pdo, $adminId, 'session_deleted', 'session', $sessionId, [], $ip);
+
+    try {
+        $pdo->prepare('DELETE FROM sessions WHERE id = ?')->execute([$sessionId]);
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000') {
+            header("Location: /admin/sessions?event={$eventId}&error=has_photos");
+            exit;
+        }
+        throw $e;
+    }
+
+    audit_log($pdo, 'admin', 'session_deleted', 'session', $sessionId, [], $ip);
 
     header("Location: /admin/sessions?event={$eventId}");
     exit;

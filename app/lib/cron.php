@@ -1,0 +1,81 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/derivatives.php';
+
+/**
+ * Full 50s-budget job drain, guarded by a MySQL advisory lock so an
+ * overlapping cron tick (or a stuck previous run) exits immediately
+ * instead of racing. Shared by the CLI entry (cron/run.php) and the
+ * URL-invoked fallback (public/index.php's /cron/{secret} route) —
+ * see docs/architecture.md section 5.
+ */
+function run_cron_drain(PDO $pdo): void {
+    $lockToken = 'pm_cron';
+    if (!$pdo->query("SELECT GET_LOCK('{$lockToken}', 0)")->fetchColumn()) {
+        return;
+    }
+
+    $startTime = microtime(true);
+    $budget = 50.0;
+
+    while ((microtime(true) - $startTime) < $budget) {
+        $stmt = $pdo->prepare('
+            UPDATE jobs
+            SET status = ?, locked_at = NOW(), attempts = attempts + 1
+            WHERE status = ? AND run_after <= NOW() AND (locked_at IS NULL OR locked_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+            ORDER BY id ASC
+            LIMIT 1
+        ');
+        $stmt->execute(['running', 'pending']);
+
+        if ($stmt->rowCount() === 0) {
+            break;
+        }
+
+        $stmt = $pdo->prepare('SELECT id, type, payload, attempts FROM jobs WHERE status = ? ORDER BY id DESC LIMIT 1');
+        $stmt->execute(['running']);
+        $job = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$job) {
+            break;
+        }
+
+        $jobId = (int)$job['id'];
+        $type = (string)$job['type'];
+        $payload = json_decode((string)$job['payload'], true) ?? [];
+        $attempts = (int)$job['attempts'];
+
+        $success = false;
+        try {
+            if ($type === 'derivative') {
+                $success = process_derivative_job($pdo, $payload);
+            } elseif ($type === 'email') {
+                $success = process_email_job($pdo, $payload);
+            } elseif ($type === 'cleanup') {
+                $success = process_cleanup_job($pdo, $payload);
+            }
+        } catch (Throwable $e) {
+            $success = false;
+        }
+
+        if ($success) {
+            $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
+        } elseif ($attempts >= 3) {
+            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['failed', $jobId]);
+        } else {
+            $backoff = min(3600, (2 ** $attempts) * 60);
+            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = DATE_ADD(NOW(), INTERVAL ? SECOND) WHERE id = ?')
+                ->execute(['pending', $backoff, $jobId]);
+        }
+    }
+
+    $pdo->query("SELECT RELEASE_LOCK('{$lockToken}')");
+}
+
+function process_email_job(PDO $pdo, array $payload): bool {
+    return true;
+}
+
+function process_cleanup_job(PDO $pdo, array $payload): bool {
+    return true;
+}
