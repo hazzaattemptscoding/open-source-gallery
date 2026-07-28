@@ -77,6 +77,11 @@ switch ($path) {
         admin_jobs_run_controller($pdo, $config);
         break;
 
+    case '/admin/migrations':
+        require __DIR__ . '/../app/controllers/admin/migrations.php';
+        admin_migrations_controller($pdo, $config);
+        break;
+
     default:
         if (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';

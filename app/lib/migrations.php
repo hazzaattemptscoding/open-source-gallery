@@ -38,9 +38,14 @@ function migrations_pending(PDO $pdo, string $migrationsDir): array
 }
 
 /**
- * Apply one migration file and record it as applied. Statements are split
- * on `;` at end-of-line, which is all this project's migrations need (no
- * stored procedures/triggers with embedded semicolons).
+ * Apply one migration file and record it as applied. Full-line `--` comments
+ * are stripped before splitting on `;` at end-of-line, which is all this
+ * project's migrations need (no stored procedures/triggers with embedded
+ * semicolons). Stripping comments first matters: a statement is only ever
+ * skipped when it's *entirely* a comment, not just prefixed by one — a
+ * naive "does this chunk start with --" check silently drops the first real
+ * statement in any file that opens with an explanatory comment block, which
+ * every migration here does.
  *
  * Deliberately NOT wrapped in a PHP transaction: MySQL/MariaDB DDL statements
  * (CREATE TABLE, ALTER TABLE) each cause an implicit commit, which silently
@@ -61,10 +66,12 @@ function migrations_apply(PDO $pdo, string $migrationsDir, string $filename): vo
         throw new RuntimeException("Could not read migration file: {$filename}");
     }
 
-    $statements = array_filter(array_map('trim', explode(";\n", $sql)));
+    $withoutComments = preg_replace('/^\s*--.*$/m', '', $sql);
+    $statements = array_filter(array_map('trim', explode(";\n", $withoutComments)));
 
     foreach ($statements as $statement) {
-        if ($statement === '' || str_starts_with($statement, '--')) {
+        $statement = trim($statement);
+        if ($statement === '') {
             continue;
         }
         $pdo->exec($statement);

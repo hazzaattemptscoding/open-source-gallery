@@ -18,9 +18,9 @@
   <div style="margin: 2rem 0; padding: 1rem; background: rgba(109, 40, 217, 0.1); border-radius: 4px;">
     <h2>Manage content</h2>
     <ul style="list-style: none; padding: 0;">
-      <li><a href="/admin/events" style="color: var(--gold);">→ Events</a> — Create and manage events, set prices</li>
-      <li><a href="/admin/events" style="color: var(--gold);">→ Sessions</a> — Organise photos into sessions within events</li>
-      <li><a href="/admin/events" style="color: var(--gold);">→ Upload & photos</a> — Coming next: bulk upload, derivatives, tagging</li>
+      <li><a href="/admin/events" style="color: var(--gold);">→ Events</a> — Create and manage events, sessions, prices</li>
+      <li><a href="/admin/upload" style="color: var(--gold);">→ Upload photos</a> — Chunked upload with derivative generation</li>
+      <li><a href="/admin/migrations" style="color: var(--gold);">→ Migrations</a> — Apply pending database schema changes</li>
     </ul>
   </div>
 
