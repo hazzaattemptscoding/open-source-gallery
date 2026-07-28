@@ -16,17 +16,21 @@ function public_cart_page_controller(PDO $pdo, array $config): void {
     $currencyCode = $config['currency'] ?? 'GBP';
 
     $items = cart_get($config);
-    $priced = cart_price($pdo, $items);
+    $priced = cart_price($pdo, $items, $config);
 
     render(__DIR__ . '/../../views/public/cart.php', [
         'siteName' => $siteName,
         'currencyCode' => $currencyCode,
         'lines' => $priced['lines'],
         'totalPence' => $priced['total_pence'],
+        'discountPence' => $priced['discount_pence'],
+        'discountPercent' => $priced['discount_percent'],
     ]);
 }
 
-/** POST /cart/add {type, id} — single-tap add, no confirm step (CLAUDE.md product rules). */
+/** POST /cart/add {type, id} — single-tap add, no confirm step (CLAUDE.md product rules).
+ * Prevents duplicate items in cart (user cannot add same photo twice).
+ */
 function public_cart_add_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
 
@@ -46,8 +50,14 @@ function public_cart_add_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    $items = cart_add($config, $type, $id);
-    echo json_encode(['ok' => true, 'count' => count($items)]);
+    $result = cart_add($config, $type, $id);
+    if ($result['duplicate']) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Photo already in cart']);
+        return;
+    }
+
+    echo json_encode(['ok' => true, 'count' => count($result['items'])]);
 }
 
 /** POST /cart/remove {type, id} */

@@ -27,6 +27,13 @@
       <?php endforeach; ?>
     </ul>
 
+    <?php if ((int)($discountPence ?? 0) > 0): ?>
+      <div class="discount-banner">
+        <span>Discount applied</span>
+        <span>-<?= e(format_pence((int)$discountPence, $currencyCode)) ?></span>
+      </div>
+    <?php endif; ?>
+
     <div class="cart-total">
       <span>Total</span>
       <span><?= e(format_pence($totalPence, $currencyCode)) ?></span>

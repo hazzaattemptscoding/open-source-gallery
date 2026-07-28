@@ -667,6 +667,18 @@ body.lightbox-open {
   color: var(--text);
 }
 
+.discount-banner {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #e8f5e9;
+  border: 1px solid #4caf50;
+  color: #2e7d32;
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin: 1rem 0;
+}
+
 .cart-total {
   display: flex;
   justify-content: space-between;

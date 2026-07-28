@@ -40,9 +40,9 @@ function public_checkout_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    // Price everything fresh from DB
+    // Price everything fresh from DB (including volume discount)
     require_once __DIR__ . '/../../lib/cart.php';
-    $priced = cart_price($pdo, $items);
+    $priced = cart_price($pdo, $items, $config);
     if (empty($priced['lines']) || $priced['total_pence'] <= 0) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid cart items']);

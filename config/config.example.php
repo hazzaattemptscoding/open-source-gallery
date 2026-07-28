@@ -59,6 +59,16 @@ return [
         'from_name'  => '',
     ],
 
+    // Volume discounts: auto-applied at checkout based on number of photos.
+    // Example: 10+ photos = 15% off, 20+ photos = 20% off.
+    // Discount is calculated at checkout time from actual cart contents;
+    // cannot be reverse-engineered by adding items then removing them.
+    'discounts' => [
+        10 => 0.15,  // 10+ photos: 15% off
+        20 => 0.20,  // 20+ photos: 20% off
+        50 => 0.25,  // 50+ photos: 25% off
+    ],
+
     'security' => [
         // Random 32+ byte string. Signs the cart cookie and per-file download
         // URLs (see docs/architecture.md sections 4 and 6). Generate with:
