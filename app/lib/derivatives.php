@@ -52,6 +52,13 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
 
     $pdo->prepare('UPDATE photos SET status = ?, deriv_size_bytes = ? WHERE id = ?')
         ->execute(['live', $derivBytes, $photoId]);
+
+    // Queue a cleanup job to delete the 1600px derivative after 7 days to save space
+    $pdo->prepare('
+        INSERT INTO jobs (type, payload, run_after, status)
+        VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY), ?)
+    ')->execute(['cleanup', json_encode(['photo_id' => $photoId]), 'pending']);
+
     return true;
 }
 

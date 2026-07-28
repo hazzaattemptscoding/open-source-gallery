@@ -76,6 +76,29 @@ function process_email_job(PDO $pdo, array $payload): bool {
     return true;
 }
 
+/**
+ * Image tiering: deletes 1600px derivatives for photos older than 7 days
+ * to save storage space. Smaller 400/800px versions remain for gallery display.
+ */
 function process_cleanup_job(PDO $pdo, array $payload): bool {
+    $photoId = (int)($payload['photo_id'] ?? 0);
+    if ($photoId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT public_token FROM photos WHERE id = ?');
+    $stmt->execute([$photoId]);
+    $token = $stmt->fetchColumn();
+    if (!$token) {
+        return false;
+    }
+
+    $derivPath = __DIR__ . '/../../public/media/d';
+    $largePath = "{$derivPath}/{$token}-1600.jpg";
+
+    if (file_exists($largePath)) {
+        @unlink($largePath);
+    }
+
     return true;
 }
