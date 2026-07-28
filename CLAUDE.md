@@ -54,6 +54,7 @@ These should be installed as Claude Code plugins/skills for this project. If a s
 - **design-taste-frontend** (Leonxlnx/taste-skill) — anti-slop frontend design for premium editorial aesthetics, audit-first on redesigns.
 - **minimalist-ui** (Leonxlnx/taste-skill) — clean, minimalist interfaces with typographic contrast, editorial layouts, no gradients.
 - **impeccable** (pbakaus/impeccable) — comprehensive design polish, typography, spacing, and accessibility audits.
+- **security-audit** (velimattiv/claude-security-audit) — security auditing, vulnerability scanning, OWASP assessment, supply chain and injection attack analysis.
 
 ## Writing style
 
