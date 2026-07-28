@@ -12,7 +12,7 @@ Open source, self-hosted client photo gallery and sales platform for sports phot
 
 ## Design
 
-Default theme is "Podium Ink": ink black, signature purple #6D28D9, deep purple, gold. Fully swappable, document how.
+Premium editorial photography aesthetic. White and black only, minimal, generous whitespace, full-bleed images. Clean typographic hierarchy, no decorative elements. Maximizes focus on the photographs themselves. Not swappable—one solid, timeless look.
 
 ## Product rules
 
@@ -51,6 +51,9 @@ These should be installed as Claude Code plugins/skills for this project. If a s
 - **stop-slop** (hardikpandya/stop-slop) — run on all user-facing copy and documentation.
 - **emil-design-eng** and related (emilkowalski/skills) — animation and interaction rules for the lightbox, cart, and any motion in the UI.
 - **context-engineering** (muratcankoylan/agent-skills-for-context-engineering) — use the PRP pattern when scoping each build stage.
+- **design-taste-frontend** (Leonxlnx/taste-skill) — anti-slop frontend design for premium editorial aesthetics, audit-first on redesigns.
+- **minimalist-ui** (Leonxlnx/taste-skill) — clean, minimalist interfaces with typographic contrast, editorial layouts, no gradients.
+- **impeccable** (pbakaus/impeccable) — comprehensive design polish, typography, spacing, and accessibility audits.
 
 ## Writing style
 
