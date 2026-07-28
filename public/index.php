@@ -131,6 +131,11 @@ switch ($path) {
         admin_stats_controller($pdo, $config);
         break;
 
+    case '/admin/orders':
+        require __DIR__ . '/../app/controllers/admin/orders.php';
+        admin_orders_controller($pdo, $config);
+        break;
+
     case '/admin/jobs/run':
         require __DIR__ . '/../app/controllers/admin/jobs.php';
         admin_jobs_run_controller($pdo, $config);

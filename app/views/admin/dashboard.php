@@ -29,6 +29,7 @@
     <h2>Monitor</h2>
     <ul class="list-plain">
       <li><a href="/admin/stats">→ Sales dashboard</a> — Orders, revenue, top photos</li>
+      <li><a href="/admin/orders">→ Order history</a> — Browse orders, customer emails, status</li>
     </ul>
   </div>
 
