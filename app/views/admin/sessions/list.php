@@ -16,7 +16,7 @@
     <div class="error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <a href="/admin/sessions/new?event=<?= e($eventId) ?>" class="btn-pill btn-pill-gold">+ Create session</a>
+  <a href="/admin/sessions/new?event=<?= e($eventId) ?>" class="btn-pill">+ Create session</a>
 
   <?php if (empty($sessions)): ?>
     <p>No sessions yet.</p>

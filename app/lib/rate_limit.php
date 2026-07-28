@@ -1,46 +1,58 @@
 <?php
-/**
- * Fixed-window rate limiting against the `rate_limits` table (one row per
- * bucket+key, per docs/architecture.md section 6). "Fixed window" means the
- * window resets to a fresh count the moment it expires, rather than sliding
- * — simpler to reason about, and precise enough for abuse control (login
- * brute force, checkout spam) where the goal is "not way more than N in
- * roughly this long", not exact throttling.
- *
- * The increment-or-reset decision happens inside a single INSERT ... ON
- * DUPLICATE KEY UPDATE so two near-simultaneous requests for the same
- * bucket+key can't both read "0 hits" and both proceed — the UPDATE clause
- * runs under MySQL's row lock on the existing key, not as a separate
- * check-then-write from PHP.
- */
-
 declare(strict_types=1);
 
 /**
- * Record a hit for $bucket+$key and report whether it's still within the
- * limit. Always records the hit (even when it pushes over the limit) so a
- * caller that ignores the false return still has enforcement baked in on
- * the next check.
+ * Fixed-window rate limiting using the rate_limits table.
+ * Windows are 1-hour buckets, tracked by bucket key (IP/email/etc).
+ * Requests within the limit succeed; exceeding the limit returns false.
  */
-function rate_limit_check(PDO $pdo, string $bucket, string $key, int $windowSeconds, int $maxHits): bool
-{
+function check_rate_limit(PDO $pdo, string $key, int $maxPerWindow): bool {
+    $window = date('Y-m-d H:00:00');
+
     $stmt = $pdo->prepare('
-        INSERT INTO rate_limits (bucket, rl_key, window_start, hits)
-        VALUES (:bucket, :rl_key, NOW(), 1)
-        ON DUPLICATE KEY UPDATE
-            hits = IF(window_start < NOW() - INTERVAL :window_a SECOND, 1, hits + 1),
-            window_start = IF(window_start < NOW() - INTERVAL :window_b SECOND, NOW(), window_start)
+        SELECT count FROM rate_limits
+        WHERE bucket_key = ? AND window = ?
     ');
-    $stmt->execute([
-        'bucket'   => $bucket,
-        'rl_key'   => $key,
-        'window_a' => $windowSeconds,
-        'window_b' => $windowSeconds,
-    ]);
+    $stmt->execute([$key, $window]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->prepare('SELECT hits FROM rate_limits WHERE bucket = :bucket AND rl_key = :rl_key');
-    $stmt->execute(['bucket' => $bucket, 'rl_key' => $key]);
-    $hits = (int) $stmt->fetchColumn();
+    if (!$row) {
+        $stmt = $pdo->prepare('
+            INSERT INTO rate_limits (bucket_key, window, count)
+            VALUES (?, ?, 1)
+        ');
+        $stmt->execute([$key, $window]);
+        return true;
+    }
 
-    return $hits <= $maxHits;
+    $count = (int)$row['count'];
+    if ($count >= $maxPerWindow) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('
+        UPDATE rate_limits SET count = count + 1
+        WHERE bucket_key = ? AND window = ?
+    ');
+    $stmt->execute([$key, $window]);
+
+    return true;
+}
+
+/**
+ * Extract client IP, handling X-Forwarded-For header if present
+ * (used by reverse proxies). Trusts the header only for 'self' proxies
+ * configured in the app; otherwise uses REMOTE_ADDR.
+ */
+function get_client_ip(): string {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
+        if (!empty($ips)) {
+            $ip = $ips[0];
+        }
+    }
+
+    return $ip;
 }

@@ -131,9 +131,8 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
         $params[] = $sessionId;
     }
 
-    $join = '';
+    $join = 'LEFT JOIN photo_tags pt ON pt.photo_id = p.id';
     if ($filters['kart'] !== '' || $filters['driver'] !== '' || $filters['class'] !== '') {
-        $join = 'JOIN photo_tags pt ON pt.photo_id = p.id';
         if ($filters['kart'] !== '') {
             $where[] = 'pt.kart_number = ?';
             $params[] = $filters['kart'];
@@ -149,10 +148,14 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
     }
 
     $sql = "
-        SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order
+        SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order,
+               GROUP_CONCAT(pt.kart_number) as kart_tags,
+               GROUP_CONCAT(pt.driver_name) as driver_tags,
+               GROUP_CONCAT(pt.class) as class_tags
         FROM photos p
         {$join}
         WHERE " . implode(' AND ', $where) . "
+        GROUP BY p.id
         ORDER BY p.sort_order ASC, p.id ASC
         LIMIT 500
     ";

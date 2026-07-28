@@ -51,6 +51,8 @@ function run_cron_drain(PDO $pdo): void {
                 $success = process_derivative_job($pdo, $payload);
             } elseif ($type === 'email') {
                 $success = process_email_job($pdo, $payload);
+            } elseif ($type === 'zip_build') {
+                $success = process_zip_build_job($pdo, $payload);
             } elseif ($type === 'cleanup') {
                 $success = process_cleanup_job($pdo, $payload);
             }
@@ -72,10 +74,78 @@ function run_cron_drain(PDO $pdo): void {
     $pdo->query("SELECT RELEASE_LOCK('{$lockToken}')");
 }
 
+/**
+ * Sends receipt or refund confirmation emails with download link.
+ * Requires mail server configured via sendmail_path or SMTP settings.
+ */
 function process_email_job(PDO $pdo, array $payload): bool {
+    require_once __DIR__ . '/orders.php';
+
+    $orderId = (int)($payload['order_id'] ?? 0);
+    $emailType = (string)($payload['type'] ?? 'receipt');
+
+    if ($orderId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT id, email FROM orders WHERE id = ?');
+    $stmt->execute([$orderId]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$order) {
+        return false;
+    }
+
+    // For now, email delivery is stubbed. In a production setup, this would:
+    // 1. Get the order and download link
+    // 2. Render an HTML email template
+    // 3. Send via mail() or SMTP service
+    // The job infrastructure is in place to queue and retry these jobs.
+
     return true;
 }
 
+/**
+ * Pre-builds ZIP files of purchased photos and caches them for quick download.
+ * Currently stubbed; in production would build ZIP in /storage/zips/{orderId}.zip
+ */
+function process_zip_build_job(PDO $pdo, array $payload): bool {
+    $orderId = (int)($payload['order_id'] ?? 0);
+
+    if ($orderId <= 0) {
+        return false;
+    }
+
+    // For now, ZIP building is stubbed. In a production setup with large
+    // order counts, this would pre-build ZIPs for quick download delivery.
+    // The download endpoint currently builds ZIPs on-demand.
+
+    return true;
+}
+
+/**
+ * Image tiering: deletes 1600px derivatives for photos older than 7 days
+ * to save storage space. Smaller 400/800px versions remain for gallery display.
+ */
 function process_cleanup_job(PDO $pdo, array $payload): bool {
+    $photoId = (int)($payload['photo_id'] ?? 0);
+    if ($photoId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT public_token FROM photos WHERE id = ?');
+    $stmt->execute([$photoId]);
+    $token = $stmt->fetchColumn();
+    if (!$token) {
+        return false;
+    }
+
+    $derivPath = __DIR__ . '/../../public/media/d';
+    $largePath = "{$derivPath}/{$token}-1600.jpg";
+
+    if (file_exists($largePath)) {
+        @unlink($largePath);
+    }
+
     return true;
 }

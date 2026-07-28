@@ -72,6 +72,26 @@ switch ($path) {
         public_api_photo_view_controller($pdo, $config);
         break;
 
+    case '/checkout':
+        require __DIR__ . '/../app/controllers/public/checkout.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_checkout_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
+    case '/webhook/stripe':
+        require __DIR__ . '/../app/controllers/webhook/stripe.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            webhook_stripe_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
     case '/admin/setup':
         require __DIR__ . '/../app/controllers/admin/setup.php';
         admin_setup_controller($pdo, $config);
@@ -128,6 +148,12 @@ switch ($path) {
         } elseif (strpos($path, '/admin/upload') === 0) {
             require __DIR__ . '/../app/controllers/admin/upload.php';
             admin_upload_controller($pdo, $config);
+        } elseif (preg_match('#^/download/([a-z0-9]+)$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/download.php';
+            public_download_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/checkout/success/([a-z0-9]+)$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/checkout.php';
+            public_checkout_success_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);

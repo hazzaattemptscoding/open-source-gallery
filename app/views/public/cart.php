@@ -32,7 +32,11 @@
       <span><?= e(format_pence($totalPence, $currencyCode)) ?></span>
     </div>
 
-    <button type="button" class="checkout-button" disabled title="Checkout lands in the next build stage">Checkout</button>
+    <form id="checkout-form" class="checkout-form">
+      <input type="email" name="email" placeholder="Your email" required>
+      <button type="submit" class="checkout-button">Checkout</button>
+      <div id="checkout-error" class="error-message" style="display: none;"></div>
+    </form>
   <?php endif; ?>
 </main>
 

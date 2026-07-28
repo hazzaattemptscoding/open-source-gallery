@@ -9,7 +9,11 @@
   <p class="empty-state">No photos match these filters.</p>
 <?php else: ?>
   <?php foreach ($photos as $index => $photo): ?>
-    <div class="photo-thumb" data-index="<?= (int)$index ?>">
+    <div class="photo-thumb"
+         data-index="<?= (int)$index ?>"
+         data-kart-tags="<?= e($photo['kart_tags'] ?? '') ?>"
+         data-driver-tags="<?= e($photo['driver_tags'] ?? '') ?>"
+         data-class-tags="<?= e($photo['class_tags'] ?? '') ?>">
       <img
         src="/media/d/<?= e($photo['public_token']) ?>-800.jpg"
         srcset="/media/d/<?= e($photo['public_token']) ?>-400.jpg 400w, /media/d/<?= e($photo['public_token']) ?>-800.jpg 800w, /media/d/<?= e($photo['public_token']) ?>-1600.jpg 1600w"

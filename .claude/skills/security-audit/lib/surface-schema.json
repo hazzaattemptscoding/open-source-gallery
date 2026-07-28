@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/velimattiv/claude-security-audit/lib/surface-schema.json",
+  "title": "Phase-02 Attack Surface Inventory",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "skill_version",
+    "audit_id",
+    "generated_at",
+    "by_category",
+    "flags_summary",
+    "surfaces"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "skill_version": { "type": "string" },
+    "audit_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "by_category": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "flags_summary": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "partition",
+          "category",
+          "path",
+          "registration_file",
+          "handler_file",
+          "line_range",
+          "handler_hash",
+          "auth_required",
+          "auth_middleware",
+          "roles_required",
+          "params",
+          "trust_zone",
+          "data_ops",
+          "framework"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "partition": { "type": "string" },
+          "category": {
+            "enum": [
+              "http",
+              "grpc",
+              "graphql",
+              "websocket",
+              "sse",
+              "trpc",
+              "queue_consumer",
+              "scheduler",
+              "webhook",
+              "file_upload",
+              "serverless",
+              "mobile_ipc",
+              "desktop_ipc",
+              "admin_debug",
+              "cli_admin",
+              "outbound_tls"
+            ]
+          },
+          "method": { "type": ["string", "null"] },
+          "path": { "type": "string" },
+          "registration_file": {
+            "type": "string",
+            "description": "File where the route / handler is *registered* (e.g., server.ts for app.post(...)). For file-based routing (Nuxt, Next), this equals handler_file."
+          },
+          "handler_file": {
+            "type": "string",
+            "description": "File containing the handler function body. For modular routing (e.g., Express app.post('/x', require('./routes/x'))), handler_file is routes/x.ts while registration_file is server.ts. Delta-mode invalidation keys off handler_file primarily."
+          },
+          "line_range": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 1 },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "[start_line, end_line] within `handler_file` (not `registration_file`). The handler body's line span, used as input to handler_hash."
+          },
+          "handler_hash": { "type": ["string", "null"] },
+          "auth_required": { "enum": [true, false, "unknown"] },
+          "auth_middleware": { "type": "array", "items": { "type": "string" } },
+          "roles_required": { "type": "array", "items": { "type": "string" } },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "source", "sensitive"],
+              "properties": {
+                "name": { "type": "string" },
+                "source": { "enum": ["path", "query", "body", "header", "cookie", "env", "message"] },
+                "sensitive": { "type": "boolean" }
+              }
+            }
+          },
+          "trust_zone": { "enum": ["public", "internal", "admin", "dev", "unknown"] },
+          "data_ops": {
+            "type": "array",
+            "items": { "enum": ["read", "write", "delete", "exec", "none"] }
+          },
+          "framework": { "type": "string" },
+          "serves_resource": {
+            "type": ["string", "null"],
+            "description": "Canonical data_model entity id this surface reads/emits, if any. Join key for the Authorized-Egress reconciliation (v2.4)."
+          },
+          "intended_gate": {
+            "type": ["string", "null"],
+            "description": "The strongest gate the served resource declares (RBAC / tenant-ownership / 2FA-share / OIDC). A resolve-layer surface that holds the real gate (e.g. a /s/{shortId} 2FA resolver) is how the cross-layer R5 rule finds the floor for byte-serving sinks."
+          },
+          "emits_bytes": {
+            "type": "boolean",
+            "description": "True if this surface itself returns the resource's bytes (a sink). False for resolve/identify surfaces that only hand out an id — those establish the gate floor but are not the egress."
+          },
+          "guarded_paths": {
+            "type": "array",
+            "description": "Per-branch authz, same shape as sink guarded_paths. Lets the reconciliation read this surface's enforced gate per branch.",
+            "items": {
+              "type": "object",
+              "required": ["branch_id", "enforced_gate"],
+              "properties": {
+                "branch_id": { "type": "string" },
+                "condition": { "type": "string" },
+                "enforced_gate": { "type": "string" },
+                "serves_bytes": { "type": "boolean" }
+              }
+            }
+          },
+          "flags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "notes": { "type": "string", "maxLength": 200 }
+        }
+      }
+    }
+  }
+}

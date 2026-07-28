@@ -1,0 +1,53 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2025 [Your Company/Name]
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+ADDITIONAL TERMS
+
+If you modify this software and use it to provide a service to third parties,
+you MUST:
+
+1. Provide the source code to your users under the AGPL-3.0 license
+2. Document all modifications clearly
+3. Include this license text and attribution to the original authors
+
+For example: if you run a hosted version of this software (SaaS), you must
+provide users with the ability to download and modify the full source code,
+or offer it to them directly.
+
+---
+
+FULL LICENSE TEXT
+
+The full GNU Affero General Public License v3 is available at:
+https://www.gnu.org/licenses/agpl-3.0.html
+
+Key points:
+- You can use this software for any purpose
+- You can modify the source code
+- You can distribute modified versions
+- If you distribute or use this over a network (SaaS), you must make source
+  code available to users
+- The software is provided AS-IS with no warranty
+
+---
+
+TRADEMARK
+
+See TRADEMARK.md for branding and trademark restrictions.
