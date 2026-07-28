@@ -18,7 +18,7 @@
 .tag-input-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
 .tag-input-group input, .tag-input-group select { padding: 0.5rem; border: 1px solid var(--purple); border-radius: 4px; width: 100%; max-width: 300px; box-sizing: border-box; }
 .tag-list { margin: 1rem 0; padding: 0; list-style: none; }
-.tag-list li { background: white; border: 1px solid var(--dark-purple); padding: 0.75rem; margin: 0.5rem 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+.tag-list li { background: white; border: 1px solid var(--purple-deep); padding: 0.75rem; margin: 0.5rem 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
 .tag-list li code { font-family: monospace; }
 .tag-list button { padding: 0.25rem 0.75rem; background: red; color: white; border: none; border-radius: 2px; cursor: pointer; font-size: 0.875rem; }
 .tag-list button:hover { opacity: 0.8; }

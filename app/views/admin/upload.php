@@ -12,7 +12,7 @@
 .upload-zone button { padding: 1rem 2rem; background: var(--gold); color: var(--ink); border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
 .upload-zone button:hover { opacity: 0.9; }
 .files-list { list-style: none; padding: 0; margin: 2rem 0; }
-.file-item { background: rgba(109, 40, 217, 0.05); border: 1px solid var(--dark-purple); border-radius: 4px; padding: 1rem; margin: 0.5rem 0; }
+.file-item { background: rgba(109, 40, 217, 0.05); border: 1px solid var(--purple-deep); border-radius: 4px; padding: 1rem; margin: 0.5rem 0; }
 .file-progress { margin: 0.5rem 0; background: #e0e0e0; height: 20px; border-radius: 2px; overflow: hidden; }
 .file-progress-bar { background: var(--purple); height: 100%; transition: width 0.2s; }
 .file-status { font-size: 0.875rem; margin-top: 0.5rem; }

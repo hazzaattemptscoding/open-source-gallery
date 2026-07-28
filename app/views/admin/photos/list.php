@@ -15,7 +15,7 @@
 .status-hidden { background: gray; }
 .status-failed { background: red; }
 table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
-th, td { border: 1px solid var(--dark-purple); padding: 0.75rem; text-align: left; font-size: 0.875rem; }
+th, td { border: 1px solid var(--purple-deep); padding: 0.75rem; text-align: left; font-size: 0.875rem; }
 th { background: var(--purple); color: white; }
 a { color: var(--gold); text-decoration: none; }
 a:hover { text-decoration: underline; }

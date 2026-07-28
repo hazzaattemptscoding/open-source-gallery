@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
-th, td { border: 1px solid var(--dark-purple); padding: 0.75rem; text-align: left; }
+th, td { border: 1px solid var(--purple-deep); padding: 0.75rem; text-align: left; }
 th { background: var(--purple); color: white; }
 tr:nth-child(even) { background: rgba(109, 40, 217, 0.05); }
 a { color: var(--gold); text-decoration: none; }

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 ul { list-style: none; padding: 0; }
-li { padding: 0.5rem 0.75rem; border: 1px solid var(--dark-purple); border-radius: 4px; margin: 0.5rem 0; font-family: monospace; }
+li { padding: 0.5rem 0.75rem; border: 1px solid var(--purple-deep); border-radius: 4px; margin: 0.5rem 0; font-family: monospace; }
 .applied { background: rgba(109, 40, 217, 0.1); }
 </style>
 </head>
