@@ -6,5 +6,7 @@
 !/storage/hires/.gitkeep
 !/storage/zips/.gitkeep
 !/storage/tmp/.gitkeep
+/public/media/d/
+!/public/media/d/.gitkeep
 *.log
 .DS_Store
