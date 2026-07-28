@@ -26,6 +26,8 @@ a:hover { text-decoration: underline; }
   <h1>Photos in "<?= e($sessionSlug) ?>"</h1>
   <p><a href="/admin/sessions?event=<?= e($eventId) ?>">← Back to sessions</a></p>
 
+  <a href="/admin/photos/tags?session=<?= e($sessionId) ?>" style="display: inline-block; margin: 1rem 0; padding: 0.75rem 1.5rem; background: var(--purple); color: white; border-radius: 4px; text-decoration: none;">Tag photos</a>
+
   <?php if (empty($photos)): ?>
     <p>No photos in this session yet.</p>
   <?php else: ?>

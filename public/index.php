@@ -68,6 +68,9 @@ switch ($path) {
         } elseif (strpos($path, '/admin/upload') === 0) {
             require __DIR__ . '/../app/controllers/admin/upload.php';
             admin_upload_controller($pdo, $config);
+        } elseif (strpos($path, '/admin/photos/tags') === 0) {
+            require __DIR__ . '/../app/controllers/admin/tagging.php';
+            admin_tagging_controller($pdo, $config);
         } else {
             http_response_code(404);
             echo '404 Not Found';
