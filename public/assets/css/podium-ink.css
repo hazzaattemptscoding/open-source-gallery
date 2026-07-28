@@ -701,6 +701,93 @@ body.lightbox-open {
   cursor: not-allowed;
 }
 
+.checkout-form {
+  margin-top: 2rem;
+}
+
+.checkout-form input[type="email"] {
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  margin-bottom: 1rem;
+}
+
+.checkout-form input[type="email"]:focus {
+  outline: 2px solid var(--text);
+  outline-offset: -1px;
+}
+
+.checkout-form button {
+  width: 100%;
+  margin-top: 0;
+  padding: 0.875rem;
+}
+
+.error-message {
+  background: #ffe0e0;
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 1rem;
+  border-radius: 0;
+  font-size: 0.95rem;
+  margin-top: 1rem;
+}
+
+/* --- Order details (checkout success) --- */
+
+.panel {
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  background: var(--bg);
+}
+
+.panel h2 {
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.list-plain {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-plain li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.list-plain li:last-child {
+  border-bottom: none;
+}
+
+.download-link {
+  display: inline-block;
+  padding: 0.875rem 2rem;
+  background: var(--text);
+  color: var(--bg);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 0;
+  transition: background 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.download-link:hover {
+  background: var(--text-muted);
+}
+
 /* --- 404 page --- */
 
 .not-found-page {
