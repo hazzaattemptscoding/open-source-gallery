@@ -50,6 +50,11 @@ switch ($path) {
         admin_dashboard_controller($pdo, $config);
         break;
 
+    case '/admin/upload':
+        require __DIR__ . '/../app/controllers/admin/upload_page.php';
+        admin_upload_page_controller($pdo, $config);
+        break;
+
     default:
         if (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';
@@ -60,6 +65,9 @@ switch ($path) {
         } elseif (strpos($path, '/admin/photos') === 0) {
             require __DIR__ . '/../app/controllers/admin/photos.php';
             admin_photos_controller($pdo, $config);
+        } elseif (strpos($path, '/admin/upload') === 0) {
+            require __DIR__ . '/../app/controllers/admin/upload.php';
+            admin_upload_controller($pdo, $config);
         } else {
             http_response_code(404);
             echo '404 Not Found';
