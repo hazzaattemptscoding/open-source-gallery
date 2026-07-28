@@ -1,8 +1,4 @@
-/*
- * PowerMedia Gallery — dark theme, Pixieset-inspired aesthetic.
- * Compact layout, full-bleed images, premium dark background.
- * Maximizes impact of photography with refined, modern design.
- */
+/* PowerMedia Gallery — minimal dark theme. Function over form. */
 
 :root {
   --bg: #1a1a1a;
@@ -10,17 +6,12 @@
   --text: #ffffff;
   --text-muted: #999999;
   --border: #333333;
-  --accent: #ffffff;
   --error: #ff6b6b;
   --success: #51cf66;
 }
 
 * {
   box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 body {
@@ -31,58 +22,25 @@ body {
   line-height: 1.6;
 }
 
-/* --- Auth pages --- */
-
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: var(--bg);
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 2.5rem;
-}
-
-.auth-card h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.02em;
-}
-
-.auth-card p.subtitle {
-  margin: 0 0 2rem;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 400;
-}
+/* --- Inputs and buttons --- */
 
 label {
   display: block;
   font-size: 0.9rem;
   font-weight: 500;
-  margin: 1.25rem 0 0.5rem;
+  margin: 1rem 0 0.5rem;
   color: var(--text);
 }
 
 input[type="email"],
 input[type="password"],
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+select {
   width: 100%;
   padding: 0.75rem;
-  border-radius: 0;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--bg-alt);
   color: var(--text);
   font-size: 1rem;
   font-family: inherit;
@@ -92,28 +50,28 @@ input::placeholder {
   color: var(--text-muted);
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: 1px solid var(--text);
   outline-offset: -1px;
 }
 
 button {
   width: 100%;
-  margin-top: 1.5rem;
+  margin: 0;
   padding: 0.75rem;
-  border-radius: 0;
-  border: none;
+  border: 1px solid var(--border);
   background: var(--text);
   color: var(--bg);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  letter-spacing: 0.01em;
-  transition: background 0.2s ease;
+  font-family: inherit;
 }
 
 button:hover {
   background: #e0e0e0;
+  border-color: #e0e0e0;
 }
 
 button:disabled {
@@ -121,14 +79,22 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 1rem;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
 .error {
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid var(--error);
   color: var(--error);
   padding: 1rem;
-  border-radius: 0;
-  font-size: 0.95rem;
-  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  margin-top: 1rem;
 }
 
 .hint {
@@ -137,19 +103,37 @@ button:disabled {
   margin-top: 0.5rem;
 }
 
-.secret {
-  font-family: ui-monospace, monospace;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: 1rem;
-  border-radius: 0;
-  word-break: break-all;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+/* --- Auth pages --- */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-/* --- Admin layout --- */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  padding: 2.5rem;
+}
+
+.auth-card h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.auth-card p.subtitle {
+  margin: 0 0 2rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* --- Admin --- */
 
 .dashboard {
   max-width: 1200px;
@@ -158,24 +142,50 @@ button:disabled {
 }
 
 .dashboard h1 {
-  font-size: 1.75rem;
-  font-weight: 600;
   margin: 0 0 1rem;
-  letter-spacing: -0.01em;
+  font-size: 2rem;
+  font-weight: 600;
 }
 
 .dashboard h2 {
+  margin: 2rem 0 1rem;
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 1.75rem 0 1rem;
-  letter-spacing: -0.01em;
 }
 
 .dashboard h3 {
+  margin: 1.5rem 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
-  margin: 1.25rem 0 0.75rem;
-  letter-spacing: -0.01em;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-alt);
+}
+
+.panel h2 {
+  margin: 0 0 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.list-plain {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-plain li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.list-plain li:last-child {
+  border-bottom: none;
 }
 
 .logout-form button {
@@ -183,14 +193,23 @@ button:disabled {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text);
-  margin: 0;
 }
 
 .logout-form button:hover {
   background: var(--bg-alt);
 }
 
-/* --- Public site header --- */
+.secret {
+  font-family: monospace;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  word-break: break-all;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+/* --- Site header --- */
 
 .site-header {
   display: flex;
@@ -209,18 +228,15 @@ button:disabled {
   font-weight: 600;
   font-size: 1.1rem;
   text-decoration: none;
-  letter-spacing: -0.01em;
 }
 
 .cart-badge {
   color: var(--bg);
   background: var(--text);
   padding: 0.5rem 1.25rem;
-  border-radius: 0;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: background 0.2s ease;
 }
 
 .cart-badge:hover {
@@ -234,7 +250,7 @@ button:disabled {
   font-size: 0.95rem;
 }
 
-/* --- Event cards (home page) --- */
+/* --- Event list --- */
 
 .event-list-page {
   max-width: 1400px;
@@ -252,16 +268,13 @@ button:disabled {
   display: block;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 0;
   overflow: hidden;
   text-decoration: none;
   color: var(--text);
-  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .event-card:hover {
   border-color: var(--text);
-  transform: translateY(-2px);
 }
 
 .event-card-image {
@@ -285,7 +298,6 @@ button:disabled {
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .event-card-meta {
@@ -294,14 +306,14 @@ button:disabled {
   font-size: 0.85rem;
 }
 
-/* --- Event page hero --- */
+/* --- Hero --- */
 
 .hero {
   position: relative;
   width: 100%;
   height: 50vh;
   min-height: 350px;
-  background-color: var(--bg-alt);
+  background: var(--bg-alt);
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -327,8 +339,6 @@ button:disabled {
   margin: 0 0 0.5rem;
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.02em;
 }
 
 .hero-meta {
@@ -341,7 +351,7 @@ body.lightbox-open {
   overflow: hidden;
 }
 
-/* --- Session nav (tag row) --- */
+/* --- Session nav --- */
 
 .session-nav {
   display: flex;
@@ -355,14 +365,12 @@ body.lightbox-open {
 .session-nav a {
   flex-shrink: 0;
   padding: 0.5rem 0.9rem;
-  border-radius: 0;
   text-decoration: none;
   color: var(--text-muted);
   border: 1px solid var(--border);
   font-size: 0.85rem;
   font-weight: 500;
   white-space: nowrap;
-  transition: all 0.2s ease;
 }
 
 .session-nav a:hover {
@@ -388,33 +396,11 @@ body.lightbox-open {
   border-bottom: 1px solid var(--border);
 }
 
-.filter-bar select {
-  padding: 0.5rem 0.75rem;
-  border-radius: 0;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 0.85rem;
-  font-family: inherit;
-}
-
-.filter-bar select:focus {
-  outline: 1px solid var(--text);
-  outline-offset: -1px;
-}
-
 .filter-bar button {
   width: auto;
   margin: 0;
   padding: 0.5rem 1rem;
-  background: var(--text);
-  color: var(--bg);
   font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.filter-bar button:hover {
-  background: #e0e0e0;
 }
 
 .clear-filters {
@@ -426,13 +412,14 @@ body.lightbox-open {
   padding: 0;
   margin: 0;
   text-decoration: underline;
+  width: auto;
 }
 
 .clear-filters:hover {
   color: var(--text);
 }
 
-/* --- Search box --- */
+/* --- Search --- */
 
 .search-box {
   padding: 1.25rem 2rem;
@@ -446,7 +433,6 @@ body.lightbox-open {
   padding: 0.75rem;
   font-size: 0.95rem;
   border: 1px solid var(--border);
-  border-radius: 0;
   background: var(--bg-alt);
   color: var(--text);
   font-family: inherit;
@@ -478,7 +464,6 @@ body.lightbox-open {
   border: 1px solid var(--border);
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.2s ease;
 }
 
 .photo-thumb:hover {
@@ -499,10 +484,9 @@ body.lightbox-open {
   width: 2.25rem;
   height: 2.25rem;
   margin: 0;
-  border-radius: 50%;
   background: rgba(255, 255, 255, 0.95);
   color: var(--bg);
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -510,20 +494,15 @@ body.lightbox-open {
   padding: 0;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .add-to-cart:hover {
   background: var(--text);
-  color: var(--bg);
-  transform: scale(1.1);
 }
 
 .add-to-cart.added {
   background: var(--success);
   color: var(--bg);
-  border: none;
 }
 
 /* --- Video section --- */
@@ -538,8 +517,6 @@ body.lightbox-open {
   margin: 0 0 1.5rem;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.01em;
 }
 
 .video-grid {
@@ -590,7 +567,6 @@ body.lightbox-open {
   margin: 0;
   padding: 1rem;
   font-weight: 300;
-  transition: color 0.2s ease;
 }
 
 .lightbox-close:hover,
@@ -625,9 +601,6 @@ body.lightbox-open {
   width: auto;
   margin: 0;
   padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  background: var(--text);
-  color: var(--bg);
 }
 
 /* --- Cart page --- */
@@ -694,8 +667,6 @@ body.lightbox-open {
   color: var(--text-muted);
   font-size: 1rem;
   cursor: pointer;
-  border-radius: 0;
-  transition: all 0.2s ease;
 }
 
 .cart-line-remove:hover {
@@ -720,34 +691,18 @@ body.lightbox-open {
   justify-content: space-between;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text);
   padding: 1.5rem 0;
   border-top: 1px solid var(--border);
-  letter-spacing: -0.01em;
 }
 
 .checkout-button {
   width: 100%;
   margin-top: 1.5rem;
   padding: 0.875rem;
-  border-radius: 0;
-  border: none;
-  background: var(--text);
-  color: var(--bg);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.01em;
-  transition: background 0.2s ease;
 }
 
 .checkout-button:hover:not(:disabled) {
   background: #e0e0e0;
-}
-
-.checkout-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .checkout-form {
@@ -757,7 +712,6 @@ body.lightbox-open {
 .checkout-form input[type="email"] {
   width: 100%;
   padding: 0.75rem;
-  border-radius: 0;
   border: 1px solid var(--border);
   background: var(--bg-alt);
   color: var(--text);
@@ -771,38 +725,7 @@ body.lightbox-open {
   outline-offset: -1px;
 }
 
-.checkout-form button {
-  width: 100%;
-  margin-top: 0;
-  padding: 0.875rem;
-}
-
-.error-message {
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid var(--error);
-  color: var(--error);
-  padding: 1rem;
-  border-radius: 0;
-  font-size: 0.9rem;
-  margin-top: 1rem;
-}
-
-/* --- Order details (checkout success) --- */
-
-.panel {
-  border: 1px solid var(--border);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  background: var(--bg-alt);
-}
-
-.panel h2 {
-  margin: 0 0 1.25rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
+/* --- Order details --- */
 
 .detail-row {
   display: flex;
@@ -828,23 +751,6 @@ body.lightbox-open {
   font-size: 0.95rem;
 }
 
-.list-plain {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.list-plain li {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.95rem;
-  color: var(--text);
-}
-
-.list-plain li:last-child {
-  border-bottom: none;
-}
-
 .download-link {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -852,9 +758,6 @@ body.lightbox-open {
   color: var(--bg);
   text-decoration: none;
   font-weight: 600;
-  border-radius: 0;
-  transition: background 0.2s ease;
-  letter-spacing: 0.01em;
   font-size: 0.9rem;
 }
 
@@ -881,7 +784,6 @@ body.lightbox-open {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-muted);
-  transition: all 0.2s ease;
   width: auto;
   margin: 0;
 }
@@ -904,7 +806,7 @@ body.lightbox-open {
   display: block;
 }
 
-/* --- Responsive adjustments --- */
+/* --- Responsive --- */
 
 @media (max-width: 768px) {
   .site-header {
@@ -913,11 +815,6 @@ body.lightbox-open {
 
   .site-title {
     font-size: 1rem;
-  }
-
-  .cart-badge {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.9rem;
   }
 
   .event-cards {
@@ -936,20 +833,16 @@ body.lightbox-open {
     min-height: 280px;
   }
 
-  .hero-overlay {
-    padding: 1.5rem;
-  }
-
-  .hero-overlay h1 {
-    font-size: clamp(1.25rem, 3vw, 2rem);
-  }
-
   .cart-page {
     padding: 1.5rem 1rem;
   }
 
-  .lightbox-prev,
-  .lightbox-next {
-    padding: 0.5rem;
+  table {
+    font-size: 0.85rem;
+  }
+
+  table th,
+  table td {
+    padding: 0.75rem !important;
   }
 }
