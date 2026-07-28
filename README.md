@@ -23,8 +23,7 @@ Early build. Not ready for production use by anyone other than the maintainer ye
 
 ## Docs
 
-- [ARCHITECTURE.md](docs/architecture.md) — database schema and system design
-- [PLAN.md](docs/plan.md) — feature plan and technical implementation notes
+- [ARCHITECTURE.md](docs/architecture.md) — database schema, system design, request flows, and security requirements
 - [INSTALL.md](INSTALL.md) — setup guide for shared hosting
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
 - [CLAUDE.md](CLAUDE.md) — project instructions for Claude Code

@@ -1,0 +1,5 @@
+# storage/hires holds unwatermarked purchase-grade originals. A guessable URL
+# to a paid file is the worst failure this app can have, so this directory is
+# denied outright as a second layer under "outside the docroot".
+# See docs/architecture.md section 6 (security requirements -> enforcement map).
+Require all denied

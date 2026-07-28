@@ -1,0 +1,7 @@
+# Routes everything except real files/directories (assets, media derivatives)
+# through index.php, so app/controllers can use clean URLs like /admin/login
+# without a query string. See docs/architecture.md section 2.
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]

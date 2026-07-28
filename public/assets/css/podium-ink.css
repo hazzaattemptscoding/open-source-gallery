@@ -1,0 +1,145 @@
+/*
+ * Podium Ink — the default shipped theme (see docs/architecture.md and
+ * CLAUDE.md "Design"). Swapping themes means: pick a different value for
+ * branding.theme in config.php, write a matching CSS file here, and change
+ * the <link> in app/views/*. No PHP code branches on theme name — the theme
+ * is purely this stylesheet plus the config string used to select it.
+ */
+
+:root {
+  --ink: #0a0a0f;
+  --ink-panel: #14141c;
+  --purple: #6d28d9;
+  --purple-deep: #4c1d95;
+  --gold: #d4af37;
+  --text: #f3f2f7;
+  --text-muted: #a3a0b0;
+  --border: #2a2a38;
+  --error: #e0555a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--ink-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.auth-card h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  color: var(--gold);
+}
+
+.auth-card p.subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  margin: 1rem 0 0.35rem;
+  color: var(--text-muted);
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--ink);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+input:focus {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+
+button {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.7rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--purple);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--purple-deep);
+}
+
+.error {
+  background: rgba(224, 85, 90, 0.12);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+.secret {
+  font-family: ui-monospace, monospace;
+  background: var(--ink);
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  border-radius: 6px;
+  word-break: break-all;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+}
+
+.dashboard {
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+.dashboard h1 {
+  color: var(--gold);
+}
+
+.logout-form button {
+  width: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
