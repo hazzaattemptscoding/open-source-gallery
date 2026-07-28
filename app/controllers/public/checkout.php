@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/orders.php';
 require_once __DIR__ . '/../../lib/stripe.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
+require_once __DIR__ . '/../../lib/audit.php';
 
 /**
  * POST /checkout {email} — validates cart, creates an order, initiates
@@ -50,6 +51,12 @@ function public_checkout_controller(PDO $pdo, array $config): void {
 
     // Create the order
     $order = create_order($pdo, $config, $email, $priced['lines'], $priced['total_pence']);
+
+    audit_log($pdo, 'public', 'checkout_initiated', 'order', $order['id'], [
+        'email' => $email,
+        'item_count' => count($priced['lines']),
+        'total_pence' => $priced['total_pence'],
+    ], $ip);
 
     // Create Stripe session
     try {

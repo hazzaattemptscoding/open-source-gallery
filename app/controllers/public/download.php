@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/orders.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
+require_once __DIR__ . '/../../lib/audit.php';
 
 /**
  * GET /download/{token} — validates download link and streams files.
@@ -94,6 +95,10 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     // Record download
     $stmt = $pdo->prepare('UPDATE download_links SET downloads_used = downloads_used + 1 WHERE id = ?');
     $stmt->execute([$downloadLink['id']]);
+
+    audit_log($pdo, 'public', 'download', 'order', $orderId, [
+        'file_count' => count($files),
+    ], $ip);
 
     // Single file: stream directly
     if (count($files) === 1) {
