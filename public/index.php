@@ -122,6 +122,11 @@ switch ($path) {
         admin_upload_page_controller($pdo, $config);
         break;
 
+    case '/admin/stats':
+        require __DIR__ . '/../app/controllers/admin/stats.php';
+        admin_stats_controller($pdo, $config);
+        break;
+
     case '/admin/jobs/run':
         require __DIR__ . '/../app/controllers/admin/jobs.php';
         admin_jobs_run_controller($pdo, $config);
