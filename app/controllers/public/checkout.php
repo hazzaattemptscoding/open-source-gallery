@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../lib/cart.php';
 require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/orders.php';
 require_once __DIR__ . '/../../lib/stripe.php';
+require_once __DIR__ . '/../../lib/rate_limit.php';
 
 /**
  * POST /checkout {email} — validates cart, creates an order, initiates
@@ -20,6 +21,14 @@ function public_checkout_controller(PDO $pdo, array $config): void {
     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid email']);
+        return;
+    }
+
+    $ip = get_client_ip();
+    $rateLimitKey = hash('sha256', "{$email}:{$ip}");
+    if (!check_rate_limit($pdo, $rateLimitKey, 5)) {
+        http_response_code(429);
+        echo json_encode(['error' => 'Too many checkout attempts. Try again later.']);
         return;
     }
 

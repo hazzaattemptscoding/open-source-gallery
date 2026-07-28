@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/orders.php';
+require_once __DIR__ . '/../../lib/rate_limit.php';
 
 /**
  * GET /download/{token} — validates download link and streams files.
@@ -9,6 +10,14 @@ require_once __DIR__ . '/../../lib/orders.php';
  * Checks expiry and download count before streaming. Records download.
  */
 function public_download_controller(PDO $pdo, array $config, string $rawToken): void {
+    $ip = get_client_ip();
+    $rateLimitKey = hash('sha256', "download:{$ip}");
+    if (!check_rate_limit($pdo, $rateLimitKey, 30)) {
+        http_response_code(429);
+        echo 'Too many download attempts. Try again later.';
+        return;
+    }
+
     $tokenHash = hash('sha256', $rawToken, true);
     $encodedHash = strtr(base64_encode($tokenHash), '+/', '-_');
 
