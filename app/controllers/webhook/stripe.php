@@ -99,11 +99,12 @@ function handle_charge_refunded(PDO $pdo, array $charge): void {
     }
 
     $isFullyRefunded = (bool)($charge['refunded'] ?? false);
+    $refundType = $isFullyRefunded ? 'full' : 'partial';
     $status = $isFullyRefunded ? 'refunded' : 'partial_refund';
 
     $stmt = $pdo->prepare('UPDATE orders SET status = ?, refunded_at = NOW() WHERE id = ?');
     $stmt->execute([$status, $orderId]);
 
     // Queue refund confirmation email
-    queue_job($pdo, 'email', ['order_id' => $orderId, 'type' => 'refund_confirmation']);
+    queue_job($pdo, 'email', ['order_id' => (int)$orderId, 'type' => 'refund', 'refund_type' => $refundType]);
 }

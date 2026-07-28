@@ -104,11 +104,15 @@ function queue_job(PDO $pdo, string $type, array $payload): void {
 }
 
 function create_download_link(PDO $pdo, int $orderId, array $config, int $expiryDays = 30): string {
+    // Get item count and download cap from settings
     $stmt = $pdo->prepare('SELECT COUNT(*) FROM order_items WHERE order_id = ?');
     $stmt->execute([$orderId]);
     $itemCount = (int)$stmt->fetchColumn();
 
-    $multiplier = (int)($config['download_cap_multiplier'] ?? 5);
+    $stmt = $pdo->prepare('SELECT svalue FROM settings WHERE skey = ?');
+    $stmt->execute(['download_cap_multiplier']);
+    $multiplier = (int)($stmt->fetchColumn() ?? 5);
+
     $maxDownloads = max(1, $itemCount * $multiplier);
     $expiryDate = date('Y-m-d H:i:s', time() + ($expiryDays * 86400));
 

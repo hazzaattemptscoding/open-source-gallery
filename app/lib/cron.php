@@ -79,7 +79,7 @@ function run_cron_drain(PDO $pdo): void {
  * Requires mail server configured via sendmail_path or SMTP settings.
  */
 function process_email_job(PDO $pdo, array $payload): bool {
-    require_once __DIR__ . '/orders.php';
+    require_once __DIR__ . '/email.php';
 
     $orderId = (int)($payload['order_id'] ?? 0);
     $emailType = (string)($payload['type'] ?? 'receipt');
@@ -88,21 +88,17 @@ function process_email_job(PDO $pdo, array $payload): bool {
         return false;
     }
 
-    $stmt = $pdo->prepare('SELECT id, email FROM orders WHERE id = ?');
-    $stmt->execute([$orderId]);
-    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Load config for email details
+    $config = require __DIR__ . '/../../config/config.php';
 
-    if (!$order) {
-        return false;
+    if ($emailType === 'receipt') {
+        return send_receipt_email($pdo, $config, $orderId);
+    } elseif ($emailType === 'refund') {
+        $refundType = (string)($payload['refund_type'] ?? 'full');
+        return send_refund_email($pdo, $config, $orderId, $refundType);
     }
 
-    // For now, email delivery is stubbed. In a production setup, this would:
-    // 1. Get the order and download link
-    // 2. Render an HTML email template
-    // 3. Send via mail() or SMTP service
-    // The job infrastructure is in place to queue and retry these jobs.
-
-    return true;
+    return false;
 }
 
 /**
