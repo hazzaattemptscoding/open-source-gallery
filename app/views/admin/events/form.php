@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><?= e($isNew ? 'Create event' : 'Edit event') ?> — <?= e($siteName) ?></title>
+<link rel="stylesheet" href="/assets/css/podium-ink.css">
+</head>
+<body>
+<div class="dashboard">
+  <h1><?= e($isNew ? 'Create event' : 'Edit event') ?></h1>
+  <p><a href="/admin/events">← Back to events</a></p>
+
+  <?php if ($error): ?>
+    <div class="error"><?= e($error) ?></div>
+  <?php endif; ?>
+
+  <form method="post" style="max-width: 600px;">
+    <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+
+    <label for="slug">Event slug (URL-safe, unique)</label>
+    <input type="text" id="slug" name="slug" value="<?= e($event['slug'] ?? '') ?>" required pattern="[a-z0-9-]+">
+    <p class="hint">Lowercase, hyphens, no spaces. Example: club100-rye-june</p>
+
+    <label for="event_date">Date</label>
+    <input type="date" id="event_date" name="event_date" value="<?= e($event['event_date'] ?? '') ?>" required>
+
+    <label for="is_published">Published</label>
+    <input type="checkbox" id="is_published" name="is_published" value="1" <?= ($event['is_published'] ?? false) ? 'checked' : '' ?>>
+
+    <label for="price_single_pence">Single photo price (<?= e($currencySymbol) ?>)</label>
+    <input type="number" id="price_single_pence" name="price_single_pence" value="<?= e($event['price_single_pence'] ?? '') ?>" min="0">
+    <p class="hint">In <?= e(strtolower($currencyName)) ?>. Leave blank to disable.</p>
+
+    <label for="price_session_pence">Session bundle price (<?= e($currencySymbol) ?>)</label>
+    <input type="number" id="price_session_pence" name="price_session_pence" value="<?= e($event['price_session_pence'] ?? '') ?>" min="0">
+    <p class="hint">All photos in one session. Leave blank to disable.</p>
+
+    <label for="price_event_pence">Full event price (<?= e($currencySymbol) ?>)</label>
+    <input type="number" id="price_event_pence" name="price_event_pence" value="<?= e($event['price_event_pence'] ?? '') ?>" min="0">
+    <p class="hint">All photos in all sessions. Leave blank to disable.</p>
+
+    <button type="submit"><?= e($isNew ? 'Create event' : 'Update event') ?></button>
+  </form>
+</div>
+</body>
+</html>

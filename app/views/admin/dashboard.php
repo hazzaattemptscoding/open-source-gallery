@@ -15,7 +15,14 @@
     <p class="error">Two-factor authentication is not enabled on this account. <a href="/admin/totp/enroll" style="color: var(--gold)">Set it up now</a>.</p>
   <?php endif; ?>
 
-  <p>Event and photo management lands in the next build step.</p>
+  <div style="margin: 2rem 0; padding: 1rem; background: rgba(109, 40, 217, 0.1); border-radius: 4px;">
+    <h2>Manage content</h2>
+    <ul style="list-style: none; padding: 0;">
+      <li><a href="/admin/events" style="color: var(--gold);">→ Events</a> — Create and manage events, set prices</li>
+      <li><a href="/admin/events" style="color: var(--gold);">→ Sessions</a> — Organise photos into sessions within events</li>
+      <li><a href="/admin/events" style="color: var(--gold);">→ Upload & photos</a> — Coming next: bulk upload, derivatives, tagging</li>
+    </ul>
+  </div>
 
   <form method="post" action="/admin/logout" class="logout-form">
     <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">

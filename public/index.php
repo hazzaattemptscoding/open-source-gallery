@@ -51,6 +51,17 @@ switch ($path) {
         break;
 
     default:
-        http_response_code(404);
-        echo '404 Not Found';
+        if (strpos($path, '/admin/events') === 0) {
+            require __DIR__ . '/../app/controllers/admin/events.php';
+            admin_events_controller($pdo, $config);
+        } elseif (strpos($path, '/admin/sessions') === 0) {
+            require __DIR__ . '/../app/controllers/admin/sessions.php';
+            admin_sessions_controller($pdo, $config);
+        } elseif (strpos($path, '/admin/photos') === 0) {
+            require __DIR__ . '/../app/controllers/admin/photos.php';
+            admin_photos_controller($pdo, $config);
+        } else {
+            http_response_code(404);
+            echo '404 Not Found';
+        }
 }
