@@ -23,7 +23,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     $encodedHash = strtr(base64_encode($tokenHash), '+/', '-_');
 
     $stmt = $pdo->prepare('
-        SELECT id, order_id, expires_at, max_downloads, downloads_used
+        SELECT id, order_id, expires_at, max_downloads, download_count, revoked
         FROM download_links
         WHERE token_hash = ?
     ');
@@ -36,13 +36,19 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
+    if ((int)($downloadLink['revoked'] ?? 0) === 1) {
+        http_response_code(410);
+        echo 'Download link revoked';
+        return;
+    }
+
     if (strtotime($downloadLink['expires_at']) < time()) {
         http_response_code(410);
         echo 'Download link expired';
         return;
     }
 
-    if ($downloadLink['downloads_used'] >= $downloadLink['max_downloads']) {
+    if ((int)$downloadLink['download_count'] >= (int)$downloadLink['max_downloads']) {
         http_response_code(410);
         echo 'Download limit exceeded';
         return;
@@ -93,7 +99,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     }
 
     // Record download
-    $stmt = $pdo->prepare('UPDATE download_links SET downloads_used = downloads_used + 1 WHERE id = ?');
+    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = NOW() WHERE id = ?');
     $stmt->execute([$downloadLink['id']]);
 
     audit_log($pdo, 'public', 'download', 'order', $orderId, [
