@@ -18,9 +18,11 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 ### For Customers
 
 - **No accounts required** — guest checkout via Stripe
-- **Shopping cart** — lightweight, signed cookie-based (prices always from DB)
+- **Shopping cart** — lightweight, signed cookie-based (prices always from DB); prevents duplicate items
+- **Volume discounts** — automatic discounts on photo packages (e.g., 10+ photos = 15% off)
 - **Instant delivery** — download clean (unwatermarked) originals immediately after purchase
-- **Download links** — time-limited, per-customer download limits, audit-logged
+- **Download links** — time-limited, per-customer download limits, cryptographically signed, audit-logged
+- **Email receipts** — automatic order confirmation with download link via email
 
 ### For Store Owners
 
@@ -32,13 +34,13 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 
 ## Design Philosophy
 
-**Premium editorial aesthetic.** White and black only, minimal, generous whitespace. No gradients, no decorative elements. Maximizes focus on photographs.
+**Premium dark aesthetic.** Pixieset-inspired design with dark backgrounds, compact layouts, and full-bleed images. Maximizes visual impact while maintaining editorial clarity. Responsive across desktop, tablet, and mobile.
 
 **No vendor lock-in.** Plain PHP, MySQL, vanilla HTML/CSS/JS. Runs on any shared hosting (IONOS, GoDaddy, etc.) with PHP 8.2+. No Docker, no build step, no daemons.
 
-**Security by design.** Argon2id passwords, CSRF tokens, XSS protection, SQL injection prevention via prepared statements. Stripe webhooks validated with HMAC-SHA256. Download tokens cryptographically signed.
+**Security by design.** Argon2id passwords, Stripe webhook HMAC-SHA256 validation, cryptographically signed download tokens, OWASP Top 10 mitigations. See [docs/SECURITY.md](docs/SECURITY.md) for full audit.
 
-**Shared hosting friendly.** ~200GB storage limit? Supported (with 7-day image tiering). No CLI daemons? URL-based cron fallback. Database backup? Use standard MySQL tools.
+**Shared hosting friendly.** ~200GB storage limit? Supported (with 7-day image tiering). No CLI daemons? URL-based cron fallback. Database backup? Use standard MySQL tools. Email delivery via mail() or SMTP.
 
 ## Quick Start
 
@@ -85,10 +87,11 @@ See [docs/architecture.md](docs/architecture.md) for:
 
 1. ✅ **Architecture + schema** — Database design, migrations, security requirements
 2. ✅ **Admin auth, CRUD, upload, tagging, derivatives** — Login, TOTP 2FA, photo management, auto-tagging, image processing
-3. ✅ **Public gallery** — Hero layout, photo grid, video section, search/filtering
-4. ✅ **Cart, Stripe, delivery** — Shopping cart, Stripe Checkout, webhook handling, download delivery with download limits
-5. ✅ **Stats + hardening** — Revenue reporting, rate limiting, audit logging, input validation
-6. 🚧 **Open source release prep** — Config-driven branding, documentation, LICENSE, TRADEMARK
+3. ✅ **Public gallery** — Dark theme, hero layout, photo grid, video section, search/filtering
+4. ✅ **Cart, Stripe, delivery** — Shopping cart, volume discounts, Stripe Checkout, webhook handling, download delivery
+5. ✅ **Stats + hardening** — Revenue dashboard, order history, rate limiting, audit logging, security headers
+6. ✅ **Open source release prep** — Config-driven branding, documentation, LICENSE, TRADEMARK, SECURITY audit
+7. ⏳ **Future enhancements** — Print fulfillment (Phase 2), email templates, SMTP support
 
 ## Technology Stack
 
