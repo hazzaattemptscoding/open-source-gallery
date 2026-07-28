@@ -1,0 +1,28 @@
+# Dev-only. Mirrors the PHP/MySQL versions targeted on shared hosting so bugs
+# show up locally instead of on IONOS. The app itself never requires Docker
+# or a daemon to run — see CLAUDE.md hard constraints.
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: gallery
+      MYSQL_USER: gallery
+      MYSQL_PASSWORD: gallery
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  app:
+    image: php:8.2-apache
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+
+volumes:
+  db_data:

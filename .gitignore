@@ -1,0 +1,10 @@
+/config/config.php
+/vendor/
+/storage/hires/
+/storage/zips/
+/storage/tmp/
+!/storage/hires/.gitkeep
+!/storage/zips/.gitkeep
+!/storage/tmp/.gitkeep
+*.log
+.DS_Store

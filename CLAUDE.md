@@ -33,8 +33,7 @@ Default theme is "Podium Ink": ink black, signature purple #6D28D9, deep purple,
 
 ## Reference docs
 
-- docs/architecture.md — approved schema
-- docs/plan.md — feature plan and technical notes
+- docs/architecture.md — approved schema, request flows, cron design, and security requirements
 
 ## Code style
 
