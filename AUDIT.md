@@ -5,7 +5,10 @@ Branch: claude/plugin-skill-setup-y9v6kx
 
 ## Updates (Latest First)
 
-**2026-07-29 — Rate Limiting & Security Hardening**:
+**2026-07-29 — Image Optimization & Performance Hardening**:
+- ✅ P2: Added width/height attributes to all image views (grid, search, videos)
+- ✅ P2: Improves CLS (Cumulative Layout Shift), a Web Vitals metric
+- ✅ P2: Improved alt text for gallery photos using tag data
 - ✅ P3: Applied rate limiting to public search endpoint (30 req/min per IP)
 - ✅ P3: Applied rate limiting to API photo endpoints (50 req/min per IP for grid, 1/sec for view beacon)
 - ✅ P3: Created 429 error page for rate limit responses

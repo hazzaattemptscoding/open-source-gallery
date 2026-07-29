@@ -29,6 +29,13 @@ Completed comprehensive audit and improvements to the open-source gallery site. 
 - Applied to search controller to constrain pagination safely
 - Reduces risk of invalid queries reaching database
 
+✅ **Layout Shift Prevention (CLS)**
+- Added width/height attributes to all image elements
+- Applies to: grid items, search results, video posters, hero images
+- Prevents cumulative layout shift (CLS) which degrades mobile UX
+- Browser pre-allocates space during image load, eliminating jarring reflow
+- Critical for Web Vitals score and search ranking
+
 ### SEO & User Experience (P1 & P2)
 
 ✅ **Search Engine Optimization**
@@ -101,7 +108,6 @@ Completed comprehensive audit and improvements to the open-source gallery site. 
 - Added cache headers (Cache-Control, ETag, Last-Modified)
 
 ### Identified (Not Yet Implemented)
-- Image lazy loading with width/height attributes (prevents layout shift)
 - Responsive srcset for images (currently only 800px available)
 - WebP format alternatives for image delivery
 
