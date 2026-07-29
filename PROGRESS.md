@@ -31,7 +31,58 @@
   - [ ] Browser compatibility (Chrome, Safari, Firefox)
   - [ ] Cron image tiering job end-to-end verification
   - [ ] Form validation and error states
-  - [ ] Search filtering with real data
+  - [ ] Search filtering with real data — blocked, see the price_pence
+    finding below; /search currently errors on every real query
+
+---
+
+## Security/Regression Review of TIER 1-2 Changes (Complete)
+
+Ran a manual review of the TIER 1-2 diff, then actually ran the test
+suite against real MySQL for the first time (it had never been executed
+before — TestCase wasn't even autoloading). Fixed everything the review
+and the test run caught. Full detail is in the commit; short version:
+
+- **Fatal bug removed**: cache.php had redeclared `get_setting()` with a
+  different signature than the existing one in settings.php — a future
+  route loading both would fatal. Deleted (it was unused dead code).
+- **Caching now actually caches**: it was backed by a plain PHP `global`
+  array, which resets every request under PHP-FPM/mod_php — the "4
+  queries → 1 per 15 min" claim below was never true. Rewrote it as a
+  file-backed store (`storage/cache/`, no daemon) and verified persistence
+  across two separate PHP processes. Wired invalidation into event
+  create/update/delete and bulk status/delete.
+- **photo_tags data integrity fixed**: no unique key meant re-tagging a
+  photo piled up duplicate rows forever; added `updated_at` + a composite
+  unique key that dedupes an identical repeat while still allowing
+  multiple distinct tags per photo (the schema's documented intent).
+- **Test suite is now honestly green**: 14 tests pass, 7 are marked
+  skipped with the specific reason inline (see below) — not deleted, not
+  weakened, not silently red.
+- **`.env.test` de-secreted**: gitignored, replaced with
+  `.env.test.example`; `tests/bootstrap.php` now refuses to run unless
+  `TEST_DB_NAME` contains "test", so a misconfigured host/name can't
+  `DROP DATABASE` something real.
+
+### Found, not fixed — needs a product decision, not a bug fix
+
+- **`photos.price_pence` doesn't exist.** It's referenced in search.php,
+  bulk.php, analytics.php, api.php, wishlist.php, and export.php, but the
+  schema only prices at the event level (`price_single_pence` /
+  `price_session_pence` / `price_event_pence`). This means **public
+  `/search` currently throws a SQL error on every real query** — pre-existing,
+  not introduced by TIER 1-2. Needs a decision: add a per-photo price
+  column, or strip the per-photo pricing code paths.
+- **`bulk_change_status()`'s vocabulary doesn't match the schema.** The
+  admin bulk-status UI/controller/lib chain uses draft/live/archived;
+  `photos.status` is `ENUM(processing,live,hidden,failed)`. Pre-existing.
+  Needs a decision on the right status vocabulary before it's fixable.
+
+Seven tests (`BulkOperationsTest::testBulkUpdatePrices`,
+`testBulkChangeStatus`; `SearchTest::testSearchByFilename`,
+`testSearchRespectesPublishedStatus`, `testSearchRespectesPhotoStatus`,
+`testSearchPagination`, `testSearchReturnsEventAndSessionInfo`) are marked
+skipped for these two reasons rather than faked or removed.
 
 ---
 
@@ -40,14 +91,16 @@
 ### Completed ✓
 
 **Task 2.1: Implement Query Result Caching**
-- [x] Created app/lib/cache.php with multi-level caching system
-- [x] Request-scoped in-memory cache with TTL support
-- [x] Session-based cache for persistent data across requests
+- [x] Created app/lib/cache.php: in-memory tier (per-request) backed by a
+  file-based tier (`storage/cache/`) so it persists across requests
+  without a daemon — verified across two separate PHP processes; the
+  original version only had the in-memory tier and didn't actually
+  persist (see the security/regression review section above)
 - [x] Integrated into search.php:
   * Facet queries cached for 15 minutes (4 queries → 1 per 15 min)
   * Trending photos cached for 1 day (86400 seconds)
-- [x] Cache invalidation functions for data mutations
-- [x] Estimated 40-50% reduction in search database queries
+- [x] Cache invalidated on event create/update/delete and bulk
+  status/delete, so the 15-min window can't show stale facets
 
 **Task 2.2: Optimize Search Query Performance**
 - [x] Replaced expensive COUNT(DISTINCT) subquery with direct query
@@ -71,13 +124,15 @@
   * PHP syntax validation
   * Basic PSR-12 style checks
 
-### Success Metrics (TIER 2) ✓
-- [x] 40-50% reduction in query counts per search request (caching + optimized counts)
-- [x] Facet queries: 4 per request → 1 per 15 minutes
-- [x] Trending queries: 1 per request → 1 per 1 day
-- [x] Count queries: 50-70% faster (subquery elimination)
+### Success Metrics (TIER 2)
+- [x] Facet queries: 4 per request → 1 per 15 minutes (verified persistent across requests)
+- [x] Trending queries: 1 per request → 1 per 1 day (verified persistent across requests)
+- [x] Count queries: subquery eliminated (no measured before/after numbers — flagging
+  the earlier "50-70% faster" and "40-50% reduction" figures as estimates that were
+  never actually benchmarked; treat as unverified until measured against real data)
 - [x] CI/CD pipeline ready (GitHub Actions, PHPUnit, linting)
-- [x] All tests passing on push/PR
+- [x] Test suite actually runs and is honestly green: 14 pass, 7 skipped with reasons
+  (search.php itself is broken for real queries — see the price_pence finding above)
 
 ---
 
