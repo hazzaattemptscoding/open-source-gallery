@@ -188,7 +188,7 @@
             <?php $logoUrl = \get_logo_url($settings['site_logo_filename']); ?>
             <?php if ($logoUrl): ?>
             <div style="margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px;">
-              <img src="<?= e($logoUrl) ?>" alt="Current logo" style="max-height: 80px; max-width: 100%;"><br>
+              <img src="<?= e($logoUrl) ?>" alt="Current logo" style="max-height: 60px; max-width: 100%;"><br>
               <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">✓ Logo on file</small>
             </div>
             <?php endif; ?>
@@ -302,6 +302,15 @@
       <input type="hidden" name="action" value="reset">
       <button type="submit" onclick="return confirm('Reset all customizations to defaults? This will delete any uploaded logo.');" style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Reset to Defaults</button>
     </form>
+
+    <!-- Delete logo form (only shown if logo exists) -->
+    <?php if (!empty($settings['site_logo_filename'])): ?>
+    <form method="post" style="margin-top: 0.5rem;">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+      <input type="hidden" name="action" value="delete_logo">
+      <button type="submit" onclick="return confirm('Delete the uploaded logo?');" style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Delete Logo</button>
+    </form>
+    <?php endif; ?>
   </div>
 
   <div class="customize-preview-panel">

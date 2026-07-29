@@ -224,6 +224,21 @@ function get_logo_url(string $filename): ?string {
 }
 
 /**
+ * Delete the site logo file.
+ */
+function delete_logo(string $filename): bool {
+    if (empty($filename)) {
+        return true;
+    }
+    // Prevent directory traversal
+    if (strpos($filename, '/') !== false || strpos($filename, '..') !== false) {
+        return false;
+    }
+    $path = __DIR__ . '/../../storage/customize/' . $filename;
+    return !file_exists($path) || @unlink($path);
+}
+
+/**
  * List available Google Fonts (curated selection for editorial design).
  */
 function get_available_fonts(): array {

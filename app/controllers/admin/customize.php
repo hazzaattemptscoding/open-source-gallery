@@ -39,6 +39,18 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             } else {
                 $errors[] = 'Failed to reset customization settings.';
             }
+        } elseif (isset($_POST['action']) && $_POST['action'] === 'delete_logo') {
+            // Handle logo deletion
+            if (delete_logo($settings['site_logo_filename'] ?? '')) {
+                $settings['site_logo_filename'] = '';
+                save_customize_settings($settings);
+                audit_log($pdo, 'customize_delete_logo', 'Deleted site logo');
+                touch(CUSTOMIZE_CONFIG_FILE);
+                header('Location: /admin/customize?success=1');
+                exit;
+            } else {
+                $errors[] = 'Failed to delete logo.';
+            }
         } else {
             $formData = [];
             $formData['site_name'] = trim($_POST['site_name'] ?? '');
