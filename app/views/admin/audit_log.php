@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Audit Log: Admin</title>
+<title>Audit Log: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 <style>
 .filter-form {
     display: grid;
@@ -141,9 +142,8 @@
 <link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
-
 <header class="site-header">
-  <a href="/admin" class="site-title">Audit Log</a>
+  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
   <form method="post" action="/admin/logout" class="logout-form">
     <button type="submit">Log out</button>
   </form>

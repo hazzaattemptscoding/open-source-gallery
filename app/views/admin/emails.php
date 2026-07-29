@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Email Management — Admin</title>
+<title>Email Management: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 <style>
 .emails-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 .queue-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
@@ -19,7 +20,7 @@
 </head>
 <body>
 <header class="site-header">
-  <a href="/admin" class="site-title">Email Management</a>
+  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
 </header>
 
 <div class="emails-container">
@@ -60,6 +61,7 @@
       <div style="margin-bottom: 2rem; padding: 1.5rem; border: 1px solid #eee; border-radius: 4px;">
         <h4><?= e($template['display_name']) ?></h4>
         <form method="post">
+          <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
           <input type="hidden" name="action" value="update_template">
           <input type="hidden" name="template_id" value="<?= (int)$template['id'] ?>">
           
