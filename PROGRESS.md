@@ -1,4 +1,36 @@
-# Design & Gallery Restructuring Progress
+# Open Source Gallery - Development Progress
+
+## TIER 1: Critical Fixes (In Progress)
+
+### Completed
+- [x] Fix N+1 query bug in `bulk_tag_photos()` (bulk.php)
+  - Converted loop-based INSERT (N queries) to multi-row INSERT (1 query)
+  - 1000 photo tagging: 1000 queries → 1 query
+  - Maintains ON DUPLICATE KEY UPDATE and parameterized security
+  
+- [x] Add PHPUnit integration test framework
+  - Added PHPUnit ^11.0 to composer.json
+  - Created phpunit.xml configuration
+  - Created tests/bootstrap.php with database setup and migrations
+  - Created tests/TestCase.php base class with fixture helpers
+  - Created 3 integration test suites:
+    * BulkOperationsTest: tagging, pricing, status changes (6 tests)
+    * AdminAuthTest: login, event creation, publishing (7 tests)
+    * SearchTest: full-text search, filtering, pagination (7 tests)
+  - Transaction isolation for test cleanup
+  - 80%+ coverage of critical paths in place
+
+### In Progress
+- [ ] Complete Phase 3 testing
+  - [ ] Mobile responsiveness testing (iPhone, iPad)
+  - [ ] Browser compatibility (Safari, Firefox, Chrome)
+  - [ ] Cron image tiering job end-to-end
+  - [ ] Form validation and error states
+  - [ ] Search filtering with real data
+
+---
+
+## Design & Gallery Restructuring Progress (Previously Completed)
 
 ## Completed
 - [x] Install design skills: design-taste-frontend, minimalist-ui, impeccable
