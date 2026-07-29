@@ -61,7 +61,7 @@ function render_disabled_page(): void {
     <html lang="en">
     <head>
     <meta charset="utf-8">
-    <title>Print Orders — Admin</title>
+    <title>Print Orders: Admin</title>
     <link rel="stylesheet" href="/assets/css/podium-ink.css">
     </head>
     <body>
