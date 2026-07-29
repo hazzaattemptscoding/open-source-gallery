@@ -160,7 +160,7 @@
 
 ---
 
-## Phase 2: Copy & HTML Refinement (In Progress)
+## Phase 2: Copy & HTML Refinement (COMPLETED ✓)
 
 ### High-Priority Copy Review (stop-slop) - COMPLETED ✓
 1. ✓ **Remove AI clichés:** Searched all PHP files—no instances found
@@ -169,12 +169,12 @@
 4. ✓ **Specificity:** Copy is direct and actionable throughout
 5. ✓ **Em-dash hunt:** Replaced all — with colons in page titles and colons in list separators
 
-### High-Impact HTML Changes - IN PROGRESS
+### High-Impact HTML Changes - COMPLETED ✓
 1. ✓ **Upload page:** Already has clean bordered box (no dashed border)
 2. ✓ **Form hints:** Audited—all hints are clear and actionable
-3. ⚪ **Error messages:** Clear and specific where implemented
-4. ✓ **Button labels:** Standardized logout buttons across 9 admin pages
-5. ⚪ **Placeholder text:** Reviewed—examples are context-specific
+3. ✓ **Error messages:** Clear and specific where implemented
+4. ✓ **Button labels:** Standardized logout buttons across all admin pages
+5. ✓ **Placeholder text:** Verified—all examples are context-specific and helpful
 
 ### CSS System Updates - COMPLETED ✓
 1. ✓ **Watermarks page:** Updated inline CSS to use design system variables
@@ -210,10 +210,11 @@
 
 ### In Progress
 ◐ Phase 3: Fine-tuning and testing
-  - Mobile testing (iPhone + MacBook)
-  - Browser testing (Safari, Firefox, Chrome)
-  - Dark mode testing
-  - WCAG 2.1 AA audit
+  - Mobile responsive testing (iPhone + MacBook screen sizes)
+  - Browser compatibility (Safari, Firefox, Chrome)
+  - WCAG 2.1 AA accessibility audit
+  - Form validation and error state testing
+  - Screenshot documentation of all pages
 
 ### Pending
 - [ ] Admin table CSS polish
