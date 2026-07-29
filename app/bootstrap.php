@@ -25,6 +25,17 @@ if (!is_file($configPath)) {
 
 $config = require $configPath;
 
+// Application constants
+define('APP_SEARCH_PAGE_SIZE', 20);
+define('APP_CACHE_TTL_SHORT', 600);        // 10 minutes
+define('APP_CACHE_TTL_MEDIUM', 3600);      // 1 hour
+define('APP_CACHE_TTL_LONG', 86400);       // 1 day
+define('APP_MAX_PAGINATION_PAGE', 1000);
+define('APP_MAX_SEARCH_RESULTS', 10000);
+define('APP_PASSWORD_MIN_LENGTH', 12);
+define('APP_STRIPE_KEY_PREFIX_PUB', 'pk_');
+define('APP_STRIPE_KEY_PREFIX_SEC', 'sk_');
+
 date_default_timezone_set($config['timezone'] ?? 'UTC');
 
 error_reporting(E_ALL);

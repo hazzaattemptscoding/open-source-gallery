@@ -9,10 +9,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/search.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
+require_once __DIR__ . '/../../lib/validation.php';
 
 function public_search_controller(PDO $pdo, array $config): void {
-    $query = $_GET['q'] ?? '';
-    $page = (int)($_GET['page'] ?? 1);
+    $query = (string)($_GET['q'] ?? '');
+    $page = validate_page((int)($_GET['page'] ?? 1));
 
     // Build filters from query params
     $filters = [];
@@ -58,8 +59,8 @@ function public_search_controller(PDO $pdo, array $config): void {
 function public_search_api_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
 
-    $query = $_GET['q'] ?? '';
-    $page = (int)($_GET['page'] ?? 1);
+    $query = (string)($_GET['q'] ?? '');
+    $page = validate_page((int)($_GET['page'] ?? 1));
 
     // Build filters
     $filters = [];

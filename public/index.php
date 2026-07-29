@@ -315,6 +315,6 @@ switch ($path) {
             api_v1_photos_controller($pdo);
         } else {
             http_response_code(404);
-            echo '404 Not Found';
+            render(__DIR__ . '/../app/views/errors/404.php', []);
         }
 }
