@@ -24,7 +24,7 @@ echo generate_meta_tags($GLOBALS['config'], $siteName, 'Professional sports phot
         <a class="event-card" href="/e/<?= e($event['slug']) ?>">
           <div class="event-card-image">
             <?php if ($event['cover_token']): ?>
-              <img src="/media/d/<?= e($event['cover_token']) ?>-800.jpg" alt="" loading="lazy">
+              <img src="/media/d/<?= e($event['cover_token']) ?>-800.jpg" alt="<?= e($event['title']) ?>" loading="lazy">
             <?php endif; ?>
           </div>
           <div class="event-card-body">

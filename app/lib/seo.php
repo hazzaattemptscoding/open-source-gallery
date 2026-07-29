@@ -160,4 +160,42 @@ function generate_photo_alt_text(array $photo): string {
     $alt = implode(', ', $parts);
     return substr($alt, 0, 125) ?: 'Gallery photo';
 }
+
+/**
+ * Generate alt text from gallery photo tags (kart_tags, driver_tags, class_tags).
+ * Used in grid views where photos are linked via tags.
+ *
+ * @param array $photo Photo data from fetch_gallery_media (kart_tags, driver_tags, class_tags)
+ * @return string Alt text (max 125 chars)
+ */
+function generate_gallery_photo_alt_text(array $photo): string {
+    $parts = [];
+
+    if ($photo['driver_tags'] ?? '') {
+        $drivers = array_map('trim', explode(',', $photo['driver_tags']));
+        $drivers = array_filter($drivers);
+        if (!empty($drivers)) {
+            $parts[] = 'driver ' . implode(', ', $drivers);
+        }
+    }
+
+    if ($photo['kart_tags'] ?? '') {
+        $karts = array_map('trim', explode(',', $photo['kart_tags']));
+        $karts = array_filter($karts);
+        if (!empty($karts)) {
+            $parts[] = 'kart ' . implode(', ', $karts);
+        }
+    }
+
+    if ($photo['class_tags'] ?? '') {
+        $classes = array_map('trim', explode(',', $photo['class_tags']));
+        $classes = array_filter($classes);
+        if (!empty($classes)) {
+            $parts[] = 'class ' . implode(', ', $classes);
+        }
+    }
+
+    $alt = implode(', ', $parts);
+    return substr($alt, 0, 125) ?: 'Gallery photo';
+}
 ?>

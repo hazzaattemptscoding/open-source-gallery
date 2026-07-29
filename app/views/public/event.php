@@ -15,7 +15,7 @@
 <!-- Full-screen hero -->
 <section class="hero">
   <?php if ($heroToken): ?>
-    <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="">
+    <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="<?= e($event['title']) ?> event photography">
   <?php endif; ?>
   <div class="hero-overlay">
     <h1><?= e($event['title']) ?></h1>
