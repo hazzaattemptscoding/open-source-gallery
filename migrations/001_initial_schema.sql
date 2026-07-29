@@ -334,6 +334,16 @@ CREATE TABLE stats_daily (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Search performance optimizations (TIER 2)
+-- These indexes speed up search, trending, and analytics queries.
+CREATE INDEX idx_photos_status_created ON photos (status, created_at DESC);
+CREATE INDEX idx_photos_view_count ON photos (status, view_count DESC, created_at DESC);
+CREATE INDEX idx_events_published ON events (is_published);
+CREATE FULLTEXT INDEX idx_photos_filename_ft ON photos (original_filename);
+CREATE FULLTEXT INDEX idx_tags_kart_ft ON photo_tags (kart_number);
+CREATE FULLTEXT INDEX idx_tags_driver_ft ON photo_tags (driver_name);
+CREATE FULLTEXT INDEX idx_tags_class_ft ON photo_tags (class);
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO migrations (filename) VALUES ('001_initial_schema.sql');

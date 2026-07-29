@@ -97,10 +97,64 @@ function search_photos(
         $params[] = (string)$filters['date_to'];
     }
 
-    // Get total count
-    $countSql = 'SELECT COUNT(DISTINCT p.id) FROM (' . $sql . ') AS subquery';
+    // Get total count using simplified query (avoid expensive subquery COUNT).
+    // Build count query with same WHERE conditions but simpler SELECT.
+    $countParams = $params;
+    $countSql = 'SELECT COUNT(DISTINCT p.id) FROM photos p
+        JOIN events e ON p.event_id = e.id
+        JOIN sessions s ON p.session_id = s.id
+        LEFT JOIN photo_tags t ON p.id = t.photo_id
+        WHERE p.status = \'live\' AND e.is_published = 1';
+
+    // Apply same WHERE conditions to count query.
+    if (!empty($query)) {
+        $countSql .= ' AND (
+            MATCH(p.original_filename) AGAINST(? IN BOOLEAN MODE)
+            OR MATCH(t.kart_number) AGAINST(? IN BOOLEAN MODE)
+            OR MATCH(t.driver_name) AGAINST(? IN BOOLEAN MODE)
+            OR MATCH(t.class) AGAINST(? IN BOOLEAN MODE)
+        )';
+        $searchTerm = '+' . str_replace([' ', '+', '-'], [' +', '', ''], $query) . '*';
+        $countParams = array_fill(0, 4, $searchTerm);
+    } else {
+        $countParams = [];
+    }
+
+    if (!empty($filters['event_id'])) {
+        $countSql .= ' AND p.event_id = ?';
+        $countParams[] = (int)$filters['event_id'];
+    }
+    if (!empty($filters['kart'])) {
+        $countSql .= ' AND t.kart_number = ?';
+        $countParams[] = (string)$filters['kart'];
+    }
+    if (!empty($filters['driver'])) {
+        $countSql .= ' AND t.driver_name = ?';
+        $countParams[] = (string)$filters['driver'];
+    }
+    if (!empty($filters['class'])) {
+        $countSql .= ' AND t.class = ?';
+        $countParams[] = (string)$filters['class'];
+    }
+    if (!empty($filters['price_min'])) {
+        $countSql .= ' AND p.price_pence >= ?';
+        $countParams[] = (int)$filters['price_min'];
+    }
+    if (!empty($filters['price_max'])) {
+        $countSql .= ' AND p.price_pence <= ?';
+        $countParams[] = (int)$filters['price_max'];
+    }
+    if (!empty($filters['date_from'])) {
+        $countSql .= ' AND DATE(p.created_at) >= ?';
+        $countParams[] = (string)$filters['date_from'];
+    }
+    if (!empty($filters['date_to'])) {
+        $countSql .= ' AND DATE(p.created_at) <= ?';
+        $countParams[] = (string)$filters['date_to'];
+    }
+
     $stmt = $pdo->prepare($countSql);
-    $stmt->execute($params);
+    $stmt->execute($countParams);
     $total = (int)$stmt->fetchColumn();
     $pages = ceil($total / $perPage) ?: 1;
 
