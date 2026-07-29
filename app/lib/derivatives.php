@@ -31,6 +31,9 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
     }
 
     $settings = get_watermark_settings($pdo);
+    // Include photo ID in watermark text so previews can be identified by buyers
+    $settings['text'] = "ID: {$photoId}";
+
     $sizes = [400, 800, 1600];
     $derivPath = __DIR__ . '/../../public/media/d';
 
