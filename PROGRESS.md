@@ -160,21 +160,30 @@
 
 ---
 
-## Phase 2: Copy & HTML Refinement (Next Steps)
+## Phase 2: Copy & HTML Refinement (In Progress)
 
-### High-Priority Copy Review (stop-slop)
-1. **Remove AI clichés:** Search for "Seamless", "Elevate", "Unleash", "Next-Gen", "Delve"
-2. **Cut filler:** Remove "Simply", "Actually", "Basically", "Really"
-3. **Active voice audit:** All buttons, labels, error messages
-4. **Specificity:** No vague declaratives ("the reasons are structural")
-5. **Em-dash hunt:** Replace all — with proper punctuation
+### High-Priority Copy Review (stop-slop) - COMPLETED ✓
+1. ✓ **Remove AI clichés:** Searched all PHP files—no instances found
+2. ✓ **Cut filler:** No filler words found in app copy
+3. ✓ **Active voice audit:** All button labels and messages verified
+4. ✓ **Specificity:** Copy is direct and actionable throughout
+5. ✓ **Em-dash hunt:** Replaced all — with colons in page titles and colons in list separators
 
-### High-Impact HTML Changes
-1. **Upload page:** Replace dashed border with clean "drop here" box
-2. **Form hints:** Simplify cryptic help text (especially admin forms)
-3. **Error messages:** Make actionable and specific
-4. **Button labels:** Consistent action verbs (Create, Delete, Save, etc)
-5. **Placeholder text:** Helpful examples instead of generic guides
+### High-Impact HTML Changes - IN PROGRESS
+1. ✓ **Upload page:** Already has clean bordered box (no dashed border)
+2. ✓ **Form hints:** Audited—all hints are clear and actionable
+3. ⚪ **Error messages:** Clear and specific where implemented
+4. ✓ **Button labels:** Standardized logout buttons across 9 admin pages
+5. ⚪ **Placeholder text:** Reviewed—examples are context-specific
+
+### CSS System Updates - COMPLETED ✓
+1. ✓ **Watermarks page:** Updated inline CSS to use design system variables
+2. ✓ **Search page:** Comprehensive CSS refactor:
+   - Replaced hard-coded colors with var(--*) variables
+   - Fixed form focus states
+   - Improved card hover states with subtle shadows
+   - Consistent button and input styling
+   - Proper pagination styling with design system colors
 
 ### Fine-Tuning (Phase 3)
 - [ ] Test on iPhone (user requested preview on mobile)
@@ -194,18 +203,24 @@
 ✓ Animation system (scrolling, hovers, transitions)  
 ✓ Responsive breakpoints (mobile, tablet, desktop)  
 ✓ Accessibility: prefers-reduced-motion support  
+✓ Phase 2a: Copy review (stop-slop) - no AI clichés found, no filler
+✓ Phase 2b: Em-dash removal across all HTML titles and separators
+✓ Phase 2c: Button label consistency (logout standardized)
+✓ Phase 2d: CSS system updates (watermarks, search pages)
 
 ### In Progress
-◐ HTML copy review (stop-slop pass)  
-◐ Page-by-page visual refinement  
-◐ Mobile testing (iPhone + MacBook)  
+◐ Phase 3: Fine-tuning and testing
+  - Mobile testing (iPhone + MacBook)
+  - Browser testing (Safari, Firefox, Chrome)
+  - Dark mode testing
+  - WCAG 2.1 AA audit
 
 ### Pending
-- [ ] Form refinements (upload, settings)
-- [ ] Admin table polish
-- [ ] Deep-link state preservation
-- [ ] Browser testing (Safari, Firefox, Chrome)
+- [ ] Admin table CSS polish
+- [ ] Complex form pages (settings, reporting) - CSS refactor
+- [ ] Placeholder text audit (verify helpful examples)
 - [ ] Performance optimization
+- [ ] Screenshot documentation
 - [ ] Final QA before shipping
 
 ---
