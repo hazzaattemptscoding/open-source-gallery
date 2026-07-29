@@ -8,127 +8,140 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 .analytics-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
 }
 
 .analytics-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .stat-card {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 1.5rem;
-    text-align: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 160ms var(--ease-out);
+}
+
+.stat-card:hover {
+  border-color: var(--text-muted);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .stat-card h3 {
-    font-size: 0.9rem;
-    color: #666;
-    margin: 0 0 0.5rem 0;
-    text-transform: uppercase;
-    font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .stat-card .value {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #000;
-    margin: 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0.5rem 0;
 }
 
 .stat-card .label {
-    font-size: 0.8rem;
-    color: #999;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
 .chart-container {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 1.5rem;
-    position: relative;
-    min-height: 400px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  position: relative;
+  min-height: 400px;
 }
 
 .chart-container h2 {
-    font-size: 1.1rem;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 1rem;
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .top-photos {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 1.5rem;
-    grid-column: 1 / -1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  grid-column: 1 / -1;
 }
 
 .top-photos h2 {
-    font-size: 1.1rem;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 1rem;
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .photos-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
 }
 
 .photos-table th {
-    text-align: left;
-    padding: 0.75rem;
-    background: #f9f9f9;
-    font-weight: 600;
-    border-bottom: 2px solid #eee;
+  text-align: left;
+  padding: 0.75rem;
+  background: var(--bg-alt);
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
 }
 
 .photos-table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid #eee;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
 }
 
 .photos-table tr:hover {
-    background: #f9f9f9;
+  background: var(--bg-alt);
 }
 
 .no-data {
-    text-align: center;
-    padding: 2rem;
-    color: #999;
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
-    .analytics-grid {
-        grid-template-columns: 1fr;
-    }
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
 
-    .analytics-summary {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .analytics-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-    .chart-container {
-        min-height: 300px;
-    }
+  .chart-container {
+    min-height: 300px;
+  }
 }
 </style>
 </head>
@@ -263,6 +276,10 @@
 <!-- Charts.js initialization -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+  const textMutedColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+  const bgAltColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-alt').trim();
+
   // Revenue Trend
   const revenueTrendData = <?= json_encode($analytics['revenue_trend']) ?>;
   if (revenueTrendData && revenueTrendData.length > 0) {
@@ -273,18 +290,24 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets: [{
           label: 'Revenue',
           data: revenueTrendData.map(d => d.revenue_pence / 100),
-          borderColor: '#000',
-          backgroundColor: 'rgba(0, 0, 0, 0.1)',
+          borderColor: textColor,
+          backgroundColor: 'rgba(0, 0, 0, 0.04)',
           tension: 0.4,
           fill: true,
+          pointBackgroundColor: textColor,
+          pointBorderColor: textColor,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
+        },
         scales: {
-          y: { beginAtZero: true, ticks: { callback: v => '£' + v } }
+          y: { beginAtZero: true, ticks: { callback: v => '£' + v, color: textMutedColor } },
+          x: { ticks: { color: textMutedColor } }
         }
       }
     });
@@ -300,14 +323,17 @@ document.addEventListener('DOMContentLoaded', function() {
         datasets: [{
           label: 'Orders',
           data: hourlyData.map(d => d.orders),
-          backgroundColor: '#000',
+          backgroundColor: textColor,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        scales: {
+          y: { beginAtZero: true, ticks: { color: textMutedColor } },
+          x: { ticks: { color: textMutedColor } }
+        }
       }
     });
   }
@@ -315,23 +341,24 @@ document.addEventListener('DOMContentLoaded', function() {
   // Sales by Event
   const eventData = <?= json_encode($analytics['sales_by_event']) ?>;
   if (eventData && eventData.length > 0) {
+    const colors = [
+      '#111111', '#2a2a2a', '#3f3f3f', '#535353', '#676767',
+      '#7a7a7a', '#8d8d8d', '#a1a1a1', '#b4b4b4', '#c7c7c7'
+    ];
     new Chart(document.getElementById('eventsChart'), {
       type: 'doughnut',
       data: {
         labels: eventData.map(e => e.title),
         datasets: [{
           data: eventData.map(e => e.revenue_pence / 100),
-          backgroundColor: [
-            '#000', '#333', '#666', '#999', '#ccc',
-            '#111', '#222', '#444', '#777', '#aaa'
-          ]
+          backgroundColor: colors
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'right' }
+          legend: { position: 'right', labels: { color: textColor } }
         }
       }
     });
