@@ -27,12 +27,14 @@ function check_rate_limit(PDO $pdo, string $bucket, string $rl_key, int $window_
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$row) {
+        // Delete any old rows with the same key to avoid conflicts
+        $stmt = $pdo->prepare('DELETE FROM rate_limits WHERE bucket = ? AND rl_key = ?');
+        $stmt->execute([$bucket, $rl_key]);
+
+        // Now insert fresh row
         $stmt = $pdo->prepare('
             INSERT INTO rate_limits (bucket, rl_key, window_start, hits)
             VALUES (?, ?, ?, 1)
-            ON DUPLICATE KEY UPDATE
-              window_start = VALUES(window_start),
-              hits = 1
         ');
         $stmt->execute([$bucket, $rl_key, $now->format('Y-m-d H:i:s')]);
         return true;

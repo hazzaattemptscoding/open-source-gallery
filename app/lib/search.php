@@ -32,8 +32,8 @@ function search_photos(
     $sql = <<<'SQL'
         SELECT DISTINCT
             p.id, p.public_token, p.original_filename, p.status, p.event_id,
-            p.session_id, p.width, p.height, p.price_pence, p.view_count,
-            e.title as event_title, e.slug as event_slug,
+            p.session_id, p.width, p.height, p.view_count,
+            e.title as event_title, e.slug as event_slug, e.price_single_pence,
             s.slug as session_slug
         FROM photos p
         JOIN events e ON p.event_id = e.id
@@ -47,12 +47,12 @@ function search_photos(
     // Full-text search (if query provided)
     if (!empty($query)) {
         $sql .= ' AND (
-            MATCH(p.original_filename) AGAINST(? IN BOOLEAN MODE)
-            OR MATCH(t.kart_number) AGAINST(? IN BOOLEAN MODE)
-            OR MATCH(t.driver_name) AGAINST(? IN BOOLEAN MODE)
-            OR MATCH(t.class) AGAINST(? IN BOOLEAN MODE)
+            p.original_filename LIKE ?
+            OR t.kart_number LIKE ?
+            OR t.driver_name LIKE ?
+            OR t.class LIKE ?
         )';
-        $searchTerm = '+' . str_replace([' ', '+', '-'], [' +', '', ''], $query) . '*';
+        $searchTerm = '%' . $query . '%';
         $params = array_fill(0, 4, $searchTerm);
     }
 
@@ -77,16 +77,6 @@ function search_photos(
         $params[] = (string)$filters['class'];
     }
 
-    if (!empty($filters['price_min'])) {
-        $sql .= ' AND p.price_pence >= ?';
-        $params[] = (int)$filters['price_min'];
-    }
-
-    if (!empty($filters['price_max'])) {
-        $sql .= ' AND p.price_pence <= ?';
-        $params[] = (int)$filters['price_max'];
-    }
-
     if (!empty($filters['date_from'])) {
         $sql .= ' AND DATE(p.created_at) >= ?';
         $params[] = (string)$filters['date_from'];
@@ -109,12 +99,12 @@ function search_photos(
     // Apply same WHERE conditions to count query.
     if (!empty($query)) {
         $countSql .= ' AND (
-            MATCH(p.original_filename) AGAINST(? IN BOOLEAN MODE)
-            OR MATCH(t.kart_number) AGAINST(? IN BOOLEAN MODE)
-            OR MATCH(t.driver_name) AGAINST(? IN BOOLEAN MODE)
-            OR MATCH(t.class) AGAINST(? IN BOOLEAN MODE)
+            p.original_filename LIKE ?
+            OR t.kart_number LIKE ?
+            OR t.driver_name LIKE ?
+            OR t.class LIKE ?
         )';
-        $searchTerm = '+' . str_replace([' ', '+', '-'], [' +', '', ''], $query) . '*';
+        $searchTerm = '%' . $query . '%';
         $countParams = array_fill(0, 4, $searchTerm);
     } else {
         $countParams = [];
@@ -135,14 +125,6 @@ function search_photos(
     if (!empty($filters['class'])) {
         $countSql .= ' AND t.class = ?';
         $countParams[] = (string)$filters['class'];
-    }
-    if (!empty($filters['price_min'])) {
-        $countSql .= ' AND p.price_pence >= ?';
-        $countParams[] = (int)$filters['price_min'];
-    }
-    if (!empty($filters['price_max'])) {
-        $countSql .= ' AND p.price_pence <= ?';
-        $countParams[] = (int)$filters['price_max'];
     }
     if (!empty($filters['date_from'])) {
         $countSql .= ' AND DATE(p.created_at) >= ?';
@@ -276,8 +258,9 @@ function get_trending_photos(PDO $pdo, int $limit = 12): array {
 
     try {
         $stmt = $pdo->prepare(<<<'SQL'
-            SELECT p.id, p.public_token, p.original_filename, p.price_pence,
+            SELECT p.id, p.public_token, p.original_filename,
                    p.view_count, p.event_id, e.title as event_title,
+                   e.price_single_pence,
                    s.slug as session_slug, e.slug as event_slug
             FROM photos p
             JOIN events e ON p.event_id = e.id
