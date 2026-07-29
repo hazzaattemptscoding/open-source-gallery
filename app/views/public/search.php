@@ -311,7 +311,7 @@
                   <div class="search-result-title"><?= e($photo['original_filename']) ?></div>
                   <div class="search-result-meta"><?= e($photo['event_title']) ?></div>
                   <div class="search-result-price">
-                    £<?= number_format($photo['price_pence'] / 100, 2) ?>
+                    £<?= number_format($photo['price_single_pence'] / 100, 2) ?>
                   </div>
                 </div>
               </a>

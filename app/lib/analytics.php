@@ -48,7 +48,7 @@ function get_top_photos(PDO $pdo, int $limit = 10): array {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT
                 p.id, p.public_token, p.original_filename,
-                p.price_pence, e.title as event_title,
+                COALESCE(p.price_pence, e.price_single_pence) AS price_pence, e.title as event_title,
                 COUNT(oi.id) as times_sold,
                 SUM(oi.quantity) as units_sold,
                 SUM(oi.unit_price_pence * oi.quantity) as revenue_pence
@@ -56,7 +56,7 @@ function get_top_photos(PDO $pdo, int $limit = 10): array {
             JOIN events e ON p.event_id = e.id
             LEFT JOIN order_items oi ON p.id = oi.photo_id
             WHERE oi.id IS NOT NULL
-            GROUP BY p.id, p.public_token, p.original_filename, p.price_pence, e.title
+            GROUP BY p.id, p.public_token, p.original_filename, p.price_pence, e.price_single_pence, e.title
             ORDER BY revenue_pence DESC, units_sold DESC
             LIMIT ?
         SQL);

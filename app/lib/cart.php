@@ -139,6 +139,7 @@ function cart_price(PDO $pdo, array $items, array $config = []): array {
             $lines[] = [
                 'type' => 'photo',
                 'id' => (int)$row['id'],
+                'public_token' => $row['public_token'],
                 'description' => "Photo {$row['public_token']} — {$row['event_title']}",
                 'unit_price_pence' => $price,
             ];

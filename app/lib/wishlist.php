@@ -74,10 +74,12 @@ function get_wishlist_items(PDO $pdo, string $customerToken, int $limit = 100): 
     try {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT w.id, p.id as photo_id, p.public_token, p.original_filename,
-                   p.price_pence, p.width, p.height, wi.notes, wi.added_at
+                   COALESCE(p.price_pence, e.price_single_pence) AS price_pence,
+                   p.width, p.height, wi.notes, wi.added_at
             FROM wishlists w
             JOIN wishlist_items wi ON w.id = wi.wishlist_id
             JOIN photos p ON wi.photo_id = p.id
+            JOIN events e ON p.event_id = e.id
             WHERE w.customer_token = ? AND p.status = 'live'
             ORDER BY wi.added_at DESC
             LIMIT ?

@@ -13,18 +13,22 @@ declare(strict_types=1);
  */
 function audit_log(PDO $pdo, string $actor, string $action, ?string $entityType = null, ?int $entityId = null, ?array $meta = null, ?string $ip = null): void
 {
-    $stmt = $pdo->prepare('
-        INSERT INTO audit_log (actor, action, entity_type, entity_id, meta, ip, created_at)
-        VALUES (:actor, :action, :entity_type, :entity_id, :meta, :ip, CURRENT_TIMESTAMP)
-    ');
-    $stmt->execute([
-        'actor'       => $actor,
-        'action'      => $action,
-        'entity_type' => $entityType,
-        'entity_id'   => $entityId,
-        'meta'        => $meta !== null ? json_encode($meta) : null,
-        'ip'          => $ip !== null ? inet_pton($ip) : null,
-    ]);
+    try {
+        $stmt = $pdo->prepare('
+            INSERT INTO audit_log (actor, action, entity_type, entity_id, meta, ip, created_at)
+            VALUES (:actor, :action, :entity_type, :entity_id, :meta, :ip, CURRENT_TIMESTAMP)
+        ');
+        $stmt->execute([
+            'actor'       => $actor,
+            'action'      => $action,
+            'entity_type' => $entityType,
+            'entity_id'   => $entityId,
+            'meta'        => $meta !== null ? json_encode($meta) : null,
+            'ip'          => $ip !== null ? inet_pton($ip) : null,
+        ]);
+    } catch (Throwable $e) {
+        error_log("audit_log failed: {$e->getMessage()}");
+    }
 }
 
 /**

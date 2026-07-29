@@ -81,11 +81,13 @@ function api_get_photos(PDO $pdo, int $page = 1, int $perPage = 50): array {
     try {
         $offset = ($page - 1) * $perPage;
         $stmt = $pdo->prepare(<<<'SQL'
-            SELECT id, public_token, original_filename, price_pence, width, height,
-                   view_count, created_at, camera_make, camera_model
-            FROM photos
-            WHERE status = 'live'
-            ORDER BY created_at DESC
+            SELECT p.id, p.public_token, p.original_filename,
+                   COALESCE(p.price_pence, e.price_single_pence) AS price_pence,
+                   p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model
+            FROM photos p
+            JOIN events e ON p.event_id = e.id
+            WHERE p.status = 'live'
+            ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
         SQL);
         $stmt->execute([$perPage, $offset]);
@@ -101,9 +103,12 @@ function api_get_photos(PDO $pdo, int $page = 1, int $perPage = 50): array {
 function api_get_photo(PDO $pdo, int $photoId): ?array {
     try {
         $stmt = $pdo->prepare(<<<'SQL'
-            SELECT id, public_token, original_filename, price_pence, width, height,
-                   view_count, created_at, camera_make, camera_model, description
-            FROM photos WHERE id = ? AND status = 'live'
+            SELECT p.id, p.public_token, p.original_filename,
+                   COALESCE(p.price_pence, e.price_single_pence) AS price_pence,
+                   p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model, p.description
+            FROM photos p
+            JOIN events e ON p.event_id = e.id
+            WHERE p.id = ? AND p.status = 'live'
         SQL);
         $stmt->execute([$photoId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
