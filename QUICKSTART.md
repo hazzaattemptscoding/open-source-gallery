@@ -8,10 +8,13 @@ git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
 git checkout claude/plugin-skill-setup-y9v6kx
 
-# 2. Start (requires Docker)
+# 2. Verify environment (optional but recommended)
+php verify-setup.php
+
+# 3. Start (requires Docker)
 docker-compose up
 
-# 3. Open
+# 4. Open
 http://localhost:8080/admin/setup
 ```
 
@@ -26,6 +29,9 @@ cd ~/Applications/MAMP/htdocs
 git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
 bash setup.sh
+
+# Verify environment setup
+php verify-setup.php
 ```
 
 Then:
