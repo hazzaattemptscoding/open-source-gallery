@@ -42,7 +42,7 @@ function validate_api_key(PDO $pdo, string $providedKey): ?array {
         $key = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($key) {
-            $stmt = $pdo->prepare('UPDATE api_keys SET last_used_at = NOW() WHERE id = ?');
+            $stmt = $pdo->prepare('UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?');
             $stmt->execute([$key['id']]);
         }
 

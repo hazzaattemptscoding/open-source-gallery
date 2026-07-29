@@ -29,7 +29,7 @@ function get_revenue_trend(
                 AVG(total_pence) as avg_order_value
             FROM orders
             WHERE status = 'paid'
-            AND created_at > DATE_SUB(NOW(), INTERVAL ? DAY)
+            AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY)
             GROUP BY period
             ORDER BY period ASC
         SQL);
@@ -133,7 +133,7 @@ function get_conversion_metrics(PDO $pdo, int $days = 30): array {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT COUNT(*) as total_orders
             FROM orders
-            WHERE status = 'paid' AND created_at > DATE_SUB(NOW(), INTERVAL ? DAY)
+            WHERE status = 'paid' AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY)
         SQL);
         $stmt->execute([$days]);
         $orders = $stmt->fetch(PDO::FETCH_ASSOC)['total_orders'] ?? 0;
@@ -176,7 +176,7 @@ function get_analytics_summary(PDO $pdo): array {
                 SUM(total_pence) as revenue,
                 COUNT(*) as orders
             FROM orders
-            WHERE status = 'paid' AND created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
+            WHERE status = 'paid' AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
         SQL);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         $stats['last_30_days_revenue'] = (int)($row['revenue'] ?? 0);

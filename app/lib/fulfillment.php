@@ -24,7 +24,7 @@ function create_fulfillment_job(PDO $pdo, int $orderId, string $macsAddress = ''
 
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, run_after)
-        VALUES (?, ?, ?, NOW())
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     ');
 
     return $stmt->execute([
@@ -42,7 +42,7 @@ function create_fulfillment_job(PDO $pdo, int $orderId, string $macsAddress = ''
  * Called by the poller after sending magic packet to NAS.
  */
 function mark_wol_sent(PDO $pdo, int $jobId): bool {
-    $stmt = $pdo->prepare('UPDATE jobs SET wol_sent_at = NOW() WHERE id = ? AND type = ?');
+    $stmt = $pdo->prepare('UPDATE jobs SET wol_sent_at = CURRENT_TIMESTAMP WHERE id = ? AND type = ?');
     return $stmt->execute([$jobId, 'fulfillment']);
 }
 
@@ -51,7 +51,7 @@ function mark_wol_sent(PDO $pdo, int $jobId): bool {
  * Called by cron after detecting files pushed via SFTP.
  */
 function mark_fulfilled(PDO $pdo, int $jobId): bool {
-    $stmt = $pdo->prepare('UPDATE jobs SET status = ?, fulfilled_at = NOW() WHERE id = ? AND type = ?');
+    $stmt = $pdo->prepare('UPDATE jobs SET status = ?, fulfilled_at = CURRENT_TIMESTAMP WHERE id = ? AND type = ?');
     return $stmt->execute(['fulfilled', $jobId, 'fulfillment']);
 }
 
@@ -70,8 +70,8 @@ function check_stalled_fulfillment_jobs(PDO $pdo, array $config): void {
         FROM jobs
         WHERE type = ? AND status IN (?, ?)
         AND (
-            (wol_sent_at IS NULL AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE))
-            OR (wol_sent_at IS NOT NULL AND fulfilled_at IS NULL AND wol_sent_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE))
+            (wol_sent_at IS NULL AND created_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 15 MINUTE))
+            OR (wol_sent_at IS NOT NULL AND fulfilled_at IS NULL AND wol_sent_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 15 MINUTE))
         )
         AND alert_sent_at IS NULL
     ');
@@ -84,7 +84,7 @@ function check_stalled_fulfillment_jobs(PDO $pdo, array $config): void {
 
         send_fulfillment_alert_email($adminEmail, $config, $orderId, $job['id']);
 
-        $updateStmt = $pdo->prepare('UPDATE jobs SET alert_sent_at = NOW() WHERE id = ?');
+        $updateStmt = $pdo->prepare('UPDATE jobs SET alert_sent_at = CURRENT_TIMESTAMP WHERE id = ?');
         $updateStmt->execute([$job['id']]);
     }
 }

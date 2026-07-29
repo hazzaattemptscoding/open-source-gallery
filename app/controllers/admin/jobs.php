@@ -22,8 +22,8 @@ function admin_jobs_run_controller(PDO $pdo, array $config): void {
     while ((microtime(true) - $startTime) < $budget) {
         $stmt = $pdo->prepare('
             UPDATE jobs
-            SET status = ?, locked_at = NOW()
-            WHERE status = ? AND run_after <= NOW()
+            SET status = ?, locked_at = CURRENT_TIMESTAMP
+            WHERE status = ? AND run_after <= CURRENT_TIMESTAMP
             ORDER BY id ASC
             LIMIT 1
         ');

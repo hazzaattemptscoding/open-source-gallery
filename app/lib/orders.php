@@ -77,7 +77,7 @@ function update_order_stripe_ids(PDO $pdo, int $orderId, string $checkoutId, ?st
 }
 
 function mark_order_paid(PDO $pdo, int $orderId): void {
-    $stmt = $pdo->prepare('UPDATE orders SET status = ?, paid_at = NOW() WHERE id = ?');
+    $stmt = $pdo->prepare('UPDATE orders SET status = ?, paid_at = CURRENT_TIMESTAMP WHERE id = ?');
     $stmt->execute(['paid', $orderId]);
 
     // Queue email and zip-building jobs
@@ -98,7 +98,7 @@ function get_order_by_checkout_id(PDO $pdo, string $checkoutId): ?array {
 function queue_job(PDO $pdo, string $type, array $payload): void {
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, run_after)
-        VALUES (?, ?, ?, NOW())
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     ');
     $stmt->execute([$type, json_encode($payload), 'pending']);
 }

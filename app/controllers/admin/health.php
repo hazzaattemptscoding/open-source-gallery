@@ -249,7 +249,7 @@ function get_quick_stats(PDO $pdo): array {
         $stmt = $pdo->query(<<<'SQL'
             SELECT COUNT(*) as count
             FROM orders
-            WHERE status = 'completed' AND created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)
+            WHERE status = 'completed' AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)
         SQL);
         $stats['orders_24h'] = (int)$stmt->fetchColumn();
 
@@ -257,7 +257,7 @@ function get_quick_stats(PDO $pdo): array {
         $stmt = $pdo->query(<<<'SQL'
             SELECT COUNT(*) as count
             FROM photos
-            WHERE created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)
+            WHERE created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)
         SQL);
         $stats['photos_24h'] = (int)$stmt->fetchColumn();
 

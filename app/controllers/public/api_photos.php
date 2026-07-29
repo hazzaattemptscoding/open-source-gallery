@@ -104,7 +104,7 @@ function public_api_photo_view_controller(PDO $pdo, array $config): void {
     // This keeps the API response fast even under high view traffic.
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, run_after)
-        VALUES (?, ?, ?, NOW())
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     ');
     $stmt->execute([
         'view_count',

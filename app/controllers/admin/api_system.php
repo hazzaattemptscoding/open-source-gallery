@@ -336,7 +336,7 @@ function api_batch_reprocess_derivatives(PDO $pdo, array $input): void {
     foreach ($photoIds as $photoId) {
         $stmt = $pdo->prepare('
             INSERT IGNORE INTO jobs (type, payload, status, run_after)
-            VALUES (?, ?, ?, NOW())
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             'derivative',

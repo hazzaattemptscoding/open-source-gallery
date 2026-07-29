@@ -63,7 +63,7 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
     // Queue a cleanup job to delete the 1600px derivative after 7 days to save space
     $pdo->prepare('
         INSERT INTO jobs (type, payload, run_after, status)
-        VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY), ?)
+        VALUES (?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY), ?)
     ')->execute(['cleanup', json_encode(['photo_id' => $photoId]), 'pending']);
 
     return true;

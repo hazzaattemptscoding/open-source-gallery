@@ -549,7 +549,7 @@ function batch_reprocess_derivatives(PDO $pdo): void {
     foreach ($photoIds as $photoId) {
         $stmt = $pdo->prepare('
             INSERT IGNORE INTO jobs (type, payload, status, run_after)
-            VALUES (?, ?, ?, NOW())
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             'derivative',
@@ -606,7 +606,7 @@ function handle_health(PDO $pdo, array $args): void {
     $checks[] = [$failed > 0 ? '⚠️  Failed jobs' : '✅ Failed jobs', number_format($failed)];
 
     // Pending jobs
-    $stmt = $pdo->query('SELECT COUNT(*) FROM jobs WHERE status = "pending" AND locked_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE)');
+    $stmt = $pdo->query('SELECT COUNT(*) FROM jobs WHERE status = "pending" AND locked_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE)');
     $stuck = $stmt->fetchColumn();
     $checks[] = [$stuck > 0 ? '⚠️  Stuck jobs' : '✅ Stuck jobs', number_format($stuck)];
 

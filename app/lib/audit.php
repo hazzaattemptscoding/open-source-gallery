@@ -15,7 +15,7 @@ function audit_log(PDO $pdo, string $actor, string $action, ?string $entityType 
 {
     $stmt = $pdo->prepare('
         INSERT INTO audit_log (actor, action, entity_type, entity_id, meta, ip, created_at)
-        VALUES (:actor, :action, :entity_type, :entity_id, :meta, :ip, NOW())
+        VALUES (:actor, :action, :entity_type, :entity_id, :meta, :ip, CURRENT_TIMESTAMP)
     ');
     $stmt->execute([
         'actor'       => $actor,

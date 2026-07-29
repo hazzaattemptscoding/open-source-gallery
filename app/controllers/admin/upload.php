@@ -313,7 +313,7 @@ function generate_public_token(): string {
 function queue_derivative_job(PDO $pdo, int $photoId): void {
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, attempts, run_after)
-        VALUES (?, ?, ?, 0, NOW())
+        VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
     ');
     $stmt->execute(['derivative', json_encode(['photo_id' => $photoId]), 'pending']);
 }

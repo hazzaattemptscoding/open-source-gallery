@@ -112,7 +112,7 @@ function send_email_direct(string $recipient, string $subject, string $bodyHtml,
  */
 function mark_email_sent(PDO $pdo, int $emailId): bool {
     try {
-        $stmt = $pdo->prepare('UPDATE emails SET status = ?, sent_at = NOW() WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE emails SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute(['sent', $emailId]);
     } catch (Throwable $e) {
         return false;

@@ -221,7 +221,7 @@ function cli_analytics_export(PDO $pdo, array $args): void {
     $stmt = $pdo->prepare(<<<'SQL'
         SELECT DATE(created_at) as date, COUNT(*) as orders, SUM(total_pence) as revenue
         FROM orders
-        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+        WHERE created_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY)
         GROUP BY DATE(created_at)
         ORDER BY date DESC
     SQL);

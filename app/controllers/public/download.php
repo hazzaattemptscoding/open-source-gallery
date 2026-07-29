@@ -99,7 +99,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     }
 
     // Record download
-    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = NOW() WHERE id = ?');
+    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE id = ?');
     $stmt->execute([$downloadLink['id']]);
 
     audit_log($pdo, 'public', 'download', 'order', $orderId, [

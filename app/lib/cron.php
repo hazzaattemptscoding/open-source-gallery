@@ -22,8 +22,8 @@ function run_cron_drain(PDO $pdo): void {
     while ((microtime(true) - $startTime) < $budget) {
         $stmt = $pdo->prepare('
             UPDATE jobs
-            SET status = ?, locked_at = NOW(), attempts = attempts + 1
-            WHERE status = ? AND run_after <= NOW() AND (locked_at IS NULL OR locked_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+            SET status = ?, locked_at = CURRENT_TIMESTAMP, attempts = attempts + 1
+            WHERE status = ? AND run_after <= CURRENT_TIMESTAMP AND (locked_at IS NULL OR locked_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE))
             ORDER BY id ASC
             LIMIT 1
         ');
@@ -68,7 +68,7 @@ function run_cron_drain(PDO $pdo): void {
             $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['failed', $jobId]);
         } else {
             $backoff = min(3600, (2 ** $attempts) * 60);
-            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = DATE_ADD(NOW(), INTERVAL ? SECOND) WHERE id = ?')
+            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND) WHERE id = ?')
                 ->execute(['pending', $backoff, $jobId]);
         }
     }

@@ -29,7 +29,7 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
     $stmt = $pdo->prepare(<<<SQL
         INSERT INTO photo_tags (photo_id, kart_number, driver_name, class)
         VALUES $placeholders
-        ON DUPLICATE KEY UPDATE updated_at = NOW()
+        ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
     SQL);
 
     return $stmt->execute($params) ? $stmt->rowCount() : 0;
