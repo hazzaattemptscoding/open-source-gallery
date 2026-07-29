@@ -80,7 +80,7 @@ function admin_export_orders_controller(PDO $pdo, array $config): void {
 
     fclose($output);
 
-    audit_log($pdo, 'export_orders', current_admin_id(), 'Exported orders to CSV');
+    audit_log($pdo, 'admin', 'export_orders', 'orders', null, null, client_ip());
 }
 
 function admin_export_photos_controller(PDO $pdo, array $config): void {
@@ -153,7 +153,7 @@ function admin_export_photos_controller(PDO $pdo, array $config): void {
 
     fclose($output);
 
-    audit_log($pdo, 'export_photos', current_admin_id(), 'Exported photos to CSV');
+    audit_log($pdo, 'admin', 'export_photos', 'photos', null, null, client_ip());
 }
 
 function admin_export_customers_controller(PDO $pdo, array $config): void {
@@ -209,7 +209,7 @@ function admin_export_customers_controller(PDO $pdo, array $config): void {
 
     fclose($output);
 
-    audit_log($pdo, 'export_customers', current_admin_id(), 'Exported customer data to CSV');
+    audit_log($pdo, 'admin', 'export_customers', 'orders', null, null, client_ip());
 }
 
 function admin_export_events_controller(PDO $pdo, array $config): void {
@@ -271,5 +271,5 @@ function admin_export_events_controller(PDO $pdo, array $config): void {
 
     fclose($output);
 
-    audit_log($pdo, 'export_events', current_admin_id(), 'Exported events to CSV');
+    audit_log($pdo, 'admin', 'export_events', 'events', null, null, client_ip());
 }
