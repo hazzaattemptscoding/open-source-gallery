@@ -52,7 +52,14 @@ cd open-source-gallery
 php install.php
 ```
 
-The interactive installer will set up everything: database, config, directories, and tell you where to go next.
+The interactive installer will set up everything: database, config, and directories.
+
+Then:
+1. Visit the URL it gives you → `/admin/setup`
+2. Create your admin account
+3. Go to Settings and add your Stripe keys (no config file editing needed)
+4. Configure email (SMTP or mail() — see [docs/EMAIL.md](docs/EMAIL.md))
+5. Start uploading photos
 
 **Or use Docker (fastest):**
 
@@ -62,12 +69,9 @@ cd open-source-gallery
 docker-compose up
 ```
 
-Then:
-1. Visit http://localhost:8080/admin/setup
-2. Create your admin account
-3. Start uploading photos
+Visit http://localhost:8080 and follow the same steps as above.
 
-See [QUICKSTART.md](QUICKSTART.md) and [INSTALL.md](INSTALL.md) for details.
+See [QUICKSTART.md](QUICKSTART.md) and [INSTALL.md](INSTALL.md) for detailed options.
 
 ## Architecture
 
@@ -170,7 +174,7 @@ Contributions welcome! Please:
 A: If it fits the design goals (simple, self-hosted, minimal dependencies), yes. Open an issue to discuss.
 
 **Q: What about email delivery?**  
-A: Receipt emails are queued but not implemented. Plug in your mail service (PHP's `mail()`, SendGrid, etc.) in `app/lib/cron.php:process_email_job()`.
+A: Professional HTML emails are sent automatically after orders. Set up via admin Settings page (no coding required): configure SMTP (Gmail, SendGrid, AWS SES, etc.) or use your server's `mail()`. See [docs/EMAIL.md](docs/EMAIL.md) for provider setup.
 
 **Q: How many photos can I host?**  
 A: As many as your storage allows. 400/800px derivatives are kept forever; 1600px deleted after 7 days. A typical 5MP photo takes ~400KB hires + 200KB derivatives.

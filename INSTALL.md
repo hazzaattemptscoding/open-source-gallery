@@ -151,13 +151,22 @@ This checks everything and tells you what needs fixing.
    - Set up two-factor authentication when prompted
 
 8. **Stripe setup (for payments):**
-   - Go to Stripe Dashboard
+   
+   **Easiest:** Use the admin Settings page (no file editing required):
+   - Log in to `/admin`
+   - Click "Settings" in the Configuration section
    - Get test keys: https://dashboard.stripe.com/test/apikeys
-   - Paste into `config/config.php`: `stripe.publishable_key` and `stripe.secret_key`
-   - Create webhook: https://dashboard.stripe.com/test/webhooks
-   - URL: `https://yourdomain.com/webhook/stripe`
-   - Events: `checkout.session.completed`, `charge.refunded`
-   - Copy webhook secret to `config/config.php`: `stripe.webhook_secret`
+   - Paste Stripe keys into the form
+   - Save
+   
+   **Or manually** edit `config/config.php` (requires server access):
+   - Set `stripe.publishable_key` and `stripe.secret_key`
+   
+   **Webhook setup** (required for payment confirmation):
+   - Go to Stripe Dashboard → Webhooks
+   - Create webhook with URL: `https://yourdomain.com/webhook/stripe`
+   - Select events: `checkout.session.completed`, `charge.refunded`
+   - Copy webhook secret to admin Settings page (or `config/config.php` if editing manually)
 
 ---
 
@@ -176,7 +185,12 @@ This checks everything and tells you what needs fixing.
 - Ensure `public/media/d/` is writable
 
 ### "Email not sending"
-- Email is queued but not sent yet. It's a placeholder. Implement in `app/lib/email.php` with your mail service (SendGrid, AWS SES, etc.)
+- Check that email configuration is set:
+  - **Easy:** Log in to `/admin` → Settings → configure SMTP (or leave blank for mail())
+  - **Manual:** Edit `config/config.php` with SMTP details
+  - See [docs/EMAIL.md](docs/EMAIL.md) for provider setup (Gmail, SendGrid, AWS SES, Mailgun)
+- Test: Upload a test photo, complete a test order (use Stripe test card `4242 4242 4242 4242`)
+- Check spam folder and verify cron is running: `php verify-setup.php`
 
 ### Stripe webhooks not working
 - Verify webhook secret in `config/config.php` matches Stripe Dashboard
@@ -186,12 +200,22 @@ This checks everything and tells you what needs fixing.
 
 ## After Installation
 
+### First: Configure Stripe & Email (if not done during install)
+
 1. **Log in:** `/admin/login` (with the account you created)
-2. **Create an event:** Events → Create → fill in name, date, venue
-3. **Upload photos:** Upload → select photos → wait for processing
-4. **Publish event:** Go back to Events, toggle "Published" for your event
-5. **View gallery:** Visit home page (/) → see your event as a card → click to view photos
-6. **Add to cart:** Click the + button on photos → View Cart → Checkout with Stripe test card
+2. **Go to Settings:** Click "Settings" in the Configuration section
+3. **Add Stripe keys:** Get test keys from https://dashboard.stripe.com/test/apikeys
+4. **Configure email:** Set up SMTP or use `mail()` (see [docs/EMAIL.md](docs/EMAIL.md))
+5. **Set site details:** Gallery name, support email, currency
+
+### Then: Create & Publish Content
+
+1. **Create an event:** Events → Create → fill in name, date, venue
+2. **Upload photos:** Upload → select photos → wait for processing
+3. **Publish event:** Go back to Events, toggle "Published" for your event
+4. **View gallery:** Visit home page (/) → see your event as a card → click to view photos
+5. **Test checkout:** Click the + button on photos → View Cart → Checkout with Stripe test card `4242 4242 4242 4242`
+6. **Verify email:** Check inbox for order receipt email
 
 ---
 
