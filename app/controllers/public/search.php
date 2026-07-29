@@ -44,10 +44,16 @@ function public_search_controller(PDO $pdo, array $config): void {
         $filters['price_max'] = (int)$_GET['price_max'];
     }
     if (!empty($_GET['date_from'])) {
-        $filters['date_from'] = (string)$_GET['date_from'];
+        $dateFrom = validate_iso_date($_GET['date_from']);
+        if ($dateFrom) {
+            $filters['date_from'] = $dateFrom;
+        }
     }
     if (!empty($_GET['date_to'])) {
-        $filters['date_to'] = (string)$_GET['date_to'];
+        $dateTo = validate_iso_date($_GET['date_to']);
+        if ($dateTo) {
+            $filters['date_to'] = $dateTo;
+        }
     }
 
     // Perform search
