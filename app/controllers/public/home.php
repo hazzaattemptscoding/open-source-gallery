@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/view.php';
+require_once __DIR__ . '/../../lib/cache_headers.php';
 
 /**
  * Home page: published events, newest first. No filters, no auth —
@@ -19,6 +20,8 @@ function public_home_controller(PDO $pdo, array $config): void {
     ');
     $stmt->execute();
     $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    set_cache_headers('short');
 
     render(__DIR__ . '/../../views/public/home.php', compact('siteName', 'events'));
 }
