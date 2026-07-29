@@ -14,17 +14,22 @@ If you have Docker installed, this is all you need:
 docker-compose up
 ```
 
-Wait ~30 seconds for it to start. Then:
+Wait ~30 seconds for startup. Then:
 
 1. Open http://localhost:8080
 2. Go to http://localhost:8080/admin/setup
 3. Create your admin account
 4. Start uploading photos
 
-**That's it.** Database is created automatically. All folders created. Everything ready.
+**That's it.** Everything else is automatic:
+- Database is created and schema imported
+- Config is auto-generated from environment variables
+- Storage folders are created with correct permissions
+- Cron jobs run on the 5-minute schedule
 
 To stop: `Ctrl+C`  
-To restart: `docker-compose up`
+To restart: `docker-compose up`  
+To see logs: `docker-compose logs -f app`
 
 ---
 
@@ -99,7 +104,6 @@ If you're deploying to actual hosting (Bluehost, IONOS, GoDaddy, etc.):
    - Click Import
    - Choose `migrations/001_initial_schema.sql`
    - Click Import
-   - Repeat with `migrations/002_add_media_type.sql`
 
 5. **Set permissions:**
    - Create folder: `storage/hires`
@@ -139,7 +143,7 @@ If you're deploying to actual hosting (Bluehost, IONOS, GoDaddy, etc.):
 - **Check permissions:** Are `storage/` and `public/media/` writable by Apache?
 
 ### "MySQL command not found" on Mac
-- MAMP's MySQL isn't in your PATH. Use phpMyAdmin instead (http://localhost:8888/phpmyadmin) to create the database and import the migrations.
+- MAMP's MySQL isn't in your PATH. Use phpMyAdmin instead (http://localhost:8888/phpmyadmin) to create the database and import the initial schema (migrations/001_initial_schema.sql).
 
 ### Photos not showing / No derivatives
 - Check that `cron` is running: Look for recent `process_derivative_job` entries in the database (or check your hosting's cron logs)

@@ -9,6 +9,9 @@
 
 declare(strict_types=1);
 
+// Auto-generate config from environment variables if running in Docker
+require __DIR__ . '/bootstrap-config.php';
+
 $configPath = __DIR__ . '/../config/config.php';
 
 if (!is_file($configPath)) {

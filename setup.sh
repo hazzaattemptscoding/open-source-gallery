@@ -151,16 +151,11 @@ if [ ! -z "$MYSQL_CMD" ]; then
         $MYSQL_CMD -u root -proot -e "CREATE DATABASE IF NOT EXISTS photo_gallery CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null
         echo -e "${GREEN}✓ Database created${NC}"
 
-        # Import migrations
+        # Import schema
         echo "Importing schema..."
         if [ -f "migrations/001_initial_schema.sql" ]; then
             $MYSQL_CMD -u root -proot photo_gallery < migrations/001_initial_schema.sql
-            echo -e "${GREEN}✓ Imported 001_initial_schema.sql${NC}"
-        fi
-
-        if [ -f "migrations/002_add_media_type.sql" ]; then
-            $MYSQL_CMD -u root -proot photo_gallery < migrations/002_add_media_type.sql
-            echo -e "${GREEN}✓ Imported 002_add_media_type.sql${NC}"
+            echo -e "${GREEN}✓ Imported schema${NC}"
         fi
     else
         echo -e "${RED}✗ Could not connect to MySQL (root/root)${NC}"

@@ -90,6 +90,8 @@ CREATE TABLE photos (
     event_id           INT UNSIGNED NOT NULL,           -- denormalised (session implies it) for filter speed
     session_id         INT UNSIGNED NOT NULL,
     status             ENUM('processing','live','hidden','failed') NOT NULL DEFAULT 'processing',
+    media_type         ENUM('photo','video') NOT NULL DEFAULT 'photo',
+    file_extension     CHAR(3) CHARACTER SET ascii DEFAULT 'jpg' NOT NULL,
     original_filename  VARCHAR(255) NOT NULL,           -- display/reference only, never a path
     width              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     height             SMALLINT UNSIGNED NOT NULL DEFAULT 0,
@@ -102,6 +104,7 @@ CREATE TABLE photos (
     updated_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_photos_event_status (event_id, status),
     KEY idx_photos_session_status (session_id, status, sort_order),
+    KEY idx_photos_session_media (session_id, media_type, status, sort_order),
     CONSTRAINT fk_photos_event FOREIGN KEY (event_id) REFERENCES events (id)
         ON DELETE RESTRICT,
     CONSTRAINT fk_photos_session FOREIGN KEY (session_id) REFERENCES sessions (id)

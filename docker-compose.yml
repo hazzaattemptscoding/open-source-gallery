@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: mariadb:10.11
-    container_name: powermedia-db
+    container_name: gallery-db
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: photo_gallery
@@ -21,7 +21,7 @@ services:
 
   app:
     build: .
-    container_name: powermedia-app
+    container_name: gallery-app
     depends_on:
       db:
         condition: service_healthy
@@ -30,10 +30,16 @@ services:
     volumes:
       - .:/var/www/html
     environment:
+      # Database connection (auto-used by bootstrap-config.php)
       MYSQL_HOST: db
+      MYSQL_PORT: 3306
       MYSQL_DATABASE: photo_gallery
       MYSQL_USER: gallery
       MYSQL_PASSWORD: gallery
+      # Site configuration (optional; edit in /admin/setup after first login)
+      GALLERY_NAME: "Photo Gallery"
+      GALLERY_BASE_URL: "http://localhost:8080"
+      GALLERY_CURRENCY: "GBP"
     working_dir: /var/www/html
 
 volumes:
