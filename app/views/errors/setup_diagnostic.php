@@ -184,9 +184,18 @@
                 </div>
 
                 <div class="step">
-                    <h3><span class="step-number">3</span>Run the installer</h3>
-                    <p>The installer will create the database and tables automatically:</p>
-                    <div class="code-block">php install.php</div>
+                    <h3><span class="step-number">3</span>Choose your setup method</h3>
+                    <p style="margin-bottom: 16px;">Run one of these commands:</p>
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <p style="font-weight: 500; margin-bottom: 8px;">Easiest (if Docker is installed):</p>
+                            <div class="code-block">docker-compose up</div>
+                        </div>
+                        <div>
+                            <p style="font-weight: 500; margin-bottom: 8px;">Or use the installer:</p>
+                            <div class="code-block">php install.php</div>
+                        </div>
+                    </div>
                 </div>
 
                 <p>

@@ -181,8 +181,22 @@ try {
     }
 
 } catch (PDOException $e) {
-    error("Database connection failed: " . $e->getMessage() . NEWLINE .
-          "Check credentials and try again.");
+    warning("Database connection failed: " . $e->getMessage());
+    echo NEWLINE;
+    echo color("Troubleshooting:", 'bold') . NEWLINE;
+    echo "1. Make sure MySQL/MariaDB is running" . NEWLINE;
+    echo "   On Mac: brew services start mysql" . NEWLINE;
+    echo "   On Linux: sudo systemctl start mysql" . NEWLINE;
+    echo NEWLINE;
+    echo "2. Verify your credentials:" . NEWLINE;
+    echo "   Host: $dbHost (localhost usually means local machine)" . NEWLINE;
+    echo "   Port: $dbPort (3306 is standard)" . NEWLINE;
+    echo "   User: $dbUser" . NEWLINE;
+    echo NEWLINE;
+    echo "3. Or use Docker instead (easiest):" . NEWLINE;
+    echo "   docker-compose up" . NEWLINE;
+    echo NEWLINE;
+    error("Installation requires a working database connection.");
 }
 
 // ============================================================================
