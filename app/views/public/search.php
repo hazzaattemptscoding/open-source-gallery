@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Search — <?= e($siteName) ?></title>
+<title>Search: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 .search-container {
@@ -22,22 +22,32 @@
     flex: 1;
     padding: 0.75rem;
     font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+}
+
+.search-form input:focus {
+    outline: 2px solid var(--text);
+    outline-offset: -1px;
 }
 
 .search-form button {
     padding: 0.75rem 1.5rem;
-    background: #000;
-    color: #fff;
+    background: var(--text);
+    color: var(--bg);
     border: none;
-    border-radius: 4px;
+    border-radius: 0;
     cursor: pointer;
     font-weight: 500;
+    transition: background 0.2s ease-out;
 }
 
-.search-form button:hover {
-    background: #333;
+.search-form button:active {
+    transform: scale(0.98);
+    transition: transform 160ms ease-out;
 }
 
 .search-layout {
@@ -47,9 +57,10 @@
 }
 
 .search-sidebar {
-    background: #f5f5f5;
+    background: var(--bg-alt);
     padding: 1.5rem;
-    border-radius: 4px;
+    border-radius: 0;
+    border: 1px solid var(--border);
     max-height: fit-content;
 }
 
@@ -62,7 +73,7 @@
     font-weight: 600;
     text-transform: uppercase;
     margin-bottom: 1rem;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .filter-list {
@@ -80,14 +91,17 @@
     align-items: center;
     cursor: pointer;
     font-size: 0.9rem;
+    color: var(--text);
 }
 
 .filter-list input[type="checkbox"] {
     margin-right: 0.5rem;
+    cursor: pointer;
+    accent-color: var(--text);
 }
 
 .filter-list .count {
-    color: #999;
+    color: var(--text-muted);
     font-size: 0.85rem;
     margin-left: auto;
 }
@@ -99,23 +113,22 @@
 }
 
 .search-result {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0;
     overflow: hidden;
-    transition: transform 0.2s;
+    transition: box-shadow 0.2s ease-out;
 }
 
 .search-result:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .search-result-image {
     width: 100%;
     aspect-ratio: 1;
     object-fit: cover;
-    background: #f0f0f0;
+    background: var(--bg-alt);
 }
 
 .search-result-info {
@@ -131,27 +144,29 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    color: var(--text);
 }
 
 .search-result-meta {
     font-size: 0.75rem;
-    color: #999;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
 
 .search-result-price {
     font-size: 1rem;
     font-weight: 600;
+    color: var(--text);
 }
 
 .search-no-results {
     text-align: center;
     padding: 3rem;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .search-no-results h2 {
-    color: #333;
+    color: var(--text);
     margin-bottom: 1rem;
 }
 
@@ -161,25 +176,26 @@
     gap: 0.5rem;
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border);
 }
 
 .pagination a, .pagination span {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: 0;
     text-decoration: none;
-    color: #333;
+    color: var(--text);
+    transition: background-color 0.2s ease-out;
 }
 
 .pagination a:hover {
-    background: #f0f0f0;
+    background: var(--bg-alt);
 }
 
 .pagination .current {
-    background: #000;
-    color: #fff;
-    border-color: #000;
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
 }
 
 @media (max-width: 768px) {
