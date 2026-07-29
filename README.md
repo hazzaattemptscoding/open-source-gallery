@@ -18,9 +18,11 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 ### For Customers
 
 - **No accounts required** — guest checkout via Stripe
-- **Shopping cart** — lightweight, signed cookie-based (prices always from DB)
+- **Shopping cart** — lightweight, signed cookie-based (prices always from DB); prevents duplicate items
+- **Volume discounts** — automatic discounts on photo packages (e.g., 10+ photos = 15% off)
 - **Instant delivery** — download clean (unwatermarked) originals immediately after purchase
-- **Download links** — time-limited, per-customer download limits, audit-logged
+- **Download links** — time-limited, per-customer download limits, cryptographically signed, audit-logged
+- **Email receipts** — automatic order confirmation with download link via email
 
 ### For Store Owners
 
@@ -32,45 +34,44 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 
 ## Design Philosophy
 
-**Premium editorial aesthetic.** White and black only, minimal, generous whitespace. No gradients, no decorative elements. Maximizes focus on photographs.
+**Premium dark aesthetic.** Pixieset-inspired design with dark backgrounds, compact layouts, and full-bleed images. Maximizes visual impact while maintaining editorial clarity. Responsive across desktop, tablet, and mobile.
 
 **No vendor lock-in.** Plain PHP, MySQL, vanilla HTML/CSS/JS. Runs on any shared hosting (IONOS, GoDaddy, etc.) with PHP 8.2+. No Docker, no build step, no daemons.
 
-**Security by design.** Argon2id passwords, CSRF tokens, XSS protection, SQL injection prevention via prepared statements. Stripe webhooks validated with HMAC-SHA256. Download tokens cryptographically signed.
+**Security by design.** Argon2id passwords, Stripe webhook HMAC-SHA256 validation, cryptographically signed download tokens, OWASP Top 10 mitigations. See [docs/SECURITY.md](docs/SECURITY.md) for full audit.
 
-**Shared hosting friendly.** ~200GB storage limit? Supported (with 7-day image tiering). No CLI daemons? URL-based cron fallback. Database backup? Use standard MySQL tools.
+**Shared hosting friendly.** ~200GB storage limit? Supported (with 7-day image tiering). No CLI daemons? URL-based cron fallback. Database backup? Use standard MySQL tools. Email delivery via mail() or SMTP.
 
 ## Quick Start
 
+**Run this anywhere (Mac, Linux, Windows, hosting):**
+
 ```bash
-# 1. Clone and configure
-git clone https://github.com/yourusername/open-source-gallery.git
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
-cp config/config.template.php config/config.php
-# Edit config.php with your Stripe keys and MySQL credentials
-
-# 2. Set up database
-mysql photo_gallery < migrations/001_initial_schema.sql
-
-# 3. Create directories
-mkdir -p storage/hires storage/zips public/media/d
-chmod 755 storage public
-
-# 4. Create admin account
-php app/cli/create-admin.php your@email.com
-
-# 5. Set up cron
-echo "*/5 * * * * php /path/to/app/cron/run.php" | crontab -
-
-# 6. Configure Apache
-# Copy .htaccess (provided) to public/
-# Point DocumentRoot to public/
-# Enable mod_rewrite
-
-# 7. Open https://yoursite.com/admin/login and start uploading!
+php install.php
 ```
 
-For detailed setup instructions, see [INSTALL.md](INSTALL.md).
+The interactive installer will set up everything: database, config, and directories.
+
+Then:
+1. Visit the URL it gives you → `/admin/setup`
+2. Create your admin account
+3. Go to Settings and add your Stripe keys (no config file editing needed)
+4. Configure email (SMTP or mail() — see [docs/EMAIL.md](docs/EMAIL.md))
+5. Start uploading photos
+
+**Or use Docker (fastest):**
+
+```bash
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+docker-compose up
+```
+
+Visit http://localhost:8080 and follow the same steps as above.
+
+See [QUICKSTART.md](QUICKSTART.md) and [INSTALL.md](INSTALL.md) for detailed options.
 
 ## Architecture
 
@@ -85,10 +86,11 @@ See [docs/architecture.md](docs/architecture.md) for:
 
 1. ✅ **Architecture + schema** — Database design, migrations, security requirements
 2. ✅ **Admin auth, CRUD, upload, tagging, derivatives** — Login, TOTP 2FA, photo management, auto-tagging, image processing
-3. ✅ **Public gallery** — Hero layout, photo grid, video section, search/filtering
-4. ✅ **Cart, Stripe, delivery** — Shopping cart, Stripe Checkout, webhook handling, download delivery with download limits
-5. ✅ **Stats + hardening** — Revenue reporting, rate limiting, audit logging, input validation
-6. 🚧 **Open source release prep** — Config-driven branding, documentation, LICENSE, TRADEMARK
+3. ✅ **Public gallery** — Dark theme, hero layout, photo grid, video section, search/filtering
+4. ✅ **Cart, Stripe, delivery** — Shopping cart, volume discounts, Stripe Checkout, webhook handling, download delivery
+5. ✅ **Stats + hardening** — Revenue dashboard, order history, rate limiting, audit logging, security headers
+6. ✅ **Open source release prep** — Config-driven branding, documentation, LICENSE, TRADEMARK, SECURITY audit
+7. ✅ **Production readiness** — Email templates, admin settings UI, data export, audit logs, session management, deployment guide
 
 ## Technology Stack
 
@@ -172,7 +174,7 @@ Contributions welcome! Please:
 A: If it fits the design goals (simple, self-hosted, minimal dependencies), yes. Open an issue to discuss.
 
 **Q: What about email delivery?**  
-A: Receipt emails are queued but not implemented. Plug in your mail service (PHP's `mail()`, SendGrid, etc.) in `app/lib/cron.php:process_email_job()`.
+A: Professional HTML emails are sent automatically after orders. Set up via admin Settings page (no coding required): configure SMTP (Gmail, SendGrid, AWS SES, etc.) or use your server's `mail()`. See [docs/EMAIL.md](docs/EMAIL.md) for provider setup.
 
 **Q: How many photos can I host?**  
 A: As many as your storage allows. 400/800px derivatives are kept forever; 1600px deleted after 7 days. A typical 5MP photo takes ~400KB hires + 200KB derivatives.
@@ -183,11 +185,21 @@ A: Download links and audit logs contain customer IPs for security. Implement da
 **Q: Can I run this on Heroku / Docker / etc?**  
 A: Not the intended use case. This is built for shared hosting (Apache + cron). You *can* containerize it if you want, but you'd lose the simplicity benefit.
 
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** — Get up and running in minutes
+- **[INSTALL.md](INSTALL.md)** — Detailed installation for all platforms
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Pre-launch checklist and go-live guide
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — Common issues and solutions
+- **[docs/EMAIL.md](docs/EMAIL.md)** — Email configuration (SMTP, Gmail, SendGrid, AWS SES, Mailgun)
+- **[docs/SECURITY.md](docs/SECURITY.md)** — Security audit and hardening
+- **[docs/architecture.md](docs/architecture.md)** — Technical design and database schema
+
 ## Support
 
-- **Issue tracker:** GitHub Issues
-- **Discussions:** GitHub Discussions
-- **Docs:** [INSTALL.md](INSTALL.md), [docs/architecture.md](docs/architecture.md)
+- **Issue tracker:** [GitHub Issues](https://github.com/hazzaattemptscoding/open-source-gallery/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/hazzaattemptscoding/open-source-gallery/discussions)
+- **Stuck?** Check [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) first—it covers 99% of issues
 
 ---
 

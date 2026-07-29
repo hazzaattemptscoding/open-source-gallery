@@ -12,8 +12,7 @@ require_once __DIR__ . '/../../lib/audit.php';
  */
 function public_download_controller(PDO $pdo, array $config, string $rawToken): void {
     $ip = get_client_ip();
-    $rateLimitKey = hash('sha256', "download:{$ip}");
-    if (!check_rate_limit($pdo, $rateLimitKey, 30)) {
+    if (!check_rate_limit($pdo, 'download', $ip, 3600, 30)) {
         http_response_code(429);
         echo 'Too many download attempts. Try again later.';
         return;
@@ -23,7 +22,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     $encodedHash = strtr(base64_encode($tokenHash), '+/', '-_');
 
     $stmt = $pdo->prepare('
-        SELECT id, order_id, expires_at, max_downloads, downloads_used
+        SELECT id, order_id, expires_at, max_downloads, download_count, revoked
         FROM download_links
         WHERE token_hash = ?
     ');
@@ -36,13 +35,19 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
+    if ((int)($downloadLink['revoked'] ?? 0) === 1) {
+        http_response_code(410);
+        echo 'Download link revoked';
+        return;
+    }
+
     if (strtotime($downloadLink['expires_at']) < time()) {
         http_response_code(410);
         echo 'Download link expired';
         return;
     }
 
-    if ($downloadLink['downloads_used'] >= $downloadLink['max_downloads']) {
+    if ((int)$downloadLink['download_count'] >= (int)$downloadLink['max_downloads']) {
         http_response_code(410);
         echo 'Download limit exceeded';
         return;
@@ -66,7 +71,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         }
 
         $stmt = $pdo->prepare('
-            SELECT id, event_id, public_token, original_filename FROM photos WHERE id = ?
+            SELECT id, event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?
         ');
         $stmt->execute([$photoId]);
         $photo = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -74,7 +79,8 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         if ($photo) {
             $eventId = (int)$photo['event_id'];
             $token = (string)$photo['public_token'];
-            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.jpg";
+            $ext = (string)($photo['file_extension'] ?? 'jpg');
+            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
 
             if (file_exists($filePath)) {
                 $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
@@ -93,7 +99,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     }
 
     // Record download
-    $stmt = $pdo->prepare('UPDATE download_links SET downloads_used = downloads_used + 1 WHERE id = ?');
+    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = NOW() WHERE id = ?');
     $stmt->execute([$downloadLink['id']]);
 
     audit_log($pdo, 'public', 'download', 'order', $orderId, [

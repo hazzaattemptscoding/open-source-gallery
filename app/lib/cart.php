@@ -80,16 +80,20 @@ function cart_save(array $config, array $items): void {
     ]);
 }
 
+/**
+ * Adds item to cart, preventing duplicates (no user should add the same photo twice).
+ * Returns array with 'items' and 'duplicate' bool flag.
+ */
 function cart_add(array $config, string $type, int $id): array {
     $items = cart_get($config);
     foreach ($items as $item) {
         if ($item['type'] === $type && $item['id'] === $id) {
-            return $items;
+            return ['items' => $items, 'duplicate' => true];
         }
     }
     $items[] = ['type' => $type, 'id' => $id];
     cart_save($config, $items);
-    return $items;
+    return ['items' => $items, 'duplicate' => false];
 }
 
 function cart_remove(array $config, string $type, int $id): array {
@@ -107,11 +111,16 @@ function cart_remove(array $config, string $type, int $id): array {
  * the event still offers that price tier) and prices it fresh — the cart
  * cookie is never trusted for anything but which IDs are in it.
  *
- * @return array{lines: list<array<string,mixed>>, total_pence: int}
+ * Calculates volume discount based on number of photos. Discount is applied
+ * only at checkout time (not stored in cart), preventing reverse-engineering
+ * (user cannot add 10 photos, get discount, then remove 5).
+ *
+ * @return array{lines: list<array<string,mixed>>, total_pence: int, discount_pence: int, discount_percent: float}
  */
-function cart_price(PDO $pdo, array $items): array {
+function cart_price(PDO $pdo, array $items, array $config = []): array {
     $lines = [];
     $total = 0;
+    $photoCount = 0;
 
     foreach ($items as $item) {
         if ($item['type'] === 'photo') {
@@ -134,6 +143,7 @@ function cart_price(PDO $pdo, array $items): array {
                 'unit_price_pence' => $price,
             ];
             $total += $price;
+            $photoCount++;
         } elseif ($item['type'] === 'session_bundle') {
             $stmt = $pdo->prepare('
                 SELECT s.id, s.name, e.title AS event_title, e.price_session_pence
@@ -172,5 +182,26 @@ function cart_price(PDO $pdo, array $items): array {
         }
     }
 
-    return ['lines' => $lines, 'total_pence' => $total];
+    // Apply volume discount based on photo count (bundles don't count toward threshold)
+    $discountPercent = 0.0;
+    $discountPence = 0;
+    $discounts = $config['discounts'] ?? [];
+    if ($discountPence === 0 && !empty($discounts)) {
+        // Find highest applicable discount tier
+        foreach (array_keys($discounts) as $threshold) {
+            if ($photoCount >= $threshold) {
+                $discountPercent = (float)$discounts[$threshold];
+            }
+        }
+        if ($discountPercent > 0) {
+            $discountPence = (int)round($total * $discountPercent);
+        }
+    }
+
+    return [
+        'lines' => $lines,
+        'total_pence' => $total - $discountPence,
+        'discount_pence' => $discountPence,
+        'discount_percent' => $discountPercent,
+    ];
 }

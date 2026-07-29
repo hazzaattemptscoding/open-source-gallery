@@ -58,7 +58,7 @@ function webhook_stripe_controller(PDO $pdo, array $config): void {
         http_response_code(200);
         echo json_encode(['ok' => true]);
     } catch (Throwable $e) {
-        audit_log($pdo, 'webhook_error', ['error' => $e->getMessage()]);
+        audit_log($pdo, 'system', 'webhook_error', null, null, ['error' => $e->getMessage()]);
         http_response_code(500);
         echo json_encode(['error' => 'Processing failed']);
     }
@@ -99,11 +99,12 @@ function handle_charge_refunded(PDO $pdo, array $charge): void {
     }
 
     $isFullyRefunded = (bool)($charge['refunded'] ?? false);
+    $refundType = $isFullyRefunded ? 'full' : 'partial';
     $status = $isFullyRefunded ? 'refunded' : 'partial_refund';
 
     $stmt = $pdo->prepare('UPDATE orders SET status = ?, refunded_at = NOW() WHERE id = ?');
     $stmt->execute([$status, $orderId]);
 
     // Queue refund confirmation email
-    queue_job($pdo, 'email', ['order_id' => $orderId, 'type' => 'refund_confirmation']);
+    queue_job($pdo, 'email', ['order_id' => (int)$orderId, 'type' => 'refund', 'refund_type' => $refundType]);
 }

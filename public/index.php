@@ -11,13 +11,21 @@ declare(strict_types=1);
 require __DIR__ . '/../app/bootstrap.php';
 require __DIR__ . '/../app/lib/session.php';
 require __DIR__ . '/../app/lib/view.php';
+require __DIR__ . '/../app/lib/seeder.php';
+
+// Auto-seed test data on first run (dev-friendly)
+seed_test_data($pdo);
 
 session_start_secure();
 
+// Security headers (docs/architecture.md section 6)
 header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'");
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()');
+header('X-Permitted-Cross-Domain-Policies: none');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 
 $path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/', '/');
 if ($path === '') {
@@ -121,6 +129,61 @@ switch ($path) {
         require __DIR__ . '/../app/controllers/admin/upload_page.php';
         admin_upload_page_controller($pdo, $config);
         break;
+
+    case '/admin/stats':
+        require __DIR__ . '/../app/controllers/admin/stats.php';
+        admin_stats_controller($pdo, $config);
+        break;
+
+    case '/admin/orders':
+        require __DIR__ . '/../app/controllers/admin/orders.php';
+        admin_orders_controller($pdo, $config);
+        break;
+
+    case '/admin/settings':
+        require __DIR__ . '/../app/controllers/admin/settings.php';
+        admin_settings_controller($pdo, $config);
+        break;
+
+    case '/admin/export':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_page_controller($pdo, $config);
+        break;
+
+    case '/admin/audit-log':
+        require __DIR__ . '/../app/controllers/admin/audit_log.php';
+        admin_audit_log_controller($pdo, $config);
+        break;
+
+    case '/admin/my-sessions':
+        require __DIR__ . '/../app/controllers/admin/my_sessions.php';
+        admin_my_sessions_controller($pdo, $config);
+        break;
+
+    case '/admin/health':
+        require __DIR__ . '/../app/controllers/admin/health.php';
+        admin_health_check_controller($pdo, $config);
+        break;
+
+    case '/admin/export/orders':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_orders_controller($pdo, $config);
+        exit;
+
+    case '/admin/export/photos':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_photos_controller($pdo, $config);
+        exit;
+
+    case '/admin/export/customers':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_customers_controller($pdo, $config);
+        exit;
+
+    case '/admin/export/events':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_events_controller($pdo, $config);
+        exit;
 
     case '/admin/jobs/run':
         require __DIR__ . '/../app/controllers/admin/jobs.php';

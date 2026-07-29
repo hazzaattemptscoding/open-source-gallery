@@ -204,7 +204,7 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
 
     $eventId = (int)$session['event_id'];
     $tmpDir = __DIR__ . '/../../../storage/tmp/uploads/' . $fileId;
-    $assembledPath = $tmpDir . '/assembled.jpg';
+    $assembledPath = $tmpDir . '/assembled.tmp';
 
     if (!assemble_chunks($tmpDir, (int)$file['chunks_total'], $assembledPath)) {
         $pdo->prepare('UPDATE upload_files SET status = ?, error = ? WHERE id = ?')
@@ -239,6 +239,7 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
     $fileSize = (int)@filesize($assembledPath);
     $takenAt = extract_exif_taken_at($assembledPath);
     $originalFilename = (string)$file['client_name'];
+    $fileExtension = get_file_extension($assembledPath);
 
     $publicToken = generate_public_token();
     $photoDir = __DIR__ . '/../../../storage/hires/' . $eventId;
@@ -246,7 +247,7 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
         @mkdir($photoDir, 0700, true);
     }
 
-    $hiresPath = $photoDir . '/' . $publicToken . '.jpg';
+    $hiresPath = $photoDir . '/' . $publicToken . '.' . $fileExtension;
     if (!@rename($assembledPath, $hiresPath)) {
         @unlink($assembledPath);
         http_response_code(500);
@@ -255,10 +256,10 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
     }
 
     $stmt = $pdo->prepare('
-        INSERT INTO photos (public_token, event_id, session_id, status, original_filename, width, height, hires_size_bytes, taken_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO photos (public_token, event_id, session_id, status, original_filename, width, height, hires_size_bytes, taken_at, file_extension)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
-    $stmt->execute([$publicToken, $eventId, $sessionId, 'processing', $originalFilename, $width, $height, $fileSize, $takenAt]);
+    $stmt->execute([$publicToken, $eventId, $sessionId, 'processing', $originalFilename, $width, $height, $fileSize, $takenAt, $fileExtension]);
     $photoId = (int)$pdo->lastInsertId();
 
     $stmt = $pdo->prepare('UPDATE upload_files SET status = ?, photo_id = ? WHERE id = ?');

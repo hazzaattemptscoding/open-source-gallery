@@ -2,6 +2,22 @@
 declare(strict_types=1);
 
 /**
+ * Load image from file using GD, supporting both JPEG and PNG.
+ */
+function load_image_gd(string $inputPath) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo ? (string)finfo_file($finfo, $inputPath) : null;
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+
+    if ($mimeType === 'image/png') {
+        return imagecreatefrompng($inputPath);
+    }
+    return imagecreatefromjpeg($inputPath);
+}
+
+/**
  * Runtime-detects Imagick vs GD per docs/architecture.md section 1: shared
  * hosting can't be assumed to have either extension, so a build that hard-
  * depends on one is useless. Imagick is preferred when present (better
@@ -68,7 +84,7 @@ function apply_watermark_imagick(Imagick $image, array $settings): void {
 }
 
 function generate_derivative_gd(string $inputPath, string $outputPath, int $size, bool $addWatermark, array $watermarkSettings): void {
-    $image = imagecreatefromjpeg($inputPath);
+    $image = load_image_gd($inputPath);
     if (!$image) {
         throw new RuntimeException("Failed to load image: {$inputPath}");
     }

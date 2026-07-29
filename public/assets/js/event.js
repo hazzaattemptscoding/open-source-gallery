@@ -96,8 +96,15 @@ async function addToCart(type, id, btn) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type, id }),
     });
-    if (!response.ok) throw new Error('Failed to add');
     const data = await response.json();
+    if (!response.ok) {
+      if (data.error === 'Photo already in cart') {
+        alert('This photo is already in your cart.');
+      } else {
+        throw new Error(data.error || 'Failed to add');
+      }
+      return;
+    }
     document.getElementById('cartCount').textContent = data.count;
     if (btn) {
       btn.classList.add('added');
@@ -105,6 +112,7 @@ async function addToCart(type, id, btn) {
     }
   } catch (err) {
     console.error(err);
+    alert('Failed to add to cart. Please try again.');
   }
 }
 

@@ -34,8 +34,8 @@ function admin_attempt_login(PDO $pdo, string $email, string $password, ?string 
     // Per docs/architecture.md section 6: 5 attempts per 15 minutes, per IP
     // AND per account. Checked before touching the password hash so a
     // locked-out attempt doesn't cost an Argon2id verify either.
-    $ipOk = rate_limit_check($pdo, 'login', 'ip:' . $ip, 900, 5);
-    $accountOk = rate_limit_check($pdo, 'login', 'acct:' . $email, 900, 5);
+    $ipOk = check_rate_limit($pdo, 'login', 'ip:' . $ip, 900, 5);
+    $accountOk = check_rate_limit($pdo, 'login', 'acct:' . $email, 900, 5);
     if (!$ipOk || !$accountOk) {
         audit_log($pdo, 'public', 'login_rate_limited', 'admin_users', null, ['email' => $email], $ip);
         return ['ok' => false, 'reason' => 'rate_limited'];

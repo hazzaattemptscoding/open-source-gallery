@@ -49,14 +49,26 @@ return [
         'webhook_secret'  => '',
     ],
 
-    // Populated in the delivery build stage (receipts, download links).
+    // Email configuration. Leave host empty to use mail() (shared hosting default).
+    // For SMTP, fill in credentials. See docs/EMAIL.md for providers (Gmail, SendGrid, etc).
+    // If left empty, the server's mail() function is used (most shared hosts support this).
     'smtp' => [
-        'host'      => '',
-        'port'      => 587,
-        'user'      => '',
-        'pass'      => '',
-        'from_email' => '',
-        'from_name'  => '',
+        'host'       => '',              // 'smtp.gmail.com', 'smtp.sendgrid.net', etc. Leave empty for mail()
+        'port'       => 587,             // 587 (STARTTLS) or 465 (SSL/TLS)
+        'user'       => '',              // SMTP username (for Gmail, your email@gmail.com)
+        'pass'       => '',              // SMTP password (for Gmail, use App Password, not account password!)
+        'from_email' => 'noreply@example.com',  // Sender email (use your domain)
+        'from_name'  => 'Your Gallery',  // Sender name (shown in customer's email client)
+    ],
+
+    // Volume discounts: auto-applied at checkout based on number of photos.
+    // Example: 10+ photos = 15% off, 20+ photos = 20% off.
+    // Discount is calculated at checkout time from actual cart contents;
+    // cannot be reverse-engineered by adding items then removing them.
+    'discounts' => [
+        10 => 0.15,  // 10+ photos: 15% off
+        20 => 0.20,  // 20+ photos: 20% off
+        50 => 0.25,  // 50+ photos: 25% off
     ],
 
     'security' => [

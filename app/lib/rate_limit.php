@@ -3,56 +3,61 @@ declare(strict_types=1);
 
 /**
  * Fixed-window rate limiting using the rate_limits table.
- * Windows are 1-hour buckets, tracked by bucket key (IP/email/etc).
- * Requests within the limit succeed; exceeding the limit returns false.
+ * Each bucket/rl_key pair tracks requests in a time window starting at window_start.
+ * Once the window expires (60+ seconds passed), a new window begins.
+ *
+ * @param $pdo PDO instance
+ * @param $bucket Type of limit (e.g., 'login', 'checkout', 'download', 'totp')
+ * @param $rl_key Unique key within that bucket (e.g., 'ip', email, download_link_id)
+ * @param $window_seconds Duration of the time window in seconds (e.g., 900 for 15 minutes, 3600 for 1 hour)
+ * @param $max_hits Maximum hits allowed per window
+ * @return bool True if under limit, false if limit exceeded
  */
-function check_rate_limit(PDO $pdo, string $key, int $maxPerWindow): bool {
-    $window = date('Y-m-d H:00:00');
+function check_rate_limit(PDO $pdo, string $bucket, string $rl_key, int $window_seconds, int $max_hits): bool {
+    $now = new DateTime();
+    $windowStart = clone $now;
+    $windowStart->modify("-{$window_seconds} seconds");
 
     $stmt = $pdo->prepare('
-        SELECT count FROM rate_limits
-        WHERE bucket_key = ? AND window = ?
+        SELECT hits FROM rate_limits
+        WHERE bucket = ? AND rl_key = ? AND window_start > ?
+        LIMIT 1
     ');
-    $stmt->execute([$key, $window]);
+    $stmt->execute([$bucket, $rl_key, $windowStart->format('Y-m-d H:i:s')]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$row) {
         $stmt = $pdo->prepare('
-            INSERT INTO rate_limits (bucket_key, window, count)
-            VALUES (?, ?, 1)
+            INSERT INTO rate_limits (bucket, rl_key, window_start, hits)
+            VALUES (?, ?, ?, 1)
+            ON DUPLICATE KEY UPDATE
+              window_start = VALUES(window_start),
+              hits = 1
         ');
-        $stmt->execute([$key, $window]);
+        $stmt->execute([$bucket, $rl_key, $now->format('Y-m-d H:i:s')]);
         return true;
     }
 
-    $count = (int)$row['count'];
-    if ($count >= $maxPerWindow) {
+    $hits = (int)$row['hits'];
+    if ($hits >= $max_hits) {
         return false;
     }
 
     $stmt = $pdo->prepare('
-        UPDATE rate_limits SET count = count + 1
-        WHERE bucket_key = ? AND window = ?
+        UPDATE rate_limits SET hits = hits + 1
+        WHERE bucket = ? AND rl_key = ?
     ');
-    $stmt->execute([$key, $window]);
+    $stmt->execute([$bucket, $rl_key]);
 
     return true;
 }
 
 /**
- * Extract client IP, handling X-Forwarded-For header if present
- * (used by reverse proxies). Trusts the header only for 'self' proxies
- * configured in the app; otherwise uses REMOTE_ADDR.
+ * Get best-effort client IP. For security, trusts REMOTE_ADDR only —
+ * X-Forwarded-For is spoofable unless a trusted reverse proxy is configured.
+ * This app runs with Apache facing the internet directly, not behind a proxy.
+ * Use only REMOTE_ADDR for rate limiting and audit logging.
  */
 function get_client_ip(): string {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
-        if (!empty($ips)) {
-            $ip = $ips[0];
-        }
-    }
-
-    return $ip;
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
