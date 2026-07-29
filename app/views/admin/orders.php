@@ -12,7 +12,7 @@
 <header class="site-header">
   <a href="/admin" class="site-title"><?= e($siteName) ?></a>
   <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Logout</button>
+    <button type="submit">Log out</button>
   </form>
 </header>
 
