@@ -80,10 +80,7 @@ function mark_order_paid(PDO $pdo, int $orderId): void {
     $stmt = $pdo->prepare('UPDATE orders SET status = ?, paid_at = CURRENT_TIMESTAMP WHERE id = ?');
     $stmt->execute(['paid', $orderId]);
 
-    // Queue email and zip-building jobs
-    $stmt = $pdo->prepare('SELECT id FROM orders WHERE id = ?');
-    $stmt->execute([$orderId]);
-    if ($stmt->fetch(PDO::FETCH_ASSOC)) {
+    if ($stmt->rowCount() > 0) {
         queue_job($pdo, 'email', ['order_id' => $orderId, 'type' => 'receipt']);
         queue_job($pdo, 'zip_build', ['order_id' => $orderId]);
     }

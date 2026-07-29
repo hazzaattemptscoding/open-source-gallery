@@ -47,12 +47,6 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
-    if ((int)$downloadLink['download_count'] >= (int)$downloadLink['max_downloads']) {
-        http_response_code(410);
-        echo 'Download limit exceeded';
-        return;
-    }
-
     $orderId = (int)$downloadLink['order_id'];
     $items = get_order_items($pdo, $orderId);
 
@@ -112,9 +106,15 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
-    // Record download
-    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE id = ?');
+    // Atomically increment download count, but only if under the cap
+    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE id = ? AND download_count < max_downloads');
     $stmt->execute([$downloadLink['id']]);
+
+    if ($stmt->rowCount() === 0) {
+        http_response_code(410);
+        echo 'Download limit exceeded';
+        return;
+    }
 
     audit_log($pdo, 'public', 'download', 'order', $orderId, [
         'file_count' => count($files),
