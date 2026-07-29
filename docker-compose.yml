@@ -9,6 +9,8 @@ services:
       MYSQL_DATABASE: photo_gallery
       MYSQL_USER: gallery
       MYSQL_PASSWORD: gallery
+      # Speed up initial startup
+      MYSQL_INITDB_SKIP_TZINFO: 1
     ports:
       - "3306:3306"
     volumes:
@@ -18,6 +20,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+      start_period: 30s
+      interval: 10s
 
   app:
     build: .

@@ -24,18 +24,19 @@ If you have Docker installed, this is all you need:
 docker-compose up
 ```
 
-Wait ~30 seconds for startup. Then:
+Wait for "PowerMedia Gallery - Initializing..." message to complete (~30-60 seconds). Then:
 
 1. Open http://localhost:8080
 2. Go to http://localhost:8080/admin/setup
 3. Create your admin account
 4. Start uploading photos
 
-**That's it.** Everything else is automatic:
-- Database is created and schema imported
-- Config is auto-generated from environment variables
-- Storage folders are created with correct permissions
-- Cron jobs run on the 5-minute schedule
+**Completely automatic setup:**
+- Database created and schema imported automatically
+- Config (`config/config.php`) auto-generated from environment variables
+- Storage folders created with correct permissions
+- Database verified ready before Apache starts
+- No manual setup required
 
 To stop: `Ctrl+C`  
 To restart: `docker-compose up`  

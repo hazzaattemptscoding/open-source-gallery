@@ -54,11 +54,27 @@ $config = [
 ];
 
 // Ensure directory exists
-if (!is_dir(dirname($configPath))) {
-    @mkdir(dirname($configPath), 0700, true);
+$configDir = dirname($configPath);
+if (!is_dir($configDir)) {
+    if (!@mkdir($configDir, 0755, true)) {
+        fwrite(STDERR, "ERROR: Could not create {$configDir}. Check directory permissions.\n");
+        exit(1);
+    }
+}
+
+// Check directory is writable
+if (!is_writable($configDir)) {
+    fwrite(STDERR, "ERROR: Directory {$configDir} is not writable. Fix permissions with: chmod 755 {$configDir}\n");
+    exit(1);
 }
 
 // Write config file
 $configCode = "<?php\nreturn " . var_export($config, true) . ";\n";
-@file_put_contents($configPath, $configCode);
-@chmod($configPath, 0600);
+if (!@file_put_contents($configPath, $configCode)) {
+    fwrite(STDERR, "ERROR: Could not write {$configPath}. Check file permissions.\n");
+    exit(1);
+}
+
+if (!@chmod($configPath, 0600)) {
+    fwrite(STDERR, "WARNING: Could not set permissions on {$configPath}. File may be readable by other users.\n");
+}
