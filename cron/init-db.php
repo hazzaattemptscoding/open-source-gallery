@@ -14,15 +14,26 @@ echo "Database Initialization\n";
 echo "======================\n\n";
 
 try {
+    // Detect database driver
+    $dbDriver = $config['db']['driver'] ?? 'mysql';
+    echo "Database driver: " . ($dbDriver === 'sqlite' ? 'SQLite' : 'MySQL') . "\n\n";
+
     // Check if migrations table exists
-    $stmt = $pdo->query("SHOW TABLES LIKE 'migrations'");
-    $migrationsTableExists = (bool)$stmt->fetch();
+    if ($dbDriver === 'sqlite') {
+        $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='migrations'");
+        $migrationsTableExists = (bool)$stmt->fetch();
+    } else {
+        $stmt = $pdo->query("SHOW TABLES LIKE 'migrations'");
+        $migrationsTableExists = (bool)$stmt->fetch();
+    }
 
     if (!$migrationsTableExists) {
         echo "Migrations table not found. Importing initial schema...\n";
 
-        // Read and execute the initial schema
-        $schemaFile = __DIR__ . '/../migrations/001_initial_schema.sql';
+        // Choose schema file based on database driver
+        $schemaExtension = ($dbDriver === 'sqlite') ? '.sqlite.sql' : '.sql';
+        $schemaFile = __DIR__ . '/../migrations/001_initial_schema' . $schemaExtension;
+
         if (!file_exists($schemaFile)) {
             fwrite(STDERR, "ERROR: Schema file not found: $schemaFile\n");
             exit(1);

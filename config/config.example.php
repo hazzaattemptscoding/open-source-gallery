@@ -15,15 +15,26 @@
  */
 
 return [
-    // MySQL/MariaDB connection. Matches whatever the host's control panel gives you.
+    // Database: choose one option below.
+
+    // Option 1: SQLite (recommended for local development - no server needed)
+    // Single file database, works immediately. Perfect for previewing locally.
     'db' => [
-        'host'    => '127.0.0.1',
-        'port'    => 3306,
-        'name'    => 'gallery',
-        'user'    => 'gallery',
-        'pass'    => '',
-        'charset' => 'utf8mb4',
+        'driver' => 'sqlite',
+        'path'   => __DIR__ . '/../storage/gallery.sqlite',
     ],
+
+    // Option 2: MySQL/MariaDB (for production)
+    // Uncomment below and comment out SQLite above to use MySQL instead.
+    // 'db' => [
+    //     'driver'  => 'mysql',
+    //     'host'    => '127.0.0.1',
+    //     'port'    => 3306,
+    //     'name'    => 'gallery',
+    //     'user'    => 'gallery',
+    //     'pass'    => '',
+    //     'charset' => 'utf8mb4',
+    // ],
 
     // Shown in page titles, admin emails, and the login screen.
     'site' => [
