@@ -10,8 +10,16 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/search.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/validation.php';
+require_once __DIR__ . '/../../lib/rate_limit.php';
 
 function public_search_controller(PDO $pdo, array $config): void {
+    $clientIp = get_client_ip();
+    if (!check_rate_limit($pdo, 'search', $clientIp, 60, 30)) {
+        http_response_code(429);
+        render(__DIR__ . '/../../views/errors/429.php', []);
+        return;
+    }
+
     $query = (string)($_GET['q'] ?? '');
     $page = validate_page((int)($_GET['page'] ?? 1));
 
@@ -58,6 +66,13 @@ function public_search_controller(PDO $pdo, array $config): void {
 
 function public_search_api_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
+
+    $clientIp = get_client_ip();
+    if (!check_rate_limit($pdo, 'search_api', $clientIp, 60, 30)) {
+        http_response_code(429);
+        echo json_encode(['error' => 'rate limit exceeded']);
+        return;
+    }
 
     $query = (string)($_GET['q'] ?? '');
     $page = validate_page((int)($_GET['page'] ?? 1));

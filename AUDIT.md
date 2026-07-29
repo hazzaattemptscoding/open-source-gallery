@@ -3,6 +3,22 @@
 Date: 2026-07-29  
 Branch: claude/plugin-skill-setup-y9v6kx
 
+## Updates (Latest First)
+
+**2026-07-29 — Rate Limiting & Security Hardening**:
+- ✅ P3: Applied rate limiting to public search endpoint (30 req/min per IP)
+- ✅ P3: Applied rate limiting to API photo endpoints (50 req/min per IP for grid, 1/sec for view beacon)
+- ✅ P3: Created 429 error page for rate limit responses
+
+**2026-07-29 — Performance & SEO Pass 2**:
+- ✅ P1: Fixed 8 SELECT * queries with explicit column lists (auth, API, settings, reporting)
+- ✅ P1: Created robots.txt and XML sitemap endpoint
+- ✅ P1: Added SEO library (meta tags, Open Graph, JSON-LD schema)
+- ✅ P2: Created validation helper library for input validation
+- ✅ P2: Created 404/500 error pages (branded, user-friendly)
+- ✅ P3: Added application constants (cache TTLs, page sizes, etc)
+- ⏳ P2: Image alt text improvements (helpers created, views need update)
+
 ---
 
 ## Performance Issues
