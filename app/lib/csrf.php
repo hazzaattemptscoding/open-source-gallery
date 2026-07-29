@@ -22,12 +22,22 @@ function csrf_token(): string
     return $_SESSION['csrf_token'];
 }
 
-/** Check a submitted token against the session's token. */
+/**
+ * Check a submitted token against the session's token. On success, invalidates
+ * the token to prevent replay attacks (one-time use only).
+ */
 function csrf_verify(?string $submitted): bool
 {
     if (empty($_SESSION['csrf_token']) || $submitted === null) {
         return false;
     }
 
-    return hash_equals($_SESSION['csrf_token'], $submitted);
+    if (!hash_equals($_SESSION['csrf_token'], $submitted)) {
+        return false;
+    }
+
+    // Token verified successfully. Invalidate it immediately to prevent replay.
+    unset($_SESSION['csrf_token']);
+
+    return true;
 }

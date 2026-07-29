@@ -79,3 +79,43 @@ function db_connect_mysql(array $dbConfig): PDO
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 }
+
+/**
+ * Generate SQL for upsert (insert or replace) that works on both SQLite and MySQL.
+ * Returns the prepared statement and SQL string for use with execute().
+ *
+ * @param PDO $pdo Database connection
+ * @param string $table Table name
+ * @param array $values Key-value pairs to insert/replace
+ * @param string|string[] $primaryKey Column(s) that form the primary key
+ * @return array{sql:string, values:array} SQL and values array for execution
+ */
+function db_upsert_sql(PDO $pdo, string $table, array $values, string|array $primaryKey): array
+{
+    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $columns = array_keys($values);
+    $placeholders = array_fill(0, count($values), '?');
+
+    if ($driver === 'sqlite') {
+        $sql = sprintf(
+            'INSERT OR REPLACE INTO %s (%s) VALUES (%s)',
+            $table,
+            implode(', ', $columns),
+            implode(', ', $placeholders)
+        );
+    } else {
+        // MySQL
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
+            $table,
+            implode(', ', $columns),
+            implode(', ', $placeholders),
+            implode(', ', array_map(fn($col) => "$col = VALUES($col)", $columns))
+        );
+    }
+
+    return [
+        'sql' => $sql,
+        'values' => array_values($values),
+    ];
+}

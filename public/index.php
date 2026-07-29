@@ -151,12 +151,22 @@ switch ($path) {
 
     case '/cart/add':
         require __DIR__ . '/../app/controllers/public/cart.php';
-        public_cart_add_controller($pdo, $config);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_cart_add_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
         break;
 
     case '/cart/remove':
         require __DIR__ . '/../app/controllers/public/cart.php';
-        public_cart_remove_controller($pdo, $config);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_cart_remove_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
         break;
 
     case '/api/photos':

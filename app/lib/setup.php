@@ -121,11 +121,9 @@ function get_setup_checklist(PDO $pdo): array {
 }
 
 function save_steps(PDO $pdo, string $key, array $steps): void {
-    $stmt = $pdo->prepare('
-        INSERT INTO settings (skey, svalue) VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)
-    ');
-    $stmt->execute([$key, json_encode($steps)]);
+    $upsert = db_upsert_sql($pdo, 'settings', ['skey' => $key, 'svalue' => json_encode($steps)], 'skey');
+    $stmt = $pdo->prepare($upsert['sql']);
+    $stmt->execute($upsert['values']);
 }
 
 /**
@@ -136,11 +134,9 @@ function generate_poller_token(PDO $pdo): string {
     $token = bin2hex(random_bytes(32));
     $hash = hash('sha256', $token);
 
-    $stmt = $pdo->prepare('
-        INSERT INTO settings (skey, svalue) VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)
-    ');
-    $stmt->execute(['fulfillment_poller_token_hash', $hash]);
+    $upsert = db_upsert_sql($pdo, 'settings', ['skey' => 'fulfillment_poller_token_hash', 'svalue' => $hash], 'skey');
+    $stmt = $pdo->prepare($upsert['sql']);
+    $stmt->execute($upsert['values']);
 
     return $token;
 }

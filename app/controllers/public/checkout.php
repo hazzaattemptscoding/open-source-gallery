@@ -25,12 +25,14 @@ function public_checkout_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    $ip = get_client_ip();
-    if (!check_rate_limit($pdo, 'checkout', "email:{$email}:ip:{$ip}", 3600, 5)) {
+    // Rate limit per email (5 attempts per hour)
+    if (!check_rate_limit($pdo, 'checkout', $email, 3600, 5)) {
         http_response_code(429);
         echo json_encode(['error' => 'Too many checkout attempts. Try again later.']);
         return;
     }
+
+    $ip = get_client_ip();
 
     $items = cart_get($config);
     if (empty($items)) {
