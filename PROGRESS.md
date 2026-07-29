@@ -27,10 +27,11 @@
 
 ### Remaining
 - [ ] Task 1.3: Complete Phase 3 Testing (manual testing)
-  - [ ] Mobile responsiveness (iPhone 6/12/14, iPad)
-  - [ ] Browser compatibility (Chrome, Safari, Firefox)
-  - [ ] Cron image tiering job end-to-end verification
-  - [ ] Form validation and error states
+  - [x] Created comprehensive testing guide: `PHASE-3-TESTING-GUIDE.md`
+  - [ ] Mobile responsiveness (iPhone 6/12/14, iPad) — user execution required
+  - [ ] Browser compatibility (Chrome, Safari, Firefox) — user execution required
+  - [ ] Cron image tiering job end-to-end verification — user execution required
+  - [ ] Form validation and error states — user execution required
   - [ ] Search filtering with real data — blocked, see the price_pence
     finding below; /search currently errors on every real query
 
