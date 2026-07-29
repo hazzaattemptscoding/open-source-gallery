@@ -1,54 +1,57 @@
-# Quick Start (2 Minutes)
+# Quick Start
 
-## For Local Testing (Mac/Linux)
+**One command to get running everywhere:**
+
+## Any Computer (Mac, Linux, Windows)
 
 ```bash
-# 1. Clone
 git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
-git checkout claude/plugin-skill-setup-y9v6kx
+php install.php
+```
 
-# 2. Verify environment (optional but recommended)
-php verify-setup.php
+This interactive installer will:
+- Check your PHP version and extensions
+- Ask for database details (or use defaults)
+- Create the database and import schema automatically
+- Generate your config file with secure keys
+- Tell you exactly where to go next
 
-# 3. Start (requires Docker)
+Then just visit the URL it gives you and create your admin account.
+
+---
+
+## With Docker (Fastest)
+
+```bash
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
 docker-compose up
-
-# 4. Open
-http://localhost:8080/admin/setup
 ```
 
-Create admin account → Upload photos → Done.
+Wait for "PowerMedia Gallery - Initializing..." message, then visit `http://localhost:8080/admin/setup`.
 
 ---
 
-## For MAMP on Mac
+## That's It
 
+After either method above:
+1. Visit the URL your installer provided (or `http://localhost:8080`)
+2. Go to `/admin/setup`
+3. Create your admin account
+4. Start uploading photos
+
+No config editing, no manual database imports, no confusion.
+
+---
+
+## Troubleshooting
+
+Run the verification script:
 ```bash
-cd ~/Applications/MAMP/htdocs
-git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
-cd open-source-gallery
-bash setup.sh
-
-# Verify environment setup
 php verify-setup.php
 ```
 
-Then:
-1. In MAMP app: Preferences → Web Server → Document Root → set to `/Applications/MAMP/htdocs/open-source-gallery/public`
-2. Restart MAMP
-3. Go to http://localhost:8888/admin/setup
+This checks everything and tells you what needs fixing.
 
----
-
-## For Production Hosting
-
-See [INSTALL.md](INSTALL.md) → "Option 3: Manual Setup"
-
----
-
-## Stuck?
-
-1. **Docker won't start?** You need Docker Desktop installed: https://www.docker.com/products/docker-desktop
-2. **MAMP not connecting to DB?** Use phpMyAdmin instead: http://localhost:8888/phpmyadmin
-3. **Something else?** See [INSTALL.md](INSTALL.md) Troubleshooting section
+See [INSTALL.md](INSTALL.md) for detailed options and troubleshooting.

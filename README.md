@@ -42,9 +42,19 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 
 **Shared hosting friendly.** ~200GB storage limit? Supported (with 7-day image tiering). No CLI daemons? URL-based cron fallback. Database backup? Use standard MySQL tools. Email delivery via mail() or SMTP.
 
-## Quick Start (2 Minutes)
+## Quick Start
 
-### With Docker (Recommended)
+**Run this anywhere (Mac, Linux, Windows, hosting):**
+
+```bash
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+php install.php
+```
+
+The interactive installer will set up everything: database, config, directories, and tell you where to go next.
+
+**Or use Docker (fastest):**
 
 ```bash
 git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
@@ -52,27 +62,12 @@ cd open-source-gallery
 docker-compose up
 ```
 
-Then visit: http://localhost:8080/admin/setup
-
-Create admin account → Upload photos → Done.
-
-### With MAMP (Mac)
-
-```bash
-cd ~/Applications/MAMP/htdocs
-git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
-cd open-source-gallery
-bash setup.sh
-```
-
 Then:
-1. Set MAMP's Document Root to the `/public` folder
-2. Restart MAMP
-3. Visit: http://localhost:8888/admin/setup
+1. Visit http://localhost:8080/admin/setup
+2. Create your admin account
+3. Start uploading photos
 
-### On Production Hosting
-
-See [INSTALL.md](INSTALL.md) for detailed instructions.
+See [QUICKSTART.md](QUICKSTART.md) and [INSTALL.md](INSTALL.md) for details.
 
 ## Architecture
 
