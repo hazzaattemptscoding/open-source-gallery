@@ -88,11 +88,20 @@ class TestCase extends BaseTestCase {
     }
 
     /**
-     * Create a test photo.
+     * Create a test photo. photos.event_id is denormalised from the session
+     * for filter speed (see migrations/001_initial_schema.sql), so it's
+     * looked up from $sessionId rather than passed separately.
      */
     protected function createPhoto(int $sessionId, array $overrides = []): int {
+        $stmt = $this->pdo->prepare('SELECT event_id FROM sessions WHERE id = ?');
+        $stmt->execute([$sessionId]);
+        $eventId = $stmt->fetchColumn();
+        if ($eventId === false) {
+            throw new \RuntimeException("createPhoto: no session with id $sessionId (create it with createSession() first)");
+        }
+
         $data = array_merge([
-            'public_token' => 'token-' . uniqid(),
+            'public_token' => substr(bin2hex(random_bytes(6)), 0, 12),
             'original_filename' => 'test.jpg',
             'width' => 1920,
             'height' => 1080,
@@ -102,11 +111,12 @@ class TestCase extends BaseTestCase {
         ], $overrides);
 
         $stmt = $this->pdo->prepare(<<<'SQL'
-            INSERT INTO photos (session_id, public_token, original_filename, width, height, hires_size_bytes, status, view_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO photos (event_id, session_id, public_token, original_filename, width, height, hires_size_bytes, status, view_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         SQL);
 
         $stmt->execute([
+            (int)$eventId,
             $sessionId,
             $data['public_token'],
             $data['original_filename'],
@@ -121,27 +131,26 @@ class TestCase extends BaseTestCase {
     }
 
     /**
-     * Create test user.
+     * Create a test admin user. Single-admin model (one row in admin_users
+     * per docs/architecture.md) — there is no separate "users" table.
      */
-    protected function createUser(array $overrides = []): int {
+    protected function createAdminUser(array $overrides = []): int {
         $data = array_merge([
-            'username' => 'testuser-' . uniqid(),
-            'email' => 'test-' . uniqid() . '@example.com',
+            'email' => 'admin-' . uniqid() . '@example.com',
             'password_hash' => password_hash('TestPassword123!', PASSWORD_ARGON2ID),
-            'is_admin' => false,
+            'totp_enabled' => 0,
             'totp_secret' => null,
         ], $overrides);
 
         $stmt = $this->pdo->prepare(<<<'SQL'
-            INSERT INTO users (username, email, password_hash, is_admin, totp_secret)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO admin_users (email, password_hash, totp_enabled, totp_secret)
+            VALUES (?, ?, ?, ?)
         SQL);
 
         $stmt->execute([
-            $data['username'],
             $data['email'],
             $data['password_hash'],
-            (int)$data['is_admin'],
+            (int)$data['totp_enabled'],
             $data['totp_secret'],
         ]);
 

@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/cache.php';
+
 /**
  * Bulk tag photos.
  */
@@ -57,7 +59,14 @@ function bulk_delete_photos(PDO $pdo, array $photoIds): int {
 
     $placeholders = implode(',', array_fill(0, count($photoIds), '?'));
     $stmt = $pdo->prepare("DELETE FROM photos WHERE id IN ($placeholders)");
-    return $stmt->execute(array_map('intval', $photoIds)) ? $stmt->rowCount() : 0;
+    $deleted = $stmt->execute(array_map('intval', $photoIds)) ? $stmt->rowCount() : 0;
+
+    // Deleted photos can no longer show up in cached facets/trending.
+    if ($deleted > 0) {
+        cache_invalidate_all();
+    }
+
+    return $deleted;
 }
 
 /**
@@ -71,7 +80,15 @@ function bulk_change_status(PDO $pdo, array $photoIds, string $status): int {
     $placeholders = implode(',', array_fill(0, count($photoIds), '?'));
     $stmt = $pdo->prepare("UPDATE photos SET status = ? WHERE id IN ($placeholders)");
     $params = array_merge([$status], array_map('intval', $photoIds));
-    return $stmt->execute($params) ? $stmt->rowCount() : 0;
+    $changed = $stmt->execute($params) ? $stmt->rowCount() : 0;
+
+    // Status changes affect what's "live" for facets/trending — cached
+    // results would otherwise keep showing photos that just went hidden.
+    if ($changed > 0) {
+        cache_invalidate_all();
+    }
+
+    return $changed;
 }
 
 /**

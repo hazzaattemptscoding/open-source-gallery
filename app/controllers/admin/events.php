@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../lib/csrf.php';
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/currency.php';
+require_once __DIR__ . '/../../lib/cache.php';
 
 function admin_events_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -99,6 +100,7 @@ function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     $stmt->execute([$slug, $title, $venue, $eventDate, $isPublished, $priceSingle, $priceSession, $priceEvent]);
     $eventId = (int)$pdo->lastInsertId();
 
+    cache_invalidate_all();
     audit_log($pdo, 'admin', 'event_created', 'event', $eventId, ['slug' => $slug], $ip);
 
     header("Location: /admin/events/{$eventId}");
@@ -148,6 +150,7 @@ function update_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     $stmt = $pdo->prepare('UPDATE events SET slug = ?, title = ?, venue = ?, event_date = ?, is_published = ?, price_single_pence = ?, price_session_pence = ?, price_event_pence = ? WHERE id = ?');
     $stmt->execute([$slug, $title, $venue, $eventDate, $isPublished, $priceSingle, $priceSession, $priceEvent, $eventId]);
 
+    cache_invalidate_all();
     audit_log($pdo, 'admin', 'event_updated', 'event', $eventId, ['slug' => $slug], $ip);
 
     header("Location: /admin/events/{$eventId}");
@@ -175,6 +178,7 @@ function delete_event(PDO $pdo, int $adminId, string $ip, int $eventId): void {
         throw $e;
     }
 
+    cache_invalidate_all();
     audit_log($pdo, 'admin', 'event_deleted', 'event', $eventId, [], $ip);
 
     header('Location: /admin/events');

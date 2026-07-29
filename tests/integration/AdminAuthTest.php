@@ -16,16 +16,16 @@ class AdminAuthTest extends TestCase {
     public function testAdminLoginSuccess(): void {
         require_once APP_ROOT . '/app/lib/auth.php';
 
-        // Create admin user.
-        $stmt = $this->pdo->prepare(<<<'SQL'
-            INSERT INTO admin_users (email, password_hash, totp_enabled, totp_secret)
-            VALUES (?, ?, ?, ?)
-        SQL);
-        $stmt->execute([
-            'admin@example.com',
-            password_hash('SecurePassword123!', PASSWORD_ARGON2ID),
-            false,
-            null,
+        // A real request has a session open by the time this runs (the front
+        // controller starts one); admin_attempt_login()'s success path calls
+        // session_regenerate_id(), which needs one to exist.
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $this->createAdminUser([
+            'email' => 'admin@example.com',
+            'password_hash' => password_hash('SecurePassword123!', PASSWORD_ARGON2ID),
         ]);
 
         // Test successful login.
@@ -40,12 +40,9 @@ class AdminAuthTest extends TestCase {
     public function testAdminLoginInvalidPassword(): void {
         require_once APP_ROOT . '/app/lib/auth.php';
 
-        $stmt = $this->pdo->prepare('INSERT INTO admin_users (email, password_hash, totp_enabled, totp_secret) VALUES (?, ?, ?, ?)');
-        $stmt->execute([
-            'admin@example.com',
-            password_hash('CorrectPassword123!', PASSWORD_ARGON2ID),
-            false,
-            null,
+        $this->createAdminUser([
+            'email' => 'admin@example.com',
+            'password_hash' => password_hash('CorrectPassword123!', PASSWORD_ARGON2ID),
         ]);
 
         $result = \admin_attempt_login($this->pdo, 'admin@example.com', 'WrongPassword123!', null, '127.0.0.1');
@@ -154,16 +151,10 @@ class AdminAuthTest extends TestCase {
     public function testEventSlugUniqueness(): void {
         $slug = 'unique-slug-' . uniqid();
 
-        // Create first event.
-        $stmt = $this->pdo->prepare('INSERT INTO events (slug, title, event_date) VALUES (?, ?, ?)');
-        $stmt->execute([$slug, 'Event 1', '2025-07-30']);
+        $this->createEvent(['slug' => $slug, 'title' => 'Event 1']);
 
-        // Attempt to create event with same slug.
-        $stmt->execute([$slug, 'Event 2', '2025-07-31']);
-
-        // Should fail due to unique constraint (wrapped in try-catch if necessary).
-        // This tests the database constraint works.
-        $this->assertTrue(true, 'Slug uniqueness constraint active');
+        $this->expectException(\PDOException::class);
+        $this->createEvent(['slug' => $slug, 'title' => 'Event 2']);
     }
 
     /**
