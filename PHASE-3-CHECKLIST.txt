@@ -1,0 +1,230 @@
+================================================================================
+PHASE 3 TESTING CHECKLIST - Print or reference this while testing
+================================================================================
+
+SETUP (Do Once)
+===============
+[ ] Install dependencies: composer install
+[ ] Create .env.test with database credentials
+[ ] Start web server: php -S localhost:8000
+[ ] Start MySQL: brew services start mysql (or your system)
+[ ] Run tests: ./vendor/bin/phpunit (expect 14 pass, 7 skip)
+
+PRE-TESTING
+===========
+[ ] Create test event in admin
+[ ] Create test session in event
+[ ] Upload 2-3 test photos
+
+DEVICE TESTING
+==============
+
+Mobile (375px - iPhone 6/7/8)
+-----------------------------
+[ ] Gallery shows 1 column
+[ ] Cart button visible and clickable
+[ ] Text readable without zooming
+[ ] Forms accessible
+[ ] No horizontal scroll
+
+Tablet (768px - iPad)
+---------------------
+[ ] Gallery shows 2 columns
+[ ] Navigation works
+[ ] Forms properly spaced
+[ ] Images load
+
+Desktop (1024px+ - MacBook/Monitor)
+----------------------------------
+[ ] Gallery shows 3-4 columns
+[ ] Full navigation visible
+[ ] Images high quality
+[ ] All features accessible
+
+BROWSER TESTING (Each Device)
+=============================
+
+Chrome/Chromium
+---------------
+[ ] Gallery displays correctly
+[ ] Images load quickly
+[ ] Form validation works
+[ ] Console has no errors (F12)
+[ ] Network shows no 404s
+
+Safari (macOS/iOS)
+------------------
+[ ] Full-width images display properly
+[ ] Touch buttons responsive (on mobile)
+[ ] Scrolling smooth
+[ ] Forms submittable
+[ ] Console shows no errors
+
+Firefox
+-------
+[ ] Layout matches Chrome
+[ ] Images render correctly
+[ ] No layout bugs
+[ ] Forms work
+
+FORM VALIDATION
+===============
+
+Admin Login
+-----------
+[ ] Empty email rejected
+[ ] Wrong password shows "Invalid credentials"
+[ ] Unknown email shows "Invalid credentials"
+[ ] Valid login succeeds
+[ ] Session created (cookie visible in DevTools)
+
+Event Create
+------------
+[ ] Empty title rejected
+[ ] Empty venue rejected
+[ ] Empty date rejected
+[ ] Duplicate slug fails (or shows error)
+[ ] Valid event created
+
+Photo Upload
+------------
+[ ] Upload JPG succeeds
+[ ] Upload PNG succeeds
+[ ] Upload EXE rejected
+[ ] Large file (>100MB) handled gracefully
+[ ] Progress shown during upload
+
+WORKFLOW TESTING
+================
+
+Upload → Process → Display
+--------------------------
+[ ] Upload photo (status="processing")
+[ ] Run: php cron/run.php
+[ ] Check: ls public/media/d/ shows {token}-*.jpg files
+[ ] Check: photo status changes to "live"
+[ ] Check: photo appears in gallery
+[ ] Check: watermark visible at 800px+
+
+Cart → Checkout → Download
+---------------------------
+[ ] Add photo 1 to cart
+[ ] Add photo 2 to cart
+[ ] Cart count shows 2
+[ ] Click "Checkout"
+[ ] Redirected to Stripe payment page
+[ ] Use test card: 4242 4242 4242 4242, 12/25, 123
+[ ] After payment, show receipt page
+[ ] Check email for receipt with download link
+[ ] Download file works
+[ ] Downloaded file has NO watermark
+[ ] Check file integrity (opens correctly)
+
+Search Filtering (if /search works)
+-----------------------------------
+[ ] Search by filename: "photo" returns results
+[ ] Filter by event: shows only that event's photos
+[ ] Filter by session: shows only that session's photos
+[ ] Single-char search "a" returns no results
+[ ] Empty search returns no results
+[ ] Reset filters shows all photos
+
+Cron Job Lifecycle
+------------------
+[ ] Upload photo, note ID (e.g., 123)
+[ ] Run: php cron/run.php
+[ ] Check derivatives exist: ls public/media/d/
+[ ] Check job removed from queue:
+    mysql -u root gallery_test -e "SELECT * FROM jobs"
+[ ] Create cleanup job:
+    INSERT INTO jobs (type, payload, status, run_after)
+    VALUES ('cleanup', '{"photo_id": 123}', 'pending', NOW());
+[ ] Run: php cron/run.php
+[ ] Verify 1600px deleted: ls public/media/d/{token}-*
+    (should NOT show -1600.jpg)
+
+PERFORMANCE CHECKS
+==================
+[ ] Homepage loads in <2 seconds (DevTools Network)
+[ ] Images load progressively as you scroll
+[ ] No JavaScript errors in Console (F12)
+[ ] No HTTP errors in Network tab (DevTools)
+[ ] Cart operations respond instantly
+[ ] Search results populate in <500ms
+
+ACCESSIBILITY CHECKS
+====================
+[ ] Tab key navigates all interactive elements
+[ ] Enter key submits forms
+[ ] Escape key closes modals/lightbox
+[ ] Arrow keys navigate lightbox prev/next
+[ ] Links underlined or distinct color
+[ ] Text has sufficient contrast (white/black)
+
+SECURITY SPOT-CHECKS
+====================
+[ ] SQL injection test:
+    - Try search: ' OR '1'='1
+    - Expected: No results, no error
+[ ] File upload security:
+    - Try upload: test.exe
+    - Expected: Rejected
+[ ] XSS prevention:
+    - Upload photo with <script> in filename
+    - Expected: Filename sanitized in gallery
+
+CONSOLE/LOG CHECKS
+==================
+[ ] Open DevTools (F12) → Console tab
+[ ] Look for red errors - document any found
+[ ] Check Application → Local Storage for caching
+[ ] Check Network tab for slow requests (>1s)
+
+KNOWN BLOCKERS
+==============
+[ ] Search page may show SQL error (photos.price_pence missing)
+[ ] Bulk status change may fail (ENUM vocabulary mismatch)
+[ ] (Document if you find these)
+
+ISSUES FOUND
+============
+
+Issue #1: ___________________________________
+  URL: ___________________________________
+  Steps: ___________________________________
+  Expected: ___________________________________
+  Actual: ___________________________________
+  Severity: [ ] High [ ] Medium [ ] Low
+  Screenshot: ___________________________________
+
+Issue #2: ___________________________________
+  URL: ___________________________________
+  Steps: ___________________________________
+  Expected: ___________________________________
+  Actual: ___________________________________
+  Severity: [ ] High [ ] Medium [ ] Low
+  Screenshot: ___________________________________
+
+SUMMARY
+=======
+Testing Date: _______________
+Tester: _______________
+Devices Tested: _______________
+Total Issues Found: _______________
+  - Critical: _______________
+  - Major: _______________
+  - Minor: _______________
+
+Overall Status: [ ] PASS [ ] FAIL [ ] PARTIAL
+
+Notes: _________________________________________________________________
+
+Next Steps:
+[ ] Document all issues above
+[ ] Create GitHub issues for each problem
+[ ] Push results to branch
+[ ] Move to TIER 2.3 (GitHub Actions verification)
+
+================================================================================
+End of Checklist
+================================================================================
