@@ -13,25 +13,24 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
         return 0;
     }
 
-    $updated = 0;
-    $stmt = $pdo->prepare(<<<'SQL'
+    // Build multi-row INSERT: one query instead of N.
+    $placeholders = implode(',', array_map(fn($id) => '(?, ?, ?, ?)', $photoIds));
+
+    $params = [];
+    foreach ($photoIds as $photoId) {
+        $params[] = (int)$photoId;
+        $params[] = $tags['kart'] ?? null;
+        $params[] = $tags['driver'] ?? null;
+        $params[] = $tags['class'] ?? null;
+    }
+
+    $stmt = $pdo->prepare(<<<SQL
         INSERT INTO photo_tags (photo_id, kart_number, driver_name, class)
-        VALUES (?, ?, ?, ?)
+        VALUES $placeholders
         ON DUPLICATE KEY UPDATE updated_at = NOW()
     SQL);
 
-    foreach ($photoIds as $photoId) {
-        if ($stmt->execute([
-            (int)$photoId,
-            $tags['kart'] ?? null,
-            $tags['driver'] ?? null,
-            $tags['class'] ?? null,
-        ])) {
-            $updated++;
-        }
-    }
-
-    return $updated;
+    return $stmt->execute($params) ? $stmt->rowCount() : 0;
 }
 
 /**
