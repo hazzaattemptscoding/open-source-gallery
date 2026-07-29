@@ -1097,3 +1097,148 @@
   border-top: 1px solid #EAEAEA;
   margin: 48px 0;
 }
+
+/* Site Customization Page */
+
+.customize-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  min-height: 100vh;
+}
+
+.customize-form-panel {
+  padding: 2rem;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+.customize-preview-panel {
+  padding: 2rem;
+  background: var(--bg-alt);
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+.customize-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.customize-section h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.color-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.color-input-wrapper {
+  position: relative;
+}
+
+.color-input-wrapper input[type="color"] {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-input-wrapper label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+
+.customize-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.customize-buttons button {
+  flex: 1;
+  padding: 0.875rem;
+  font-weight: 500;
+}
+
+.customize-buttons .secondary {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.preview-button {
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  padding: 0.875rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 200ms ease-out;
+}
+
+.preview-button:hover {
+  background: #333333;
+}
+
+.success-message {
+  background: #edf3ec;
+  border: 1px solid #d6e5d2;
+  color: #346538;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  background: #fdebec;
+  border: 1px solid #f5d0d2;
+  color: #9f2f2d;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1200px) {
+  .customize-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .customize-form-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: none;
+  }
+
+  .customize-preview-panel {
+    max-height: 600px;
+  }
+}
