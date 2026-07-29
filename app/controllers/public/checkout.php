@@ -26,8 +26,7 @@ function public_checkout_controller(PDO $pdo, array $config): void {
     }
 
     $ip = get_client_ip();
-    $rateLimitKey = hash('sha256', "{$email}:{$ip}");
-    if (!check_rate_limit($pdo, $rateLimitKey, 5)) {
+    if (!check_rate_limit($pdo, 'checkout', "{$email}:{$ip}", 3600, 5)) {
         http_response_code(429);
         echo json_encode(['error' => 'Too many checkout attempts. Try again later.']);
         return;
