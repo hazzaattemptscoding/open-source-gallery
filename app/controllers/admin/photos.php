@@ -107,7 +107,7 @@ function update_photo_status(PDO $pdo, int $adminId, string $ip, int $photoId): 
 function delete_photo(PDO $pdo, int $adminId, string $ip, int $photoId): void {
     csrf_verify($_POST['csrf_token'] ?? '');
 
-    $stmt = $pdo->prepare('SELECT id, event_id, session_id, public_token FROM photos WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, event_id, session_id, public_token, file_extension FROM photos WHERE id = ?');
     $stmt->execute([$photoId]);
     $photo = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$photo) {
@@ -119,11 +119,12 @@ function delete_photo(PDO $pdo, int $adminId, string $ip, int $photoId): void {
     $sessionId = (int)$photo['session_id'];
     $eventId = (int)$photo['event_id'];
     $token = (string)$photo['public_token'];
+    $ext = (string)($photo['file_extension'] ?? 'jpg');
 
     $pdo->prepare('DELETE FROM photos WHERE id = ?')->execute([$photoId]);
     audit_log($pdo, 'admin', 'photo_deleted', 'photo', $photoId, ['public_token' => $token], $ip);
 
-    @unlink(__DIR__ . "/../../../storage/hires/{$eventId}/{$token}.jpg");
+    @unlink(__DIR__ . "/../../../storage/hires/{$eventId}/{$token}.{$ext}");
     foreach ([400, 800, 1600] as $size) {
         @unlink(__DIR__ . "/../../../public/media/d/{$token}-{$size}.jpg");
     }

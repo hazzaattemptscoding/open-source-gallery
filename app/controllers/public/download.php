@@ -72,7 +72,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         }
 
         $stmt = $pdo->prepare('
-            SELECT id, event_id, public_token, original_filename FROM photos WHERE id = ?
+            SELECT id, event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?
         ');
         $stmt->execute([$photoId]);
         $photo = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -80,7 +80,8 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         if ($photo) {
             $eventId = (int)$photo['event_id'];
             $token = (string)$photo['public_token'];
-            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.jpg";
+            $ext = (string)($photo['file_extension'] ?? 'jpg');
+            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
 
             if (file_exists($filePath)) {
                 $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
