@@ -14,7 +14,7 @@ require_once __DIR__ . '/../../lib/rate_limit.php';
 
 function public_search_controller(PDO $pdo, array $config): void {
     $clientIp = get_client_ip();
-    if (!check_rate_limit($pdo, 'search', $clientIp, 60, 30)) {
+    if (!check_rate_limit($pdo, 'search', 'ip:' . $clientIp, 60, 30)) {
         http_response_code(429);
         render(__DIR__ . '/../../views/errors/429.php', []);
         return;
@@ -68,7 +68,7 @@ function public_search_api_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
 
     $clientIp = get_client_ip();
-    if (!check_rate_limit($pdo, 'search_api', $clientIp, 60, 30)) {
+    if (!check_rate_limit($pdo, 'search_api', 'ip:' . $clientIp, 60, 30)) {
         http_response_code(429);
         echo json_encode(['error' => 'rate limit exceeded']);
         return;

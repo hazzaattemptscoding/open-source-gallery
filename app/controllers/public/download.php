@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../lib/audit.php';
  */
 function public_download_controller(PDO $pdo, array $config, string $rawToken): void {
     $ip = get_client_ip();
-    if (!check_rate_limit($pdo, 'download', $ip, 3600, 30)) {
+    if (!check_rate_limit($pdo, 'download', 'ip:' . $ip, 3600, 30)) {
         http_response_code(429);
         echo 'Too many download attempts. Try again later.';
         return;

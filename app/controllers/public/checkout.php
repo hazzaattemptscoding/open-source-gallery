@@ -26,7 +26,7 @@ function public_checkout_controller(PDO $pdo, array $config): void {
     }
 
     $ip = get_client_ip();
-    if (!check_rate_limit($pdo, 'checkout', "{$email}:{$ip}", 3600, 5)) {
+    if (!check_rate_limit($pdo, 'checkout', "email:{$email}:ip:{$ip}", 3600, 5)) {
         http_response_code(429);
         echo json_encode(['error' => 'Too many checkout attempts. Try again later.']);
         return;
@@ -100,7 +100,9 @@ function public_checkout_success_controller(PDO $pdo, array $config, string $ord
 
     if ($order['status'] !== 'paid') {
         http_response_code(400);
-        echo 'Order payment not yet confirmed. Please check your email for download links.';
+        render(__DIR__ . '/../../views/public/checkout_pending.php', [
+            'siteName' => $siteName,
+        ]);
         return;
     }
 
