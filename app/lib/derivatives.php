@@ -14,7 +14,7 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
         return false;
     }
 
-    $stmt = $pdo->prepare('SELECT id, event_id, public_token FROM photos WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, event_id, public_token, file_extension FROM photos WHERE id = ?');
     $stmt->execute([$photoId]);
     $photo = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$photo) {
@@ -23,7 +23,8 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
 
     $eventId = (int)$photo['event_id'];
     $token = (string)$photo['public_token'];
-    $hiresPath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.jpg";
+    $ext = (string)($photo['file_extension'] ?? 'jpg');
+    $hiresPath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
 
     if (!file_exists($hiresPath)) {
         return false;
@@ -43,7 +44,10 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
             $outPath = "{$derivPath}/{$token}-{$size}.jpg";
             $watermark = $settings['enabled'] && $size >= $settings['min_width'];
             generate_derivative($hiresPath, $outPath, $size, $watermark, $settings);
-            $derivBytes += (int)@filesize($outPath);
+            $bytes = (int)@filesize($outPath);
+            if ($bytes > 0) {
+                $derivBytes += $bytes;
+            }
         }
     } catch (Throwable $e) {
         $pdo->prepare('UPDATE photos SET status = ? WHERE id = ?')->execute(['failed', $photoId]);

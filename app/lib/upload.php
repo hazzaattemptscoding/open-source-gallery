@@ -87,3 +87,16 @@ function safe_original_filename(string $original): string {
     $name = trim((string)$name);
     return $name !== '' ? mb_substr($name, 0, 255) : 'upload.jpg';
 }
+
+function get_file_extension(string $filePath): string {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo ? (string)finfo_file($finfo, $filePath) : null;
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+
+    if ($mimeType === 'image/png') {
+        return 'png';
+    }
+    return 'jpg';
+}
