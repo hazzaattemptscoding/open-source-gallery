@@ -16,6 +16,33 @@
     <p class="error">Two-factor authentication is not enabled on this account. <a href="/admin/totp/enroll">Set it up now</a>.</p>
   <?php endif; ?>
 
+  <?php if (!$setupComplete && !empty($setupChecklist)): ?>
+    <div class="setup-checklist">
+      <h3>Setup Incomplete</h3>
+      <p>Finish setting up your gallery. Click any item to complete it.</p>
+      <ul>
+        <?php foreach ($setupChecklist as $item): ?>
+          <li class="checklist-item checklist-<?= e($item['status']) ?>">
+            <span class="icon">
+              <?php if ($item['status'] === 'complete'): ?>✓
+              <?php elseif ($item['status'] === 'skipped'): ?>⊘
+              <?php else: ?>•
+              <?php endif; ?>
+            </span>
+            <a href="<?= e($item['url']) ?>" class="label">
+              <?= e($item['label']) ?>
+              <?php if ($item['status'] === 'pending'): ?>
+                <span class="badge">Pending</span>
+              <?php elseif ($item['status'] === 'skipped'): ?>
+                <span class="badge skipped">Skipped</span>
+              <?php endif; ?>
+            </a>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  <?php endif; ?>
+
   <div class="panel">
     <h2>Manage content</h2>
     <ul class="list-plain">
