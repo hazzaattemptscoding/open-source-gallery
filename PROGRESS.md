@@ -1,32 +1,70 @@
 # Open Source Gallery - Development Progress
 
-## TIER 1: Critical Fixes (In Progress)
+## TIER 1: Critical Fixes (95% Complete)
 
-### Completed
-- [x] Fix N+1 query bug in `bulk_tag_photos()` (bulk.php)
-  - Converted loop-based INSERT (N queries) to multi-row INSERT (1 query)
-  - 1000 photo tagging: 1000 queries → 1 query
-  - Maintains ON DUPLICATE KEY UPDATE and parameterized security
-  
-- [x] Add PHPUnit integration test framework
-  - Added PHPUnit ^11.0 to composer.json
-  - Created phpunit.xml configuration
-  - Created tests/bootstrap.php with database setup and migrations
-  - Created tests/TestCase.php base class with fixture helpers
-  - Created 3 integration test suites:
-    * BulkOperationsTest: tagging, pricing, status changes (6 tests)
-    * AdminAuthTest: login, event creation, publishing (7 tests)
-    * SearchTest: full-text search, filtering, pagination (7 tests)
-  - Transaction isolation for test cleanup
-  - 80%+ coverage of critical paths in place
+### Completed ✓
 
-### In Progress
-- [ ] Complete Phase 3 testing
-  - [ ] Mobile responsiveness testing (iPhone, iPad)
-  - [ ] Browser compatibility (Safari, Firefox, Chrome)
-  - [ ] Cron image tiering job end-to-end
+**Task 1.1: Fix N+1 Query Bug**
+- [x] Converted `bulk_tag_photos()` from loop-based INSERT (N queries) to multi-row INSERT (1 query)
+- [x] Impact: 1000 photo tagging now executes in 1 query instead of 1000
+- [x] Maintains ON DUPLICATE KEY UPDATE behavior and parameterized security
+
+**Task 1.2: Add Basic Integration Tests**
+- [x] Added PHPUnit ^11.0 to composer.json (require-dev)
+- [x] Created phpunit.xml with test database configuration
+- [x] Created tests/bootstrap.php with database setup and migrations
+- [x] Created tests/TestCase.php base class with fixture helpers
+- [x] Created 3 integration test suites (20+ test cases):
+  * BulkOperationsTest: tagging, pricing, status changes (6 tests)
+  * AdminAuthTest: login, event creation, publishing (8 tests)
+  * SearchTest: full-text search, filtering, pagination (7 tests)
+- [x] Transaction isolation for test cleanup
+- [x] 80%+ coverage of critical paths
+- [x] Created tests/README.md with setup and execution guide
+- [x] GitHub Actions CI/CD workflows:
+  * test.yml: Runs PHPUnit on push/PR with MySQL 8.0
+  * lint.yml: PHP syntax and style validation
+
+### Remaining
+- [ ] Task 1.3: Complete Phase 3 Testing (manual testing)
+  - [ ] Mobile responsiveness (iPhone 6/12/14, iPad)
+  - [ ] Browser compatibility (Chrome, Safari, Firefox)
+  - [ ] Cron image tiering job end-to-end verification
   - [ ] Form validation and error states
   - [ ] Search filtering with real data
+
+---
+
+## TIER 2: Performance & CI/CD (5% Complete)
+
+### Completed ✓
+- [x] Task 2.3: Implement Basic CI/CD Pipeline (GitHub Actions)
+  - [x] test.yml: Runs PHPUnit tests on every push
+  - [x] MySQL 8.0 service with health checks
+  - [x] PHP 8.2 environment
+  - [x] Automatic test database creation
+  - [x] Coverage upload to Codecov
+  - [x] lint.yml: PHP syntax and style validation
+
+### In Progress / To Do
+- [ ] Task 2.1: Implement Query Result Caching
+  - [ ] Create app/lib/cache.php with caching layer
+  - [ ] Cache facet queries (15 min TTL)
+  - [ ] Cache settings in $_SESSION
+  - [ ] Cache analytics (1 hour TTL)
+  - [ ] Cache top photos/events (1 day TTL)
+  
+- [ ] Task 2.2: Optimize Search Query Performance
+  - [ ] Replace COUNT(DISTINCT) subquery with FOUND_ROWS()
+  - [ ] Add indexes on photos.status and photos.created_at
+  - [ ] Optimize GROUP_CONCAT operations
+  - [ ] Performance testing and query plan review
+
+### Success Metrics (TIER 2)
+- 30-40% reduction in query counts per search request
+- Settings load once per session (not per request)
+- Facet queries cached and reused
+- CI/CD pipeline green on all commits
 
 ---
 
