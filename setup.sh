@@ -133,11 +133,10 @@ elif command -v /opt/homebrew/bin/mysql &> /dev/null; then
     MYSQL_CMD="/opt/homebrew/bin/mysql"
 else
     echo -e "${RED}✗ MySQL client not found in PATH${NC}"
-    echo "   You'll need to import migrations manually:"
+    echo "   You'll need to import the schema manually via phpMyAdmin:"
     echo "   1. Open http://localhost:8888/phpmyadmin"
     echo "   2. Create database: photo_gallery"
     echo "   3. Import: migrations/001_initial_schema.sql"
-    echo "   4. Import: migrations/002_add_media_type.sql"
     MYSQL_CMD=""
 fi
 

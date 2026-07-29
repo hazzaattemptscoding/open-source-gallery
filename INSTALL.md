@@ -194,8 +194,7 @@ storage/                         # Uploaded files (gitignored)
 └── tmp/                         # Upload chunks
 
 migrations/                      # Database schema
-├── 001_initial_schema.sql
-└── 002_add_media_type.sql
+└── 001_initial_schema.sql
 ```
 
 ---
