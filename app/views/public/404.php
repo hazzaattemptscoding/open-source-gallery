@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Page Not Found</title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">

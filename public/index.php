@@ -50,6 +50,21 @@ if (($config['admin_mode'] ?? 'local') === 'remote' && strpos($path, '/admin') =
 // URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
 // cron is URL-based rather than CLI. cron/run.php lives outside the docroot
 // and has no direct HTTP path, so this is the only way to reach it over the web.
+// Dynamic CSS with customization overrides
+if ($path === '/api/styles.css') {
+    require __DIR__ . '/../app/lib/customize.php';
+    header('Content-Type: text/css; charset=utf-8');
+    header('Cache-Control: public, max-age=3600');
+    echo file_get_contents(__DIR__ . '/assets/css/podium-ink.css');
+    echo "\n/* Customization Overrides */\n\n";
+    $settings = get_customize_settings();
+    echo get_customize_css_overrides($settings);
+    exit;
+}
+
+// URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
+// cron is URL-based rather than CLI. cron/run.php lives outside the docroot
+// and has no direct HTTP path, so this is the only way to reach it over the web.
 if (preg_match('#^/cron/(.+)$#', $path, $cronMatch)) {
     $cronSecret = $config['security']['cron_secret'] ?? '';
     if ($cronSecret === '' || !hash_equals($cronSecret, $cronMatch[1])) {
@@ -168,6 +183,11 @@ switch ($path) {
     case '/admin/settings':
         require __DIR__ . '/../app/controllers/admin/settings.php';
         admin_settings_controller($pdo, $config);
+        break;
+
+    case '/admin/customize':
+        require __DIR__ . '/../app/controllers/admin/customize.php';
+        admin_customize_controller($pdo, $config);
         break;
 
     case '/admin/export':

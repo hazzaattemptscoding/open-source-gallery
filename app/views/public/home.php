@@ -7,7 +7,7 @@
 require_once __DIR__ . '/../../lib/seo.php';
 echo generate_meta_tags($GLOBALS['config'], $siteName, 'Professional sports photography gallery and sales platform', $GLOBALS['config']['site']['url'] ?? 'https://example.com');
 ?>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/api/styles.css">
 <?= generate_organization_schema($GLOBALS['config']) ?? '' ?>
 </head>
 <body>

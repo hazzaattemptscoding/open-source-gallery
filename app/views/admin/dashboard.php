@@ -67,8 +67,9 @@
   </div>
 
   <div class="panel">
-    <h2>Configuration & Backups</h2>
+    <h2>Design & Configuration</h2>
     <ul class="list-plain">
+      <li><a href="/admin/customize">→ Site Customization</a>: Colors, fonts, logos, layout with live preview</li>
       <li><a href="/admin/settings">→ Settings</a>: Stripe keys, email configuration, site details</li>
       <li><a href="/admin/emails">→ Email Management</a>: Queue, templates, delivery tracking</li>
       <li><a href="/admin/watermarks">→ Watermark Settings</a>: Position, opacity, custom text</li>
