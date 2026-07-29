@@ -13,8 +13,9 @@ let lightboxIndex = -1;
 
 function openLightbox(index) {
   lightboxIndex = index;
-  updateLightbox();
-  document.getElementById('lightbox').hidden = false;
+  updateLightbox(true);
+  const lightbox = document.getElementById('lightbox');
+  requestAnimationFrame(() => lightbox.classList.add('is-open'));
   document.body.classList.add('lightbox-open');
   fetch('/api/photos/view', {
     method: 'POST',
@@ -24,13 +25,26 @@ function openLightbox(index) {
 }
 
 function closeLightbox() {
-  document.getElementById('lightbox').hidden = true;
+  document.getElementById('lightbox').classList.remove('is-open');
   document.body.classList.remove('lightbox-open');
 }
 
-function updateLightbox() {
+// `immediate` skips the crossfade for the first image of a session, so
+// opening the lightbox doesn't add extra latency before the first paint.
+function updateLightbox(immediate) {
+  const img = document.getElementById('lightboxImage');
   const token = photoTokens[lightboxIndex];
-  document.getElementById('lightboxImage').src = `/media/d/${token}-1600.jpg`;
+
+  if (immediate) {
+    img.src = `/media/d/${token}-1600.jpg`;
+  } else {
+    img.classList.add('is-swapping');
+    window.setTimeout(() => {
+      img.src = `/media/d/${token}-1600.jpg`;
+      img.classList.remove('is-swapping');
+    }, 130);
+  }
+
   [lightboxIndex - 1, lightboxIndex + 1].forEach(i => {
     if (i >= 0 && i < photoTokens.length) {
       new Image().src = `/media/d/${photoTokens[i]}-1600.jpg`;
@@ -41,14 +55,14 @@ function updateLightbox() {
 function nextPhoto() {
   if (lightboxIndex < photoTokens.length - 1) {
     lightboxIndex++;
-    updateLightbox();
+    updateLightbox(false);
   }
 }
 
 function prevPhoto() {
   if (lightboxIndex > 0) {
     lightboxIndex--;
-    updateLightbox();
+    updateLightbox(false);
   }
 }
 
@@ -73,7 +87,7 @@ document.getElementById('lightbox').addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (document.getElementById('lightbox').hidden) return;
+  if (!document.getElementById('lightbox').classList.contains('is-open')) return;
   if (e.key === 'Escape') closeLightbox();
   if (e.key === 'ArrowRight') nextPhoto();
   if (e.key === 'ArrowLeft') prevPhoto();
@@ -95,25 +109,50 @@ async function addToCart(type, id, btn) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type, id }),
+      credentials: 'same-origin',
     });
     const data = await response.json();
     if (!response.ok) {
       if (data.error === 'Photo already in cart') {
-        alert('This photo is already in your cart.');
+        showToast('This photo is already in your cart.');
       } else {
         throw new Error(data.error || 'Failed to add');
       }
       return;
     }
-    document.getElementById('cartCount').textContent = data.count;
+    bumpCartCount(data.count);
     if (btn) {
       btn.classList.add('added');
       btn.textContent = '✓';
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to add to cart. Please try again.');
+    showToast('Failed to add to cart. Please try again.');
   }
+}
+
+function bumpCartCount(count) {
+  document.getElementById('cartCount').textContent = count;
+  const cartBadge = document.getElementById('cartBadge');
+  if (!cartBadge) return;
+  cartBadge.classList.remove('is-bumped');
+  void cartBadge.offsetWidth; // restart the animation on rapid successive adds
+  cartBadge.classList.add('is-bumped');
+}
+
+function showToast(message) {
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  window.clearTimeout(toast._hideTimer);
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+  toast._hideTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2600);
 }
 
 document.getElementById('lightboxCart').addEventListener('click', () => {
@@ -136,6 +175,8 @@ if (filterForm) {
     if (sessionSlug) apiParams.set('session', sessionSlug);
     const apiUrl = `/api/photos?${apiParams.toString()}`;
 
+    photoGrid.classList.add('is-loading');
+
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Filter failed');
@@ -144,6 +185,8 @@ if (filterForm) {
       history.pushState({}, '', url);
     } catch (err) {
       window.location.href = url;
+    } finally {
+      photoGrid.classList.remove('is-loading');
     }
   });
 }

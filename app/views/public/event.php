@@ -116,7 +116,7 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
 </main>
 
 <!-- Lightbox for tap-to-enlarge -->
-<div class="lightbox" id="lightbox" hidden>
+<div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
   <button class="lightbox-prev" id="lightboxPrev" aria-label="Previous">&#8249;</button>
   <img id="lightboxImage" alt="">

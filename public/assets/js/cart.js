@@ -1,25 +1,79 @@
-document.querySelectorAll('.cart-line-remove').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const line = btn.closest('.cart-line');
-    const type = line.dataset.type;
-    const id = parseInt(line.dataset.id, 10);
+/**
+ * Cart page: remove-line animation, checkout submission.
+ *
+ * Removing a line used to force a full page reload just to get an accurate
+ * total (volume discounts are priced server-side, so the total can't be
+ * safely recomputed in JS). We keep that server round-trip for correctness
+ * but avoid the jarring reload: the line collapses in place, then we
+ * re-fetch the cart page and swap in the fresh markup.
+ */
 
-    try {
-      const response = await fetch('/cart/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, id }),
-      });
-      if (!response.ok) throw new Error('Failed to remove');
-      location.reload();
-    } catch (err) {
-      console.error(err);
-    }
+function initCartPage() {
+  attachRemoveHandlers();
+  attachCheckoutHandler();
+}
+
+function attachRemoveHandlers() {
+  document.querySelectorAll('.cart-line-remove').forEach(btn => {
+    btn.addEventListener('click', () => handleRemove(btn));
   });
-});
+}
 
-const checkoutForm = document.getElementById('checkout-form');
-if (checkoutForm) {
+async function handleRemove(btn) {
+  const line = btn.closest('.cart-line');
+  const type = line.dataset.type;
+  const id = parseInt(line.dataset.id, 10);
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('/cart/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, id }),
+      credentials: 'same-origin',
+    });
+    if (!response.ok) throw new Error('Failed to remove');
+    collapseLine(line);
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    showToast('Could not remove item. Please try again.');
+  }
+}
+
+function collapseLine(line) {
+  line.style.maxHeight = line.scrollHeight + 'px';
+  line.classList.add('is-collapsible');
+  // Two rAFs: first commits the explicit max-height, second starts the
+  // transition to 0 — otherwise the browser can coalesce both style writes
+  // into one frame and skip the animation entirely.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => line.classList.add('is-removing'));
+  });
+  window.setTimeout(refreshCart, 260);
+}
+
+async function refreshCart() {
+  try {
+    const response = await fetch(location.pathname, { credentials: 'same-origin' });
+    if (!response.ok) throw new Error('refresh failed');
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const freshMain = doc.querySelector('.cart-page');
+    const currentMain = document.querySelector('.cart-page');
+    if (!freshMain || !currentMain) throw new Error('missing .cart-page');
+    currentMain.innerHTML = freshMain.innerHTML;
+    initCartPage();
+  } catch (err) {
+    console.error(err);
+    location.reload();
+  }
+}
+
+function attachCheckoutHandler() {
+  const checkoutForm = document.getElementById('checkout-form');
+  if (!checkoutForm) return;
+
   checkoutForm.addEventListener('submit', async e => {
     e.preventDefault();
 
@@ -27,18 +81,18 @@ if (checkoutForm) {
     const errorDiv = document.getElementById('checkout-error');
 
     if (!email) {
-      errorDiv.textContent = 'Email is required';
-      errorDiv.style.display = 'block';
+      showFormError(errorDiv, 'Email is required');
       return;
     }
 
-    errorDiv.style.display = 'none';
+    hideFormError(errorDiv);
 
     try {
       const response = await fetch('/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
+        credentials: 'same-origin',
       });
 
       if (!response.ok) {
@@ -62,9 +116,38 @@ if (checkoutForm) {
       };
       document.head.appendChild(script);
     } catch (err) {
-      errorDiv.textContent = err.message || 'An error occurred';
-      errorDiv.style.display = 'block';
+      showFormError(errorDiv, err.message || 'An error occurred');
       console.error(err);
     }
   });
 }
+
+function showFormError(el, message) {
+  el.textContent = message;
+  el.style.display = 'block';
+  el.classList.remove('is-visible');
+  void el.offsetWidth; // restart the entrance animation if shown twice in a row
+  el.classList.add('is-visible');
+}
+
+function hideFormError(el) {
+  el.style.display = 'none';
+  el.classList.remove('is-visible');
+}
+
+function showToast(message) {
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  window.clearTimeout(toast._hideTimer);
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+  toast._hideTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2600);
+}
+
+initCartPage();
