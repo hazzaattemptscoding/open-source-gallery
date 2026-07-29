@@ -27,8 +27,11 @@ function audit_log(PDO $pdo, string $actor, string $action, ?string $entityType 
     ]);
 }
 
-/** Best-effort client IP for audit/rate-limit keys. Trusts REMOTE_ADDR only — no X-Forwarded-For, which is trivially spoofable unless a specific trusted proxy is configured, and this app runs with Apache facing the internet directly. */
-function client_ip(): string
-{
+/**
+ * Get client IP for audit/rate-limit keys. Trusts REMOTE_ADDR only —
+ * X-Forwarded-For is spoofable unless a trusted proxy is configured.
+ * This app runs with Apache facing the internet directly.
+ */
+function client_ip(): string {
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }

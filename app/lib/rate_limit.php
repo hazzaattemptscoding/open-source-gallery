@@ -40,19 +40,11 @@ function check_rate_limit(PDO $pdo, string $key, int $maxPerWindow): bool {
 }
 
 /**
- * Extract client IP, handling X-Forwarded-For header if present
- * (used by reverse proxies). Trusts the header only for 'self' proxies
- * configured in the app; otherwise uses REMOTE_ADDR.
+ * Get best-effort client IP. For security, trusts REMOTE_ADDR only —
+ * X-Forwarded-For is spoofable unless a trusted reverse proxy is configured.
+ * This app runs with Apache facing the internet directly, not behind a proxy.
+ * Use only REMOTE_ADDR for rate limiting and audit logging.
  */
 function get_client_ip(): string {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
-        if (!empty($ips)) {
-            $ip = $ips[0];
-        }
-    }
-
-    return $ip;
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
