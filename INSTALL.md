@@ -2,21 +2,33 @@
 
 Self-hosted photo gallery and sales platform for sports photographers.
 
-Choose your installation method below. **Docker is the easiest.**
+## Universal Installer (Works Everywhere) ⭐ Recommended
 
-## Quick Setup Verification
+**Works on Windows, Mac, Linux, shared hosting, VPS:**
 
-Before you begin, verify your environment is ready:
+```bash
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+php install.php
+```
 
+The interactive installer will:
+- Check your environment (PHP version, extensions)
+- Ask for your database details (defaults provided)
+- Create database and import schema automatically
+- Generate secure config file
+- Tell you exactly what to do next
+
+Then visit the URL it gives you and create your admin account. Done.
+
+**Troubleshooting?** Run this anytime:
 ```bash
 php verify-setup.php
 ```
 
-This checks PHP version, required extensions, file permissions, and database connectivity. It catches setup issues early so you don't get stuck.
-
 ---
 
-## Option 1: Docker (One Command) ⭐ Recommended
+## Option 1: Docker (Fastest) ⭐ Alternative
 
 If you have Docker installed, this is all you need:
 
@@ -83,34 +95,20 @@ This automatically:
 
 ---
 
-## Option 3: Manual Setup (Any Server)
+## Option 3: Manual Shared Hosting Setup
 
-If you're deploying to actual hosting (Bluehost, IONOS, GoDaddy, etc.):
+**If the installer doesn't work for you:**
 
-### Prerequisites
-- PHP 8.2+ with: `pdo_mysql`, `gd`, `zip`, `exif` extensions
-- MySQL 5.7+ or MariaDB 10.2+
-- SSH/SFTP access or FTP file manager
-- Apache 2.4+ with `mod_rewrite`
+### Quick Verification
 
-### Quick Verification (After Upload)
-
-After uploading files via FTP/SFTP, run this to check everything:
-
+After uploading, run:
 ```bash
 php host-setup.php
 ```
 
-This verifies:
-- PHP version and required extensions
-- Directory structure and permissions
-- Database connectivity
-- Config file validity
-- Schema import status
+This checks everything and tells you what needs fixing.
 
-It provides clear error messages and solutions for common issues.
-
-### Manual Steps (Detailed)
+### Detailed Manual Steps
 
 1. **Upload files** via SFTP/FTP to your hosting provider's public HTML directory
 
