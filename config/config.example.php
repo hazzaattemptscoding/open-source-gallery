@@ -84,6 +84,14 @@ return [
 
     'timezone' => 'UTC',
 
+    // File storage mode. Can be 'local' or 'remote-nas'.
+    // 'local' (default): all files including originals stored on this server.
+    //   Standard shared hosting setup, no additional hardware needed.
+    // 'remote-nas': originals stored on home NAS, previews cached on this server.
+    //   Advanced setup for users with home network + always-on poller machine.
+    //   See docs/NAS-FULFILLMENT.md for detailed setup instructions.
+    'storage_mode' => 'local',
+
     // Admin deployment mode. Can be 'local' or 'remote'.
     // 'local' (default): admin panel runs on the same server as the public site.
     //   Everything works as it does today, no additional configuration needed.
