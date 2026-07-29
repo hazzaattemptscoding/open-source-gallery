@@ -143,12 +143,15 @@ function get_customize_css_overrides(array $settings): string {
         $css .= "}\n\n";
     }
 
-    // Apply grid column customization
+    // Apply grid column customization - adjust minmax size for responsive grids
     if (!empty($settings['grid_columns'])) {
         $cols = (int)$settings['grid_columns'];
         if ($cols >= 2 && $cols <= 5) {
-            $css .= "/* Photo grid columns: $cols */\n";
-            $css .= ".grid, .photo-grid, .search-results { grid-template-columns: repeat($cols, 1fr); }\n\n";
+            // Calculate minmax width to achieve desired column count at typical viewport widths
+            $widths = [2 => '450px', 3 => '280px', 4 => '200px', 5 => '160px'];
+            $minmaxWidth = $widths[$cols] ?? '280px';
+            $css .= "/* Photo grid: targeting ~$cols columns */\n";
+            $css .= ".photo-grid, .search-results { grid-template-columns: repeat(auto-fill, minmax($minmaxWidth, 1fr)) !important; }\n\n";
         }
     }
 
