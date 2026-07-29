@@ -219,3 +219,37 @@ hardening gaps filed as H3/H4. Nothing qualifies for inlining.
 **Sound:** admin auth (decoy hash, TOTP replay guard), CSRF, cart cookie read
 path, download token hashing, webhook idempotency, order transaction, derivative
 failure handling.
+
+---
+
+## Brand Alignment: Option A Implementation (2026-07-29)
+
+**Status**: ✅ COMPLETE
+
+**Implemented**:
+- Wired .hero-eyebrow and .hero-title CSS pattern into event.php hero section
+- Added paired CTA block below hero: primary "View Gallery" + secondary "View all events"
+- Styled .hero-cta-block with centered layout, .hero-cta-primary button (280px width), .hero-cta-secondary link with hover state
+- Refined copy tone in checkout_pending.php and checkout_success.php (direct, confident, minimal)
+- Removed broken @font-face rules for GeistSans and Newsreader from podium-ink.css
+- Removed broken @font-face rule for GeistMono from admin.css
+- Added comments noting fonts are placeholders pending real brand assets
+- Font-family stacks already have proper fallbacks (system fonts + Google Fonts imports)
+
+**Design rationale** (per brand-alignment-plan.md):
+- Adopts eyebrow label pattern (already built, unused) — typographic signal, no color change
+- Adds paired CTA on event hero only (not cart/checkout, which preserve single-tap no-confirm per CLAUDE.md)
+- Refines copy to match brand's short, direct, confident voice across transactional pages
+- Skips trust line (no real, gallery-specific claim yet)
+- Leaves customize.php/json unchanged (already correct, awaits real hex/fonts/logo)
+
+**Files modified**:
+- app/views/public/event.php — hero markup + CTA section + main#photos anchor
+- app/views/public/checkout_pending.php — copy refinement
+- app/views/public/checkout_success.php — copy refinement
+- public/assets/css/podium-ink.css — removed broken @font-face, added .hero-cta-block styles
+- public/assets/css/admin.css — removed broken @font-face
+
+**Commit**: 30709c9 "Implement Option A: brand alignment (light-touch changes)"
+
+**Testing**: PHP syntax validated on all modified templates. CSS changes syntactically valid. Committed and pushed to claude/plugin-skill-setup-y9v6kx.
