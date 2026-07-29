@@ -50,7 +50,7 @@ function admin_export_orders_controller(PDO $pdo, array $config): void {
     $stmt = $pdo->prepare(<<<'SQL'
         SELECT
             o.id, o.public_token, o.email, o.total_pence, o.status,
-            o.stripe_session_id, o.download_token, o.created_at, o.updated_at
+            o.stripe_checkout_id, o.paid_at, o.created_at, o.updated_at
         FROM orders o
         ORDER BY o.created_at DESC
     SQL);
@@ -59,6 +59,11 @@ function admin_export_orders_controller(PDO $pdo, array $config): void {
     $currencyCode = $config['currency'] ?? 'GBP';
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        // Check if this order has any download links generated
+        $stmt2 = $pdo->prepare('SELECT COUNT(*) FROM download_links WHERE order_id = ?');
+        $stmt2->execute([$row['id']]);
+        $hasDownloadLinks = (int)$stmt2->fetchColumn() > 0;
+
         fputcsv($output, [
             $row['id'],
             $row['public_token'],
@@ -66,8 +71,8 @@ function admin_export_orders_controller(PDO $pdo, array $config): void {
             $row['total_pence'],
             format_pence((int)$row['total_pence'], $currencyCode),
             $row['status'],
-            $row['stripe_session_id'] ?? '',
-            $row['download_token'] ? 'Generated' : 'Not yet',
+            $row['stripe_checkout_id'] ?? '',
+            $hasDownloadLinks ? 'Generated' : 'Not yet',
             $row['created_at'],
             $row['updated_at'],
         ]);
@@ -97,43 +102,51 @@ function admin_export_photos_controller(PDO $pdo, array $config): void {
         'Photo ID',
         'Public Token',
         'Event',
-        'Caption',
+        'Session',
         'Filename',
-        'Price (pence)',
-        'Watermarked',
+        'Status',
+        'Media Type',
+        'Dimensions',
+        'View Count',
         'Tags',
-        'Upload Time',
         'Created',
     ]);
 
     $stmt = $pdo->prepare(<<<'SQL'
         SELECT
-            p.id, p.public_token, e.title as event_title, p.caption, p.original_filename,
-            p.price_pence, p.watermark_applied, p.created_at
+            p.id, p.public_token, e.title as event_title, s.name as session_name,
+            p.original_filename, p.status, p.media_type, p.width, p.height,
+            p.view_count, p.created_at
         FROM photos p
         LEFT JOIN events e ON e.id = p.event_id
+        LEFT JOIN sessions s ON s.id = p.session_id
         ORDER BY p.created_at DESC
     SQL);
     $stmt->execute();
 
-    $currencyCode = $config['currency'] ?? 'GBP';
-
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $tagsStmt = $pdo->prepare('SELECT GROUP_CONCAT(tag SEPARATOR ", ") as tags FROM photo_tags WHERE photo_id = ?');
+        // Get tags for this photo
+        $tagsStmt = $pdo->prepare('
+            SELECT GROUP_CONCAT(kart_number || " (" || driver_name || " - " || class || ")", ", ") as tags
+            FROM photo_tags WHERE photo_id = ?
+        ');
         $tagsStmt->execute([$row['id']]);
         $tagsResult = $tagsStmt->fetch(PDO::FETCH_ASSOC);
         $tags = $tagsResult['tags'] ?? '';
+
+        $dimensions = ($row['width'] && $row['height']) ? $row['width'] . 'x' . $row['height'] : 'Unknown';
 
         fputcsv($output, [
             $row['id'],
             $row['public_token'],
             $row['event_title'] ?? '(Not assigned)',
-            $row['caption'],
+            $row['session_name'] ?? '(Not assigned)',
             $row['original_filename'],
-            $row['price_pence'],
-            $row['watermark_applied'] ? 'Yes' : 'No',
+            $row['status'],
+            $row['media_type'],
+            $dimensions,
+            $row['view_count'],
             $tags,
-            'In gallery',
             $row['created_at'],
         ]);
     }
@@ -175,7 +188,7 @@ function admin_export_customers_controller(PDO $pdo, array $config): void {
             MIN(o.created_at) as first_order,
             MAX(o.created_at) as last_order
         FROM orders o
-        WHERE o.status = 'completed'
+        WHERE o.status = 'paid'
         GROUP BY o.email
         ORDER BY total_pence DESC
     SQL);
