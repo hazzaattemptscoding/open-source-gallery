@@ -98,6 +98,13 @@ function can_view_audit_log(PDO $pdo): bool {
 }
 
 /**
+ * Check if current admin can manage print orders.
+ */
+function can_manage_print_orders(PDO $pdo): bool {
+    return is_admin($pdo);
+}
+
+/**
  * Require admin role (throw 403 if not).
  */
 function require_admin_role(PDO $pdo): void {

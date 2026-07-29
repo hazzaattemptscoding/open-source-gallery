@@ -8,10 +8,16 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/analytics.php';
 
 function admin_analytics_controller(PDO $pdo, array $config): void {
     require_admin();
+    if (!can_view_analytics($pdo)) {
+        http_response_code(403);
+        echo '403 Forbidden: Analytics access required';
+        exit;
+    }
 
     // Get all analytics data
     $analytics = [

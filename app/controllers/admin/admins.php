@@ -12,7 +12,11 @@ require_once __DIR__ . '/../../lib/audit.php';
 
 function admin_admins_controller(PDO $pdo, array $config): void {
     require_admin();
-    require_admin_role($pdo);
+    if (!can_manage_admins($pdo)) {
+        http_response_code(403);
+        echo '403 Forbidden: Admin management access required';
+        exit;
+    }
 
     $action = $_GET['action'] ?? 'list';
     $errors = [];

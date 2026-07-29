@@ -13,7 +13,11 @@ require_once __DIR__ . '/../../lib/print.php';
 
 function admin_print_orders_controller(PDO $pdo, array $config): void {
     require_admin();
-    require_admin_role($pdo);
+    if (!can_manage_print_orders($pdo)) {
+        http_response_code(403);
+        echo '403 Forbidden: Print order management access required';
+        exit;
+    }
 
     // Check if print is enabled
     if (!is_print_enabled($pdo)) {
