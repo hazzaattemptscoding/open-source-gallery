@@ -293,8 +293,14 @@
       <div class="customize-buttons">
         <button type="submit" style="background: var(--text); color: var(--bg); border: none; border-radius: 4px; cursor: pointer; flex: 2;">Save Changes</button>
         <button type="button" class="preview-button" onclick="openPublicPreview();" style="flex: 1;">Preview</button>
-        <button type="button" onclick="if(confirm('Reset all customizations to defaults?')) { document.querySelectorAll('input[type=color], input[type=text], input[type=number], select').forEach(f => f.value = f.getAttribute('value')); }" style="background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px; flex: 1;">Reset</button>
       </div>
+    </form>
+
+    <!-- Reset form -->
+    <form method="post" style="margin-top: 1rem;">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+      <input type="hidden" name="action" value="reset">
+      <button type="submit" onclick="return confirm('Reset all customizations to defaults? This will delete any uploaded logo.');" style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Reset to Defaults</button>
     </form>
   </div>
 

@@ -30,6 +30,15 @@ function admin_customize_controller(PDO $pdo, array $config): void {
         // Validate CSRF token
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
             $errors[] = 'Invalid security token. Please try again.';
+        } elseif (isset($_POST['action']) && $_POST['action'] === 'reset') {
+            // Handle reset action
+            if (reset_customize_settings()) {
+                audit_log($pdo, 'customize_reset', 'Reset site customization to defaults');
+                header('Location: /admin/customize?success=1');
+                exit;
+            } else {
+                $errors[] = 'Failed to reset customization settings.';
+            }
         } else {
             $formData = [];
             $formData['site_name'] = trim($_POST['site_name'] ?? '');

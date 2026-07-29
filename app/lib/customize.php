@@ -82,6 +82,23 @@ function save_customize_settings(array $settings): bool {
 }
 
 /**
+ * Reset customization to defaults and delete uploads.
+ */
+function reset_customize_settings(): bool {
+    // Delete uploaded files
+    $uploadDir = __DIR__ . '/../../storage/customize/';
+    if (is_dir($uploadDir)) {
+        $files = glob($uploadDir . '*.{jpg,jpeg,png,webp}', GLOB_BRACE);
+        foreach ($files as $file) {
+            @unlink($file);
+        }
+    }
+
+    // Delete config file (will revert to defaults on next load)
+    return !file_exists(CUSTOMIZE_CONFIG_FILE) || @unlink(CUSTOMIZE_CONFIG_FILE);
+}
+
+/**
  * Generate CSS overrides for all customization settings.
  * Used for live preview and public site injection.
  */
