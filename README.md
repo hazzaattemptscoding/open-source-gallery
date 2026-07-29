@@ -44,34 +44,49 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 
 ## Quick Start
 
-**Run this anywhere (Mac, Linux, Windows, hosting):**
+**Automatic setup for macOS, Linux, or Windows:**
 
+### macOS
 ```bash
 git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
-php install.php
+bash install-mac.sh
 ```
 
-The interactive installer will set up everything: database, config, and directories.
-
-Then:
-1. Visit the URL it gives you → `/admin/setup`
-2. Create your admin account
-3. Go to Settings and add your Stripe keys (no config file editing needed)
-4. Configure email (SMTP or mail() — see [docs/EMAIL.md](docs/EMAIL.md))
-5. Start uploading photos
-
-**Or use Docker (fastest):**
-
+### Linux
 ```bash
 git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
+bash install-linux.sh
+```
+
+### Windows (PowerShell)
+```powershell
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+.\install-windows.ps1
+```
+
+**What the installer does:**
+- Detects and installs PHP 8.2, MySQL, Git (if missing)
+- Runs the interactive setup wizard
+- Creates database and config automatically
+- Starts the development server
+- Opens your browser to the admin setup page
+
+Then:
+1. Create your admin account
+2. Go to Settings and add your Stripe keys (optional, for sales)
+3. Configure email (SMTP or mail() — see [docs/EMAIL.md](docs/EMAIL.md))
+4. Start uploading photos
+
+**Or use Docker:**
+```bash
 docker-compose up
 ```
 
-Visit http://localhost:8080 and follow the same steps as above.
-
-See [QUICKSTART.md](QUICKSTART.md) and [INSTALL.md](INSTALL.md) for detailed options.
+See [QUICK-START.md](QUICK-START.md) and [INSTALL.md](INSTALL.md) for detailed options.
 
 ## Architecture
 
@@ -187,8 +202,8 @@ A: Not the intended use case. This is built for shared hosting (Apache + cron). 
 
 ## Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** — Get up and running in minutes
-- **[INSTALL.md](INSTALL.md)** — Detailed installation for all platforms
+- **[QUICK-START.md](QUICK-START.md)** — Automatic OS-specific installers (macOS, Linux, Windows)
+- **[INSTALL.md](INSTALL.md)** — Manual installation for all platforms
 - **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Pre-launch checklist and go-live guide
 - **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — Common issues and solutions
 - **[docs/EMAIL.md](docs/EMAIL.md)** — Email configuration (SMTP, Gmail, SendGrid, AWS SES, Mailgun)
