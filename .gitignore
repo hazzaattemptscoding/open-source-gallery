@@ -6,6 +6,7 @@ composer.lock
 /storage/zips/
 /storage/tmp/
 /storage/cache/
+/storage/*.sqlite*
 !/storage/hires/.gitkeep
 !/storage/zips/.gitkeep
 !/storage/tmp/.gitkeep
