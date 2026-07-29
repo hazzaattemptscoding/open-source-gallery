@@ -75,6 +75,10 @@ function public_checkout_controller(PDO $pdo, array $config): void {
 
         echo json_encode(['ok' => true, 'session_id' => $sessionId, 'publishable_key' => $publishableKey]);
     } catch (Throwable $e) {
+        error_log('Checkout failed for order ' . $order['id'] . ': ' . $e->getMessage());
+        audit_log($pdo, 'public', 'checkout_failed', 'order', $order['id'], [
+            'error' => $e->getMessage(),
+        ], $ip);
         http_response_code(500);
         echo json_encode(['error' => 'Checkout failed']);
     }
