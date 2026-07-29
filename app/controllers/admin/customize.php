@@ -27,42 +27,85 @@ function admin_customize_controller(PDO $pdo, array $config): void {
     $settings = get_customize_settings();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $formData = [];
-
-        $formData['site_name'] = trim($_POST['site_name'] ?? '');
-        $formData['primary_color'] = trim($_POST['primary_color'] ?? '#111111');
-        $formData['secondary_color'] = trim($_POST['secondary_color'] ?? '#ffffff');
-        $formData['accent_color'] = trim($_POST['accent_color'] ?? '#666666');
-        $formData['text_color'] = trim($_POST['text_color'] ?? '#111111');
-        $formData['text_muted_color'] = trim($_POST['text_muted_color'] ?? '#787774');
-        $formData['bg_color'] = trim($_POST['bg_color'] ?? '#ffffff');
-        $formData['bg_alt_color'] = trim($_POST['bg_alt_color'] ?? '#f9f9f8');
-        $formData['border_color'] = trim($_POST['border_color'] ?? '#eaeaea');
-        $formData['body_font'] = trim($_POST['body_font'] ?? 'Geist Sans');
-        $formData['heading_font'] = trim($_POST['heading_font'] ?? 'Newsreader');
-        $formData['mono_font'] = trim($_POST['mono_font'] ?? 'Geist Mono');
-        $formData['heading_letter_spacing'] = trim($_POST['heading_letter_spacing'] ?? '-0.02em');
-        $formData['max_content_width'] = trim($_POST['max_content_width'] ?? '1200px');
-        $formData['spacing_multiplier'] = trim($_POST['spacing_multiplier'] ?? '1');
-
-        if (save_customize_settings($formData)) {
-            $settings = $formData;
-            audit_log($pdo, 'customize_site', 'Updated site customization settings');
-            header('Location: /admin/customize?success=1');
-            exit;
+        // Validate CSRF token
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid security token. Please try again.';
         } else {
-            $errors[] = 'Failed to save customization settings. Check file permissions.';
+            $formData = [];
+            $formData['site_name'] = trim($_POST['site_name'] ?? '');
+
+            // Validate and sanitize colors (hex format)
+            $colorFields = ['primary_color', 'secondary_color', 'accent_color', 'text_color', 'text_muted_color', 'bg_color', 'bg_alt_color', 'border_color'];
+            foreach ($colorFields as $field) {
+                $value = trim($_POST[$field] ?? '');
+                if ($value && !preg_match('/^#[0-9a-fA-F]{6}$/', $value)) {
+                    $errors[] = "Invalid color format for $field. Use hex codes like #111111";
+                }
+                $formData[$field] = $value ?: '#111111';
+            }
+
+            $formData['body_font'] = trim($_POST['body_font'] ?? 'Geist Sans');
+            $formData['heading_font'] = trim($_POST['heading_font'] ?? 'Newsreader');
+            $formData['mono_font'] = trim($_POST['mono_font'] ?? 'Geist Mono');
+            $formData['heading_letter_spacing'] = trim($_POST['heading_letter_spacing'] ?? '-0.02em');
+            $formData['max_content_width'] = trim($_POST['max_content_width'] ?? '1200px');
+            $formData['spacing_multiplier'] = trim($_POST['spacing_multiplier'] ?? '1');
+            $formData['grid_columns'] = (int)($_POST['grid_columns'] ?? 3);
+
+            // Handle logo upload
+            if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] !== UPLOAD_ERR_NO_FILE) {
+                if ($_FILES['site_logo']['error'] === UPLOAD_ERR_OK) {
+                    $token = upload_customize_photo($_FILES['site_logo'], 'logo');
+                    if ($token) {
+                        $formData['site_logo_token'] = $token;
+                        audit_log($pdo, 'customize_upload_logo', 'Uploaded site logo');
+                    } else {
+                        $errors[] = 'Failed to upload logo. Ensure it is a valid image (JPEG, PNG, WebP).';
+                    }
+                } else {
+                    $errors[] = 'File upload error: ' . $_FILES['site_logo']['error'];
+                }
+            } else {
+                // Preserve existing logo if not uploading new one
+                $formData['site_logo_token'] = $settings['site_logo_token'] ?? '';
+            }
+
+            if (empty($errors) && save_customize_settings($formData)) {
+                $settings = $formData;
+                audit_log($pdo, 'customize_site', 'Updated site customization settings');
+                // Touch file to invalidate CSS cache
+                touch(CUSTOMIZE_CONFIG_FILE);
+                header('Location: /admin/customize?success=1');
+                exit;
+            } elseif (empty($errors)) {
+                $errors[] = 'Failed to save customization settings. Check file permissions.';
+            }
         }
     }
 
     $availableFonts = get_available_fonts();
     $cssOverrides = get_customize_css_overrides($settings);
 
+    // Generate CSRF token if not already in session
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
     if ($preview_mode === 'public') {
+        // Load sample events for preview
+        $sampleEvents = [];
+        try {
+            $stmt = $pdo->query("SELECT id, title, slug, event_date FROM events ORDER BY event_date DESC LIMIT 6");
+            $sampleEvents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            // Silently fail, preview will show empty state
+        }
+
         render(__DIR__ . '/../../views/admin/customize_preview_public.php', [
             'siteName' => $config['site']['name'] ?? 'Gallery',
             'settings' => $settings,
             'cssOverrides' => $cssOverrides,
+            'sampleEvents' => $sampleEvents,
         ]);
     } else {
         render(__DIR__ . '/../../views/admin/customize.php', [
@@ -72,6 +115,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             'cssOverrides' => $cssOverrides,
             'errors' => $errors,
             'success' => $success,
+            'csrfToken' => $_SESSION['csrf_token'],
         ]);
     }
 }

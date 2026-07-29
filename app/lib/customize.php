@@ -29,6 +29,7 @@ function get_customize_settings(): array {
         'heading_letter_spacing' => '-0.02em',
         'max_content_width' => '1200px',
         'spacing_multiplier' => '1',
+        'grid_columns' => 3,
     ];
 
     if (!file_exists(CUSTOMIZE_CONFIG_FILE)) {
@@ -117,6 +118,16 @@ function get_customize_css_overrides(array $settings): string {
             $css .= "  --space-$i: ${newValue}rem;\n";
         }
         $css .= "}\n\n";
+    }
+
+    // Apply grid column customization
+    if (!empty($settings['grid_columns'])) {
+        $cols = (int)$settings['grid_columns'];
+        if ($cols >= 2 && $cols <= 5) {
+            $css .= "/* Photo grid columns: $cols */\n";
+            $css .= ".grid { grid-template-columns: repeat($cols, 1fr); }\n";
+            $css .= ".search-results { grid-template-columns: repeat($cols, 1fr); }\n\n";
+        }
     }
 
     return $css;

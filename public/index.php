@@ -54,8 +54,25 @@ if (($config['admin_mode'] ?? 'local') === 'remote' && strpos($path, '/admin') =
 if ($path === '/api/styles.css') {
     require __DIR__ . '/../app/lib/customize.php';
     header('Content-Type: text/css; charset=utf-8');
-    header('Cache-Control: public, max-age=3600');
-    echo file_get_contents(__DIR__ . '/assets/css/podium-ink.css');
+
+    // Cache bust on customize.json changes
+    $customizeFile = __DIR__ . '/../storage/customize.json';
+    $mtime = file_exists($customizeFile) ? filemtime($customizeFile) : 0;
+    $baseFile = __DIR__ . '/assets/css/podium-ink.css';
+    $baseMtime = filemtime($baseFile);
+    $etag = '"' . md5("$baseMtime-$mtime") . '"';
+
+    // Set ETag and allow short cache, checking ETag on each request
+    header("ETag: $etag");
+    header('Cache-Control: public, max-age=60, must-revalidate');
+
+    // If client has cached version, check if it's still valid
+    if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] === $etag) {
+        http_response_code(304);
+        exit;
+    }
+
+    echo file_get_contents($baseFile);
     echo "\n/* Customization Overrides */\n\n";
     $settings = get_customize_settings();
     echo get_customize_css_overrides($settings);

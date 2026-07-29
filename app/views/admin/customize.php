@@ -169,13 +169,23 @@
     <div class="error-message"><?= e($error) ?></div>
     <?php endforeach; ?>
 
-    <form method="post" class="customize-form">
+    <form method="post" class="customize-form" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+
       <!-- Site Identity -->
       <div class="customize-section">
         <h3>Site Identity</h3>
         <div class="form-group">
           <label for="site_name">Site Name</label>
           <input type="text" id="site_name" name="site_name" value="<?= e($settings['site_name'] ?? '') ?>" placeholder="Gallery" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
+        </div>
+        <div class="form-group">
+          <label for="site_logo">Site Logo</label>
+          <input type="file" id="site_logo" name="site_logo" accept="image/jpeg,image/png,image/webp" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
+          <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">JPEG, PNG, or WebP (max 10MB)</small>
+          <?php if (!empty($settings['site_logo_token'])): ?>
+          <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">✓ Logo uploaded</small>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -252,6 +262,15 @@
       <!-- Layout -->
       <div class="customize-section">
         <h3>Layout</h3>
+        <div class="form-group">
+          <label for="grid_columns">Photo Grid Columns</label>
+          <select id="grid_columns" name="grid_columns" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
+            <option value="2" <?= ($settings['grid_columns'] ?? 3) == 2 ? 'selected' : '' ?>>2 columns</option>
+            <option value="3" <?= ($settings['grid_columns'] ?? 3) == 3 ? 'selected' : '' ?>>3 columns</option>
+            <option value="4" <?= ($settings['grid_columns'] ?? 3) == 4 ? 'selected' : '' ?>>4 columns</option>
+            <option value="5" <?= ($settings['grid_columns'] ?? 3) == 5 ? 'selected' : '' ?>>5 columns</option>
+          </select>
+        </div>
         <div class="form-group">
           <label for="max_content_width">Max Content Width</label>
           <input type="text" id="max_content_width" name="max_content_width" value="<?= e($settings['max_content_width'] ?? '1200px') ?>" placeholder="1200px" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">

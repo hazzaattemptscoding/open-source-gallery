@@ -44,37 +44,26 @@ body {
   <h1>Public Site Preview</h1>
   <p style="color: var(--text-muted); margin-bottom: 3rem;">This preview shows how your customizations look on the public gallery.</p>
 
-  <!-- Sample Event Cards -->
+  <!-- Event Cards -->
+  <h2 style="margin-bottom: 2rem;">Sample Events</h2>
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
-    <div style="background: var(--bg); border: 1px solid var(--border); overflow: hidden;">
-      <div style="aspect-ratio: 1; background: linear-gradient(135deg, var(--bg-alt) 0%, var(--border) 100%); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-        Sample Photo
+    <?php if (!empty($sampleEvents)): ?>
+      <?php foreach ($sampleEvents as $event): ?>
+      <div style="background: var(--bg); border: 1px solid var(--border); overflow: hidden;">
+        <div style="aspect-ratio: 1; background: linear-gradient(135deg, var(--bg-alt) 0%, var(--border) 100%); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+          No Photo
+        </div>
+        <div style="padding: 1rem;">
+          <h3 style="margin: 0 0 0.5rem; font-size: 1.1rem;"><?= e($event['title']) ?></h3>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);"><?= date('d M Y', strtotime($event['event_date'])) ?></p>
+        </div>
       </div>
-      <div style="padding: 1rem;">
-        <h2 style="margin: 0 0 0.5rem; font-size: 1.1rem;">Sample Event 1</h2>
-        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">29 Jul 2025 · Venue Name</p>
+      <?php endforeach; ?>
+    <?php else: ?>
+      <div style="grid-column: 1 / -1; background: var(--bg-alt); border: 1px solid var(--border); padding: 2rem; text-align: center; border-radius: 4px;">
+        <p style="color: var(--text-muted);">No events yet. Create some in the admin panel to see them here.</p>
       </div>
-    </div>
-
-    <div style="background: var(--bg); border: 1px solid var(--border); overflow: hidden;">
-      <div style="aspect-ratio: 1; background: linear-gradient(135deg, var(--text-muted) 0%, var(--border) 100%); display: flex; align-items: center; justify-content: center; color: white;">
-        Sample Photo
-      </div>
-      <div style="padding: 1rem;">
-        <h2 style="margin: 0 0 0.5rem; font-size: 1.1rem;">Sample Event 2</h2>
-        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">15 Aug 2025 · Location</p>
-      </div>
-    </div>
-
-    <div style="background: var(--bg); border: 1px solid var(--border); overflow: hidden;">
-      <div style="aspect-ratio: 1; background: linear-gradient(135deg, var(--bg-alt) 0%, #ccc 100%); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-        Sample Photo
-      </div>
-      <div style="padding: 1rem;">
-        <h2 style="margin: 0 0 0.5rem; font-size: 1.1rem;">Sample Event 3</h2>
-        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">22 Sep 2025 · Venue</p>
-      </div>
-    </div>
+    <?php endif; ?>
   </div>
 
   <!-- Sample UI Elements -->
