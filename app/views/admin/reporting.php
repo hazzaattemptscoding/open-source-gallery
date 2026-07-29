@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Advanced Reporting — Admin</title>
+<title>Advanced Reporting: Admin</title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 .reporting-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Order confirmed — <?= e($siteName) ?></title>
+<title>Order confirmed: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 </head>
 <body>
@@ -32,7 +32,7 @@
     <h2>Items</h2>
     <ul class="list-plain">
       <?php foreach ($items as $item): ?>
-        <li><?= e($item['description']) ?> — <?= e(format_pence($item['unit_price_pence'], $order['currency'])) ?></li>
+        <li><?= e($item['description']) ?>: <?= e(format_pence($item['unit_price_pence'], $order['currency'])) ?></li>
       <?php endforeach; ?>
     </ul>
   </div>

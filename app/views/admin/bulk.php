@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bulk Operations — Admin</title>
+<title>Bulk Operations: Admin</title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 .bulk-container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
