@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/search.php';
+require_once __DIR__ . '/../../lib/cache_headers.php';
 
 function public_search_controller(PDO $pdo, array $config): void {
     $query = $_GET['q'] ?? '';
@@ -42,6 +43,8 @@ function public_search_controller(PDO $pdo, array $config): void {
 
     // Perform search
     $results = search_photos($pdo, $query, $filters, $page, 20);
+
+    set_cache_headers('short');
 
     render(__DIR__ . '/../../views/public/search.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',

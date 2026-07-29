@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/view.php';
+require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/event.php';
 
 /**
@@ -50,15 +51,18 @@ function public_api_photos_controller(PDO $pdo, array $config): void {
 
     $photos = fetch_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
 
+    set_cache_headers('short');
     header('Content-Type: text/html; charset=utf-8');
     render(__DIR__ . '/../../views/public/_photo_grid_items.php', compact('photos'));
 }
 
 /**
- * POST /api/photos/view {photo_id} — lightbox-open beacon. Increments
- * photos.view_count and stats_daily.photo_views (architecture section 4
- * step 4). Fire-and-forget from the client; failures here are silent by
- * design, since a missed view count is not worth surfacing as an error.
+ * POST /api/photos/view {photo_id} — lightbox-open beacon. Queues a
+ * background job to increment photos.view_count and stats_daily.photo_views
+ * (architecture section 4 step 4). Fire-and-forget from the client; this
+ * endpoint returns immediately without waiting for the job to complete, so
+ * view increments are async (less blocking). Missed view counts are silent
+ * by design, since they're not worth surfacing as errors to the user.
  */
 function public_api_photo_view_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
@@ -81,14 +85,17 @@ function public_api_photo_view_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    $pdo->prepare('UPDATE photos SET view_count = view_count + 1 WHERE id = ?')->execute([$photoId]);
-
-    $today = date('Y-m-d');
+    // Queue background job instead of blocking on sync update.
+    // This keeps the API response fast even under high view traffic.
     $stmt = $pdo->prepare('
-        INSERT INTO stats_daily (stat_date, event_id, photo_views) VALUES (?, ?, 1)
-        ON DUPLICATE KEY UPDATE photo_views = photo_views + 1
+        INSERT INTO jobs (type, payload, status, run_after)
+        VALUES (?, ?, ?, NOW())
     ');
-    $stmt->execute([$today, (int)$eventId]);
+    $stmt->execute([
+        'view_count',
+        json_encode(['photo_id' => $photoId, 'event_id' => (int)$eventId]),
+        'pending',
+    ]);
 
     echo json_encode(['ok' => true]);
 }

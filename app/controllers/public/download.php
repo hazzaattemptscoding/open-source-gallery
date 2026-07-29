@@ -112,8 +112,8 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
-    // Multiple files: zip them
-    stream_zip($files);
+    // Multiple files: use pre-built ZIP if available, build on-demand otherwise
+    stream_zip($files, $orderId);
 }
 
 function stream_file(string $filePath): void {
@@ -133,33 +133,57 @@ function stream_file(string $filePath): void {
     readfile($filePath);
 }
 
-function stream_zip(array $files): void {
-    $tempZip = tempnam(sys_get_temp_dir(), 'zip_');
-    if (!$tempZip) {
+function stream_zip(array $files, int $orderId = 0): void {
+    $zipPath = null;
+
+    // Check for pre-built ZIP from cron job
+    if ($orderId > 0) {
+        $prebuiltZip = __DIR__ . "/../../storage/zips/{$orderId}.zip";
+        if (file_exists($prebuiltZip) && is_readable($prebuiltZip)) {
+            $zipPath = $prebuiltZip;
+        }
+    }
+
+    // Build on-demand if no pre-built ZIP
+    if (!$zipPath) {
+        $tempZip = tempnam(sys_get_temp_dir(), 'zip_');
+        if (!$tempZip) {
+            http_response_code(500);
+            echo 'Unable to create zip';
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if (!$zip->open($tempZip, ZipArchive::CREATE)) {
+            unlink($tempZip);
+            http_response_code(500);
+            echo 'Unable to create zip';
+            return;
+        }
+
+        foreach ($files as $file) {
+            $zip->addFile($file['path'], $file['name']);
+        }
+
+        $zip->close();
+        $zipPath = $tempZip;
+    }
+
+    if (!file_exists($zipPath) || !is_readable($zipPath)) {
         http_response_code(500);
-        echo 'Unable to create zip';
+        echo 'ZIP file not available';
         return;
     }
 
-    $zip = new ZipArchive();
-    if (!$zip->open($tempZip, ZipArchive::CREATE)) {
-        unlink($tempZip);
-        http_response_code(500);
-        echo 'Unable to create zip';
-        return;
-    }
-
-    foreach ($files as $file) {
-        $zip->addFile($file['path'], $file['name']);
-    }
-
-    $zip->close();
-
-    $fileSize = filesize($tempZip);
+    $fileSize = filesize($zipPath);
     header('Content-Type: application/zip');
     header('Content-Disposition: attachment; filename="photos.zip"');
     header('Content-Length: ' . $fileSize);
 
-    readfile($tempZip);
-    unlink($tempZip);
+    readfile($zipPath);
+
+    // Only clean up temp file, not pre-built ZIPs (they persist for future downloads)
+    if (strpos($zipPath, sys_get_temp_dir()) === 0) {
+        unlink($zipPath);
+    }
 }
