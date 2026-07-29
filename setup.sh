@@ -163,18 +163,42 @@ if [ ! -z "$MYSQL_CMD" ]; then
 fi
 echo ""
 
-# Step 6: Summary
+# Step 6: Verify database is ready
+echo -e "${BLUE}Verifying database setup...${NC}"
+if command -v php &> /dev/null; then
+    if php cron/init-db.php > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Database initialized and ready${NC}"
+    else
+        echo -e "${YELLOW}⚠ Database verification had issues, but you can check manually via phpMyAdmin${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠ PHP not in PATH, skipping database verification${NC}"
+fi
+echo ""
+
+# Step 7: Summary
 echo -e "${GREEN}================================${NC}"
 echo -e "${GREEN}Setup complete!${NC}"
 echo -e "${GREEN}================================${NC}"
 echo ""
-echo "Next steps:"
-echo "1. Make sure Apache and MySQL are running"
-echo "2. Edit config/config.php if needed (database host/port/credentials)"
-echo "3. Visit: http://localhost:8888/admin/setup"
-echo "4. Create your admin account"
-echo "5. Start uploading photos!"
+echo "Your configuration:"
+echo "  • config/config.php generated with secure keys"
+echo "  • Database schema imported (or ready to import manually)"
+echo "  • Storage folders created with correct permissions"
 echo ""
-echo "If database import failed, use phpMyAdmin:"
-echo "  http://localhost:8888/phpmyadmin"
+echo "Next steps:"
+echo "1. Verify Apache and MySQL are running in MAMP"
+echo "2. Set Document Root in MAMP:"
+echo "   Preferences → Web Server → Document Root"
+echo "   Set to: $(pwd)/public"
+echo "3. Restart MAMP servers"
+echo "4. Visit: http://localhost:8888/admin/setup"
+echo "5. Create your admin account"
+echo "6. Start uploading photos!"
+echo ""
+echo "If you need to adjust config/config.php:"
+echo "  Database credentials, Stripe keys, etc. are all editable there"
+echo ""
+echo "If database schema import failed, import manually via phpMyAdmin:"
+echo "  http://localhost:8888/phpmyadmin → Import → migrations/001_initial_schema.sql"
 echo ""
