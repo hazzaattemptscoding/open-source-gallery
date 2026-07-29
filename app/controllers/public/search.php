@@ -95,6 +95,8 @@ function public_search_api_controller(PDO $pdo, array $config): void {
     // Perform search
     $results = search_photos($pdo, $query, $filters, $page, 20);
 
+    set_cache_headers('short');
+
     // Return JSON
     echo json_encode([
         'success' => true,
