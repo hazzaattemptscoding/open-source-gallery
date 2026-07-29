@@ -50,11 +50,12 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
     }
 
     $batchId = init_upload_batch($pdo, $sessionId);
-    $response = [];
+    $response = ['accepted' => [], 'rejected' => []];
 
     foreach ($fileStrings as $fileString) {
         $file = json_decode($fileString, true);
         if (!is_array($file)) {
+            $response['rejected'][] = ['name' => '(invalid)', 'error' => 'Invalid JSON'];
             continue;
         }
 
@@ -62,13 +63,14 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
         $fileName = safe_original_filename((string)($file['name'] ?? ''));
 
         if ($fileSize <= 0) {
+            $response['rejected'][] = ['name' => $fileName ?: '(empty name)', 'error' => 'File size is 0 or missing'];
             continue;
         }
 
         $chunksTotal = (int)ceil($fileSize / CHUNK_SIZE);
         $fileId = register_upload_file($pdo, $batchId, $fileName, $fileSize, $chunksTotal);
 
-        $response[] = [
+        $response['accepted'][] = [
             'file_id' => $fileId,
             'name' => $fileName,
             'size' => $fileSize,
@@ -76,10 +78,10 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
         ];
     }
 
-    audit_log($pdo, 'admin', 'upload_batch_initiated', 'batch', $batchId, ['file_count' => count($response)], $ip);
+    audit_log($pdo, 'admin', 'upload_batch_initiated', 'batch', $batchId, ['files_accepted' => count($response['accepted']), 'files_rejected' => count($response['rejected'])], $ip);
 
     header('Content-Type: application/json');
-    echo json_encode(['batch_id' => $batchId, 'files' => $response]);
+    echo json_encode(['batch_id' => $batchId, 'accepted' => $response['accepted'], 'rejected' => $response['rejected']]);
 }
 
 function handle_chunk(PDO $pdo, int $adminId, string $ip): void {

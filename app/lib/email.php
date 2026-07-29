@@ -88,9 +88,11 @@ function get_pending_emails(PDO $pdo, int $limit = 50): array {
             ORDER BY created_at ASC
             LIMIT ?
         SQL);
-        $stmt->execute([$limit]);
+        $stmt->bindParam(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get pending emails: ' . $e->getMessage());
         return [];
     }
 }
@@ -164,9 +166,11 @@ function get_email_queue(PDO $pdo, int $limit = 50): array {
             ORDER BY created_at DESC
             LIMIT ?
         SQL);
-        $stmt->execute([$limit]);
+        $stmt->bindParam(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get email queue: ' . $e->getMessage());
         return [];
     }
 }

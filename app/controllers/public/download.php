@@ -140,8 +140,17 @@ function stream_file(string $filePath): void {
     $filename = basename($filePath);
     $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
 
+    $disposition = 'attachment; ';
+    if (preg_match('/^[\x20-\x7E]+$/', $filename)) {
+        $disposition .= 'filename="' . str_replace('"', '\"', $filename) . '"';
+    } else {
+        $dispositionFilename = rawurlencode($filename);
+        $fallbackFilename = preg_replace('/[^\x20-\x7E]/', '_', $filename);
+        $disposition .= 'filename="' . str_replace('"', '\"', $fallbackFilename) . '"; filename*=UTF-8\'\'' . $dispositionFilename;
+    }
+
     header('Content-Type: ' . $mimeType);
-    header('Content-Disposition: attachment; filename="' . addslashes($filename) . '"');
+    header('Content-Disposition: ' . $disposition);
     header('Content-Length: ' . filesize($filePath));
 
     readfile($filePath);
@@ -175,8 +184,17 @@ function stream_zip(array $files, int $orderId = 0): void {
             return;
         }
 
+        $nameCount = [];
         foreach ($files as $file) {
-            $zip->addFile($file['path'], $file['name']);
+            $name = $file['name'];
+            $nameCount[$name] = ($nameCount[$name] ?? 0) + 1;
+
+            if ($nameCount[$name] > 1) {
+                $pathInfo = pathinfo($name);
+                $name = $pathInfo['filename'] . '_' . $nameCount[$name] . '.' . ($pathInfo['extension'] ?? '');
+            }
+
+            $zip->addFile($file['path'], $name);
         }
 
         $zip->close();
