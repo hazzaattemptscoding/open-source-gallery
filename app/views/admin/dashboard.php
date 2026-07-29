@@ -33,6 +33,13 @@
     </ul>
   </div>
 
+  <div class="panel">
+    <h2>Configuration</h2>
+    <ul class="list-plain">
+      <li><a href="/admin/settings">→ Settings</a> — Stripe keys, email configuration, site details</li>
+    </ul>
+  </div>
+
   <form method="post" action="/admin/logout" class="logout-form">
     <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
     <button type="submit">Log out</button>
