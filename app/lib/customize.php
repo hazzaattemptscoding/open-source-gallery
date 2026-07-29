@@ -36,6 +36,35 @@ function get_customize_settings(): array {
     $json = file_get_contents(CUSTOMIZE_CONFIG_FILE);
     $stored = json_decode($json, true) ?? [];
 
+    // Migrate old color field names to new ones
+    if (isset($stored['text_color'])) {
+        $stored['text'] = $stored['text_color'];
+        unset($stored['text_color']);
+    }
+    if (isset($stored['text_muted_color'])) {
+        $stored['text_muted'] = $stored['text_muted_color'];
+        unset($stored['text_muted_color']);
+    }
+    if (isset($stored['bg_color'])) {
+        $stored['bg'] = $stored['bg_color'];
+        unset($stored['bg_color']);
+    }
+    if (isset($stored['bg_alt_color'])) {
+        $stored['bg_alt'] = $stored['bg_alt_color'];
+        unset($stored['bg_alt_color']);
+    }
+    if (isset($stored['border_color'])) {
+        $stored['border'] = $stored['border_color'];
+        unset($stored['border_color']);
+    }
+    // Remove old duplicate color fields
+    unset($stored['primary_color'], $stored['secondary_color'], $stored['accent_color']);
+    // Migrate logo field name
+    if (isset($stored['site_logo_token']) && !isset($stored['site_logo_filename'])) {
+        $stored['site_logo_filename'] = '';
+        unset($stored['site_logo_token']);
+    }
+
     return array_merge($defaults, $stored);
 }
 
@@ -119,8 +148,7 @@ function get_customize_css_overrides(array $settings): string {
         $cols = (int)$settings['grid_columns'];
         if ($cols >= 2 && $cols <= 5) {
             $css .= "/* Photo grid columns: $cols */\n";
-            $css .= ".grid { grid-template-columns: repeat($cols, 1fr); }\n";
-            $css .= ".search-results { grid-template-columns: repeat($cols, 1fr); }\n\n";
+            $css .= ".grid, .photo-grid, .search-results { grid-template-columns: repeat($cols, 1fr); }\n\n";
         }
     }
 
