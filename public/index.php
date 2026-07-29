@@ -145,6 +145,31 @@ switch ($path) {
         admin_settings_controller($pdo, $config);
         break;
 
+    case '/admin/export':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_page_controller($pdo, $config);
+        break;
+
+    case '/admin/export/orders':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_orders_controller($pdo, $config);
+        exit;
+
+    case '/admin/export/photos':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_photos_controller($pdo, $config);
+        exit;
+
+    case '/admin/export/customers':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_customers_controller($pdo, $config);
+        exit;
+
+    case '/admin/export/events':
+        require __DIR__ . '/../app/controllers/admin/export.php';
+        admin_export_events_controller($pdo, $config);
+        exit;
+
     case '/admin/jobs/run':
         require __DIR__ . '/../app/controllers/admin/jobs.php';
         admin_jobs_run_controller($pdo, $config);

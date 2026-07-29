@@ -34,9 +34,10 @@
   </div>
 
   <div class="panel">
-    <h2>Configuration</h2>
+    <h2>Configuration & Backups</h2>
     <ul class="list-plain">
       <li><a href="/admin/settings">→ Settings</a> — Stripe keys, email configuration, site details</li>
+      <li><a href="/admin/export">→ Export Data</a> — Download orders, photos, customers, events as CSV</li>
     </ul>
   </div>
 
