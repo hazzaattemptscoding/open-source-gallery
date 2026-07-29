@@ -4,6 +4,16 @@ Self-hosted photo gallery and sales platform for sports photographers.
 
 Choose your installation method below. **Docker is the easiest.**
 
+## Quick Setup Verification
+
+Before you begin, verify your environment is ready:
+
+```bash
+php verify-setup.php
+```
+
+This checks PHP version, required extensions, file permissions, and database connectivity. It catches setup issues early so you don't get stuck.
+
 ---
 
 ## Option 1: Docker (One Command) ⭐ Recommended
