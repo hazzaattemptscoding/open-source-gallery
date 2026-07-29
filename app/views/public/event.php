@@ -18,8 +18,15 @@
     <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="<?= e($event['title']) ?> event photography">
   <?php endif; ?>
   <div class="hero-overlay">
-    <h1><?= e($event['title']) ?></h1>
+    <span class="hero-eyebrow">Event Gallery</span>
+    <h1 class="hero-title"><?= e($event['title']) ?></h1>
   </div>
+</section>
+
+<!-- Hero CTA block -->
+<section class="hero-cta-block">
+  <a href="#photos" class="button hero-cta-primary">View Gallery</a>
+  <a href="/" class="hero-cta-secondary">View all events</a>
 </section>
 
 <!-- Meta tags: date, venue, session/class -->
@@ -81,7 +88,7 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
   <input type="text" id="searchInput" class="search-input" placeholder="Search by name, number, or class...">
 </div>
 
-<main>
+<main id="photos">
   <!-- Photo grid with empty state -->
   <div class="photo-grid" id="photoGrid"
        data-photo-ids="<?= e(json_encode(array_map('intval', array_column($photos, 'id')))) ?>"

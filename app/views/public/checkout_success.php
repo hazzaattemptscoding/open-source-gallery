@@ -14,7 +14,7 @@
 <main class="cart-page">
   <h1>Order confirmed</h1>
 
-  <p>Thank you for your purchase. A download link and receipt have been sent to <strong><?= e($order['email']) ?></strong>.</p>
+  <p>Download link and receipt sent to <strong><?= e($order['email']) ?></strong>.</p>
 
   <div class="panel">
     <h2>Order summary</h2>
@@ -42,7 +42,7 @@
     <a href="<?= e($downloadLink) ?>" class="button">Download your files</a>
   </div>
 
-  <p class="hint">If you don't see the download email within a few minutes, check your spam folder or <a href="/">return to the gallery</a>.</p>
+  <p class="hint">Check your spam folder if you don't see the email within a few minutes. Or <a href="/">return to the gallery</a>.</p>
 </main>
 </body>
 </html>

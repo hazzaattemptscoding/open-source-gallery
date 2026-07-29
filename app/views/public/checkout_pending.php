@@ -15,7 +15,7 @@
 <div class="error-page">
   <div class="error-code">⏳</div>
   <h1 class="error-title">Payment Pending</h1>
-  <p class="error-description">Your payment is being processed. Please check your email for download links once the payment is confirmed.</p>
+  <p class="error-description">Payment processing. Check your email for download links once confirmed.</p>
   <div class="error-actions">
     <a href="/" class="primary">← Back to Gallery</a>
   </div>

@@ -3,6 +3,12 @@
 /* Google Fonts fallbacks for customizable fonts (Geist Sans, Newsreader, Geist Mono loaded via @font-face) */
 @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,8..72,200..800;1,8..72,200..800&display=swap');
 
+/*
+ * Font files below are placeholders — real brand fonts should be supplied
+ * and placed in public/assets/fonts/ with @font-face rules updated.
+ * Until then, we rely on system-font fallback stacks.
+ */
+
 :root {
   /* Color palette */
   --bg: #ffffff;
@@ -37,20 +43,6 @@
   /* Animation timing */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-}
-
-@font-face {
-  font-family: 'Geist Sans';
-  src: url('/assets/fonts/GeistSans-Variable.woff2') format('woff2-variations');
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Newsreader';
-  src: url('/assets/fonts/Newsreader-Variable.woff2') format('woff2-variations');
-  font-weight: 200 800;
-  font-display: swap;
 }
 
 * {
@@ -556,6 +548,33 @@ button:disabled,
   width: auto;
   padding: 0.875rem 2rem;
   display: inline-block;
+}
+
+.hero-cta-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.hero-cta-primary {
+  width: 280px;
+  padding: 1rem 2rem !important;
+}
+
+.hero-cta-secondary {
+  display: inline-block;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.hero-cta-secondary:hover {
+  color: var(--text);
 }
 
 body.lightbox-open {
