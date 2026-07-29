@@ -183,9 +183,15 @@
         <div class="form-group">
           <label for="site_logo">Site Logo</label>
           <input type="file" id="site_logo" name="site_logo" accept="image/jpeg,image/png,image/webp" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px;">
-          <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">JPEG, PNG, or WebP (max 10MB)</small>
-          <?php if (!empty($settings['site_logo_token'])): ?>
-          <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">✓ Logo uploaded</small>
+          <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">JPEG, PNG, or WebP (max 5MB)</small>
+          <?php if (!empty($settings['site_logo_filename'])): ?>
+            <?php $logoUrl = \get_logo_url($settings['site_logo_filename']); ?>
+            <?php if ($logoUrl): ?>
+            <div style="margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px;">
+              <img src="<?= e($logoUrl) ?>" alt="Current logo" style="max-height: 80px; max-width: 100%;"><br>
+              <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">✓ Logo on file</small>
+            </div>
+            <?php endif; ?>
           <?php endif; ?>
         </div>
       </div>
@@ -195,28 +201,24 @@
         <h3>Color Palette</h3>
         <div class="color-group">
           <div class="color-input-wrapper">
-            <label for="text_color">Text Color</label>
-            <input type="color" id="text_color" name="text_color" value="<?= e($settings['text_color'] ?? '#111111') ?>">
+            <label for="text">Text Color</label>
+            <input type="color" id="text" name="text" value="<?= e($settings['text'] ?? '#111111') ?>">
           </div>
           <div class="color-input-wrapper">
-            <label for="text_muted_color">Text Muted</label>
-            <input type="color" id="text_muted_color" name="text_muted_color" value="<?= e($settings['text_muted_color'] ?? '#787774') ?>">
+            <label for="text_muted">Text Muted</label>
+            <input type="color" id="text_muted" name="text_muted" value="<?= e($settings['text_muted'] ?? '#787774') ?>">
           </div>
           <div class="color-input-wrapper">
-            <label for="bg_color">Background</label>
-            <input type="color" id="bg_color" name="bg_color" value="<?= e($settings['bg_color'] ?? '#ffffff') ?>">
+            <label for="bg">Background</label>
+            <input type="color" id="bg" name="bg" value="<?= e($settings['bg'] ?? '#ffffff') ?>">
           </div>
           <div class="color-input-wrapper">
-            <label for="bg_alt_color">Alt Background</label>
-            <input type="color" id="bg_alt_color" name="bg_alt_color" value="<?= e($settings['bg_alt_color'] ?? '#f9f9f8') ?>">
+            <label for="bg_alt">Alt Background</label>
+            <input type="color" id="bg_alt" name="bg_alt" value="<?= e($settings['bg_alt'] ?? '#f9f9f8') ?>">
           </div>
           <div class="color-input-wrapper">
-            <label for="border_color">Borders</label>
-            <input type="color" id="border_color" name="border_color" value="<?= e($settings['border_color'] ?? '#eaeaea') ?>">
-          </div>
-          <div class="color-input-wrapper">
-            <label for="primary_color">Primary</label>
-            <input type="color" id="primary_color" name="primary_color" value="<?= e($settings['primary_color'] ?? '#111111') ?>">
+            <label for="border">Borders</label>
+            <input type="color" id="border" name="border" value="<?= e($settings['border'] ?? '#eaeaea') ?>">
           </div>
         </div>
       </div>

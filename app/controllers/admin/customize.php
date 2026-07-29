@@ -35,13 +35,13 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             $formData['site_name'] = trim($_POST['site_name'] ?? '');
 
             // Validate and sanitize colors (hex format)
-            $colorFields = ['primary_color', 'secondary_color', 'accent_color', 'text_color', 'text_muted_color', 'bg_color', 'bg_alt_color', 'border_color'];
+            $colorFields = ['text', 'text_muted', 'bg', 'bg_alt', 'border'];
             foreach ($colorFields as $field) {
                 $value = trim($_POST[$field] ?? '');
                 if ($value && !preg_match('/^#[0-9a-fA-F]{6}$/', $value)) {
                     $errors[] = "Invalid color format for $field. Use hex codes like #111111";
                 }
-                $formData[$field] = $value ?: '#111111';
+                $formData[$field] = $value;
             }
 
             $formData['body_font'] = trim($_POST['body_font'] ?? 'Geist Sans');
@@ -55,19 +55,19 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             // Handle logo upload
             if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] !== UPLOAD_ERR_NO_FILE) {
                 if ($_FILES['site_logo']['error'] === UPLOAD_ERR_OK) {
-                    $token = upload_customize_photo($_FILES['site_logo'], 'logo');
-                    if ($token) {
-                        $formData['site_logo_token'] = $token;
+                    $filename = upload_customize_photo($_FILES['site_logo'], 'logo');
+                    if ($filename) {
+                        $formData['site_logo_filename'] = $filename;
                         audit_log($pdo, 'customize_upload_logo', 'Uploaded site logo');
                     } else {
-                        $errors[] = 'Failed to upload logo. Ensure it is a valid image (JPEG, PNG, WebP).';
+                        $errors[] = 'Failed to upload logo. Ensure it is a valid image (JPEG, PNG, WebP) under 5MB.';
                     }
                 } else {
                     $errors[] = 'File upload error: ' . $_FILES['site_logo']['error'];
                 }
             } else {
                 // Preserve existing logo if not uploading new one
-                $formData['site_logo_token'] = $settings['site_logo_token'] ?? '';
+                $formData['site_logo_filename'] = $settings['site_logo_filename'] ?? '';
             }
 
             if (empty($errors) && save_customize_settings($formData)) {

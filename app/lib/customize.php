@@ -14,15 +14,12 @@ const CUSTOMIZE_CONFIG_FILE = __DIR__ . '/../../storage/customize.json';
 function get_customize_settings(): array {
     $defaults = [
         'site_name' => '',
-        'site_logo_token' => '',
-        'primary_color' => '#111111',
-        'secondary_color' => '#ffffff',
-        'accent_color' => '#666666',
-        'text_color' => '#111111',
-        'text_muted_color' => '#787774',
-        'bg_color' => '#ffffff',
-        'bg_alt_color' => '#f9f9f8',
-        'border_color' => '#eaeaea',
+        'site_logo_filename' => '',
+        'text' => '#111111',
+        'text_muted' => '#787774',
+        'bg' => '#ffffff',
+        'bg_alt' => '#f9f9f8',
+        'border' => '#eaeaea',
         'body_font' => 'Geist Sans',
         'heading_font' => 'Newsreader',
         'mono_font' => 'Geist Mono',
@@ -63,14 +60,11 @@ function get_customize_css_overrides(array $settings): string {
     $css = ":root {\n";
 
     $colorMappings = [
-        'primary_color' => '--text',
-        'secondary_color' => '--bg',
-        'accent_color' => '--text-muted',
-        'text_color' => '--text',
-        'text_muted_color' => '--text-muted',
-        'bg_color' => '--bg',
-        'bg_alt_color' => '--bg-alt',
-        'border_color' => '--border',
+        'text' => '--text',
+        'text_muted' => '--text-muted',
+        'bg' => '--bg',
+        'bg_alt' => '--bg-alt',
+        'border' => '--border',
     ];
 
     foreach ($colorMappings as $key => $varName) {
@@ -135,7 +129,7 @@ function get_customize_css_overrides(array $settings): string {
 
 /**
  * Upload and register a site logo/photo.
- * Returns public_token or false on failure.
+ * Returns filename on success, null on failure.
  */
 function upload_customize_photo(array $fileUpload, string $purpose = 'logo'): ?string {
     if (!isset($fileUpload['error']) || $fileUpload['error'] !== UPLOAD_ERR_OK) {
@@ -146,19 +140,39 @@ function upload_customize_photo(array $fileUpload, string $purpose = 'logo'): ?s
         return null;
     }
 
-    $tmpPath = $fileUpload['tmp_name'];
-    $filename = bin2hex(random_bytes(12)) . '.jpg';
-    $storagePath = __DIR__ . '/../../storage/uploads/' . $filename;
+    // Check file size (max 5MB)
+    if ($fileUpload['size'] > 5 * 1024 * 1024) {
+        return null;
+    }
 
-    if (!is_dir(dirname($storagePath))) {
-        mkdir(dirname($storagePath), 0755, true);
+    $tmpPath = $fileUpload['tmp_name'];
+    $filename = 'logo-' . bin2hex(random_bytes(8)) . '.jpg';
+    $dir = __DIR__ . '/../../storage/customize/';
+    $storagePath = $dir . $filename;
+
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
     }
 
     if (!move_uploaded_file($tmpPath, $storagePath)) {
         return null;
     }
 
-    return bin2hex(random_bytes(16));
+    return $filename;
+}
+
+/**
+ * Get logo URL if one is set.
+ */
+function get_logo_url(string $filename): ?string {
+    if (empty($filename)) {
+        return null;
+    }
+    $path = __DIR__ . '/../../storage/customize/' . $filename;
+    if (file_exists($path)) {
+        return '/storage/customize/' . $filename;
+    }
+    return null;
 }
 
 /**
