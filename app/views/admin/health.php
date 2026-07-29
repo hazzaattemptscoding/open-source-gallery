@@ -82,6 +82,7 @@
     font-size: 0.85rem;
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 

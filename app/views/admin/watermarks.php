@@ -17,6 +17,7 @@ button[type="submit"] { padding: 0.875rem 1.5rem; background: var(--text); color
 button[type="submit"]:active { transform: scale(0.98); transition: transform 160ms ease-out; }
 .preview p { text-align: center; padding: 5rem 1rem; color: var(--text-muted); margin: 0; }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">

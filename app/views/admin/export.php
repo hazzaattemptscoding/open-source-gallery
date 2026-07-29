@@ -58,6 +58,7 @@
     padding-left: 1.5rem;
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 

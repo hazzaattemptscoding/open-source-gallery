@@ -200,6 +200,7 @@
     }
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 

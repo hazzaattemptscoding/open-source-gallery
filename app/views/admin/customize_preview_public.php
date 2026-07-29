@@ -30,6 +30,7 @@ body {
   text-decoration: underline;
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <div class="preview-banner">

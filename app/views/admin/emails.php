@@ -15,6 +15,7 @@
 .badge-sent { background: #c8e6c9; color: #2e7d32; }
 .badge-failed { background: #ffebee; color: #c62828; }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">
