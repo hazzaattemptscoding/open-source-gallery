@@ -66,7 +66,7 @@ function get_order_by_token(PDO $pdo, string $token): ?array {
 }
 
 function get_order_items(PDO $pdo, int $orderId): array {
-    $stmt = $pdo->prepare('SELECT id, item_type, description, unit_price_pence, line_total_pence FROM order_items WHERE order_id = ?');
+    $stmt = $pdo->prepare('SELECT id, item_type, photo_id, session_id, event_id, description, unit_price_pence, line_total_pence FROM order_items WHERE order_id = ?');
     $stmt->execute([$orderId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -111,7 +111,7 @@ function create_download_link(PDO $pdo, int $orderId, array $config, int $expiry
 
     $stmt = $pdo->prepare('SELECT svalue FROM settings WHERE skey = ?');
     $stmt->execute(['download_cap_multiplier']);
-    $multiplier = (int)($stmt->fetchColumn() ?? 5);
+    $multiplier = (int)($stmt->fetchColumn() ?: 5);
 
     $maxDownloads = max(1, $itemCount * $multiplier);
     $expiryDate = date('Y-m-d H:i:s', time() + ($expiryDays * 86400));

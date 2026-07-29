@@ -72,7 +72,7 @@ function queue_email_from_template(
  */
 function interpolate_template(string $template, array $variables): string {
     foreach ($variables as $key => $value) {
-        $template = str_replace("{{$key}}", (string)$value, $template);
+        $template = str_replace('{{' . $key . '}}', (string)$value, $template);
     }
     return $template;
 }

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/derivatives.php';
+require_once __DIR__ . '/db_compat.php';
+
+$GLOBALS['pdo'] = $GLOBALS['pdo'] ?? null;
 
 /**
  * Full 50s-budget job drain, guarded by a MySQL advisory lock so an
@@ -11,69 +14,76 @@ require_once __DIR__ . '/derivatives.php';
  * see docs/architecture.md section 5.
  */
 function run_cron_drain(PDO $pdo): void {
+    $GLOBALS['pdo'] = $pdo;
     $lockToken = 'pm_cron';
-    if (!$pdo->query("SELECT GET_LOCK('{$lockToken}', 0)")->fetchColumn()) {
+    if (!db_acquire_lock($pdo, $lockToken, 0)) {
         return;
     }
 
     $startTime = microtime(true);
     $budget = 50.0;
 
-    while ((microtime(true) - $startTime) < $budget) {
-        $stmt = $pdo->prepare('
-            UPDATE jobs
-            SET status = ?, locked_at = CURRENT_TIMESTAMP, attempts = attempts + 1
-            WHERE status = ? AND run_after <= CURRENT_TIMESTAMP AND (locked_at IS NULL OR locked_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE))
-            ORDER BY id ASC
-            LIMIT 1
-        ');
-        $stmt->execute(['running', 'pending']);
+    try {
+        while ((microtime(true) - $startTime) < $budget) {
+            $now = new DateTime('now', new DateTimeZone('UTC'));
+            $lockedAtThreshold = (clone $now)->modify('-10 minutes')->format('Y-m-d H:i:s');
 
-        if ($stmt->rowCount() === 0) {
-            break;
-        }
+            $stmt = $pdo->prepare('
+                UPDATE jobs
+                SET status = ?, locked_at = ?, attempts = attempts + 1
+                WHERE status = ? AND run_after <= ? AND (locked_at IS NULL OR locked_at < ?)
+                ORDER BY id ASC
+                LIMIT 1
+            ');
+            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), 'pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
 
-        $stmt = $pdo->prepare('SELECT id, type, payload, attempts FROM jobs WHERE status = ? ORDER BY id DESC LIMIT 1');
-        $stmt->execute(['running']);
-        $job = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$job) {
-            break;
-        }
-
-        $jobId = (int)$job['id'];
-        $type = (string)$job['type'];
-        $payload = json_decode((string)$job['payload'], true) ?? [];
-        $attempts = (int)$job['attempts'];
-
-        $success = false;
-        try {
-            if ($type === 'derivative') {
-                $success = process_derivative_job($pdo, $payload);
-            } elseif ($type === 'email') {
-                $success = process_email_job($pdo, $payload);
-            } elseif ($type === 'zip_build') {
-                $success = process_zip_build_job($pdo, $payload);
-            } elseif ($type === 'cleanup') {
-                $success = process_cleanup_job($pdo, $payload);
-            } elseif ($type === 'view_count') {
-                $success = process_view_count_job($pdo, $payload);
+            if ($stmt->rowCount() === 0) {
+                break;
             }
-        } catch (Throwable $e) {
+
+            $stmt = $pdo->prepare('SELECT id, type, payload, attempts FROM jobs WHERE status = ? ORDER BY id DESC LIMIT 1');
+            $stmt->execute(['running']);
+            $job = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$job) {
+                break;
+            }
+
+            $jobId = (int)$job['id'];
+            $type = (string)$job['type'];
+            $payload = json_decode((string)$job['payload'], true) ?? [];
+            $attempts = (int)$job['attempts'];
+
             $success = false;
-        }
+            try {
+                if ($type === 'derivative') {
+                    $success = process_derivative_job($pdo, $payload);
+                } elseif ($type === 'email') {
+                    $success = process_email_job($pdo, $payload);
+                } elseif ($type === 'zip_build') {
+                    $success = process_zip_build_job($pdo, $payload);
+                } elseif ($type === 'cleanup') {
+                    $success = process_cleanup_job($pdo, $payload);
+                } elseif ($type === 'view_count') {
+                    $success = process_view_count_job($pdo, $payload);
+                }
+            } catch (Throwable $e) {
+                $success = false;
+            }
 
-        if ($success) {
-            $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
-        } elseif ($attempts >= 3) {
-            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['failed', $jobId]);
-        } else {
-            $backoff = min(3600, (2 ** $attempts) * 60);
-            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND) WHERE id = ?')
-                ->execute(['pending', $backoff, $jobId]);
+            if ($success) {
+                $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
+            } elseif ($attempts >= 3) {
+                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['failed', $jobId]);
+            } else {
+                $backoff = min(3600, (2 ** $attempts) * 60);
+                $runAfter = (clone $now)->modify("+{$backoff} seconds")->format('Y-m-d H:i:s');
+                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = ? WHERE id = ?')
+                    ->execute(['pending', $runAfter, $jobId]);
+            }
         }
+    } finally {
+        db_release_lock($pdo, $lockToken);
     }
-
-    $pdo->query("SELECT RELEASE_LOCK('{$lockToken}')");
 }
 
 /**

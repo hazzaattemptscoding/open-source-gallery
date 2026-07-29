@@ -66,28 +66,42 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
 
     foreach ($items as $item) {
         $photoId = (int)($item['photo_id'] ?? 0);
-        if (!$photoId) {
-            continue;
+        $sessionId = (int)($item['session_id'] ?? 0);
+        $eventId = (int)($item['event_id'] ?? 0);
+
+        $photoIds = [];
+        if ($photoId) {
+            $photoIds = [$photoId];
+        } elseif ($sessionId) {
+            $stmt = $pdo->prepare('SELECT DISTINCT photo_id FROM session_photos WHERE session_id = ?');
+            $stmt->execute([$sessionId]);
+            $photoIds = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'photo_id');
+        } elseif ($eventId) {
+            $stmt = $pdo->prepare('SELECT id FROM photos WHERE event_id = ? AND status = ?');
+            $stmt->execute([$eventId, 'live']);
+            $photoIds = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id');
         }
 
-        $stmt = $pdo->prepare('
-            SELECT id, event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?
-        ');
-        $stmt->execute([$photoId]);
-        $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+        foreach ($photoIds as $pid) {
+            $stmt = $pdo->prepare('
+                SELECT id, event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?
+            ');
+            $stmt->execute([$pid]);
+            $photo = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($photo) {
-            $eventId = (int)$photo['event_id'];
-            $token = (string)$photo['public_token'];
-            $ext = (string)($photo['file_extension'] ?? 'jpg');
-            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
+            if ($photo) {
+                $eventIdFromPhoto = (int)$photo['event_id'];
+                $token = (string)$photo['public_token'];
+                $ext = (string)($photo['file_extension'] ?? 'jpg');
+                $filePath = __DIR__ . "/../../storage/hires/{$eventIdFromPhoto}/{$token}.{$ext}";
 
-            if (file_exists($filePath)) {
-                $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
-                $files[] = [
-                    'path' => $filePath,
-                    'name' => $filename,
-                ];
+                if (file_exists($filePath)) {
+                    $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
+                    $files[] = [
+                        'path' => $filePath,
+                        'name' => $filename,
+                    ];
+                }
             }
         }
     }
