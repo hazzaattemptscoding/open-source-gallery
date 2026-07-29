@@ -1,83 +1,76 @@
-# Quick Start (5 Minutes)
+# Quick Start (2 Minutes)
 
-## Using Docker (Recommended)
+## Instant: SQLite (No Setup Required)
 
-**All you need:** Docker and this command.
+**All you need:** PHP 8.2+
+
+```bash
+php -S localhost:8080 -t public/
+```
+
+That's it. Site is live at http://localhost:8080.
+
+SQLite database is created automatically and persists in `storage/gallery.sqlite`. No MySQL server, no config, nothing to install.
+
+---
+
+## With Docker (5 minutes, includes everything)
 
 ```bash
 docker-compose up
 ```
 
-Then open http://localhost:8080 and create your admin account.
-
-That's it. Database, Apache, PHP, everything is automatic.
+Then open http://localhost:8080.
 
 ---
 
-## Using PHP + MySQL (Local Development)
-
-**Requirements:** PHP 8.2+, MySQL 5.7+
+## With MySQL (10 minutes, for production)
 
 ```bash
-# 1. Copy config
-cp config/config.example.php config/config.php
-
-# 2. Run installer (asks for database details)
 php install.php
-
-# 3. Start PHP server
+# Choose option 2 (MySQL)
+# Answer the prompts for your database
 php -S localhost:8080 -t public/
-
-# 4. Open http://localhost:8080 and create admin account
 ```
-
-The installer handles creating the database and importing the schema.
 
 ---
 
-## Using Shared Hosting (IONOS, GoDaddy, etc)
+## First Time Setup
 
-**The hard way:** 30 minutes of file uploads and control panel clicks.
+1. Open http://localhost:8080/admin/setup
+2. Create admin account
+3. Go to Settings, add Stripe keys (or skip for testing)
+4. Start uploading photos
 
-**The easy way:** Use Docker on your local machine first to verify everything works. Then upload files to your host.
+---
+
+## Seeing Your Gallery
+
+1. Click Upload → select photos
+2. Tag them (optional, but helps customers filter)
+3. Go back to home page
+4. Click on your event to see gallery
+5. Click + on photos to add to cart
+
+---
+
+## Exporting as Static HTML
+
+Generate a static gallery that doesn't need a database:
+
+```bash
+php generate-static.php output/
+# Creates standalone HTML in output/ directory
+```
+
+Then upload `output/` to any web server (GitHub Pages, Netlify, etc.) or open `output/index.html` in a browser.
+
+---
+
+## Production Deployment
+
+See **[SELF_HOSTED.md](SELF_HOSTED.md)** to understand options and costs.
 
 See **[INSTALL.md](INSTALL.md)** for shared hosting step-by-step.
 
----
-
-## Having Issues?
-
-**Database won't connect:**
-```bash
-# Start MySQL (if it's not running)
-brew services start mysql        # Mac
-sudo systemctl start mysql       # Linux
-net start MySQL80                # Windows (if installed as service)
-
-# Then try php install.php again
-```
-
-**Docker not installed:**
-Get Docker here: https://www.docker.com/products/docker-desktop
-
-**Still stuck?**
-- See [INSTALL.md](INSTALL.md) for detailed troubleshooting
-- Run `php verify-setup.php` to check your environment
-- Check [docs/architecture.md](docs/architecture.md) for how the system works
-
----
-
-## Next Steps
-
-1. **Log in:** Create admin account at http://localhost:8080/admin/setup
-2. **Configure:** Go to Settings → fill in Stripe keys and email
-3. **Upload photos:** Upload → select JPEGs → tag and publish
-4. **View gallery:** Go to http://localhost:8080 to see your event
-
-That's the core flow. You're done.
-
----
-
-## Going Live
-
-When you're ready to deploy to production, see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for the security checklist and DNS configuration.
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for security checklist before going live.
