@@ -53,11 +53,15 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
                     break;
 
                 case 'status':
-                    $status = $_POST['status'] ?? 'draft';
+                    $status = $_POST['status'] ?? 'hidden';
                     $updated = bulk_change_status($pdo, $photoIds, $status);
-                    audit_log($pdo, 'bulk_status', "Changed status to $status for $updated photos");
-                    header('Location: /admin/bulk?action=select&success=1');
-                    exit;
+                    if ($updated > 0) {
+                        audit_log($pdo, 'bulk_status', "Changed status to $status for $updated photos");
+                        header('Location: /admin/bulk?action=select&success=1');
+                        exit;
+                    } else {
+                        $errors[] = "Invalid status: $status. Valid values: processing, live, hidden, failed";
+                    }
                     break;
 
                 case 'delete':

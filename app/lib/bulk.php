@@ -90,9 +90,12 @@ function bulk_delete_photos(PDO $pdo, array $photoIds): int {
 
 /**
  * Bulk change photo status.
+ * Valid statuses: processing (uploading), live (published), hidden (unpublished), failed (upload failed).
  */
 function bulk_change_status(PDO $pdo, array $photoIds, string $status): int {
-    if (empty($photoIds) || !in_array($status, ['draft', 'live', 'archived'])) {
+    // Valid statuses match schema: processing, live, hidden, failed
+    $validStatuses = ['processing', 'live', 'hidden', 'failed'];
+    if (empty($photoIds) || !in_array($status, $validStatuses)) {
         return 0;
     }
 
