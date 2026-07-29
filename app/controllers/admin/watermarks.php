@@ -37,7 +37,7 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
                 isset($_POST['enabled']) ? 1 : 0,
                 $_POST['apply_to_sizes'] ?? 'sm,md,lg',
             ])) {
-                audit_log($pdo, 'update_watermark', 'Updated watermark settings');
+                audit_log($pdo, 'admin', 'update_watermark', 'settings', null, [], client_ip());
                 header('Location: /admin/watermarks?success=1');
                 exit;
             }

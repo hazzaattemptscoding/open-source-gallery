@@ -249,7 +249,7 @@ function get_quick_stats(PDO $pdo): array {
             ->format('Y-m-d H:i:s');
 
         $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM orders WHERE status = ? AND created_at > ?');
-        $stmt->execute(['completed', $oneDayAgo]);
+        $stmt->execute(['paid', $oneDayAgo]);
         $stats['orders_24h'] = (int)$stmt->fetchColumn();
 
         $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM photos WHERE created_at > ?');

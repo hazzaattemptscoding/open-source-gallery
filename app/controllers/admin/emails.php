@@ -39,7 +39,7 @@ function admin_emails_controller(PDO $pdo, array $config): void {
                     'body_text_template' => $_POST['body_text_template'] ?? '',
                     'enabled' => isset($_POST['enabled']) ? 1 : 0,
                 ])) {
-                    audit_log($pdo, 'update_email_template', "Updated email template #$templateId");
+                    audit_log($pdo, 'admin', 'update_email_template', 'email_template', $templateId, [], client_ip());
                     header('Location: /admin/emails?action=templates&success=1');
                     exit;
                 }

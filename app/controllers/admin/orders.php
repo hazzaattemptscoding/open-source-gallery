@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/currency.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
 /**
  * GET /admin/orders — browse orders, refund status, customer emails.
  */
 function admin_orders_controller(PDO $pdo, array $config): void {
+    require_admin();
     $siteName = $config['site']['name'] ?? 'Gallery';
     $currencyCode = $config['currency'] ?? 'GBP';
 

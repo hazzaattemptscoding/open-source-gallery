@@ -41,7 +41,7 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
                             'driver' => $_POST['driver'] ?? '',
                             'class' => $_POST['class'] ?? '',
                         ]);
-                        audit_log($pdo, 'bulk_tag', "Bulk tagged $updated photos");
+                        audit_log($pdo, 'admin', 'bulk_tag', 'photos', null, ['count' => $updated], client_ip());
                         header('Location: /admin/bulk?action=select&success=1');
                         exit;
                     }
@@ -56,7 +56,7 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
                     $status = $_POST['status'] ?? 'hidden';
                     $updated = bulk_change_status($pdo, $photoIds, $status);
                     if ($updated > 0) {
-                        audit_log($pdo, 'bulk_status', "Changed status to $status for $updated photos");
+                        audit_log($pdo, 'admin', 'bulk_status', 'photos', null, ['status' => $status, 'count' => $updated], client_ip());
                         header('Location: /admin/bulk?action=select&success=1');
                         exit;
                     } else {
@@ -67,7 +67,7 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
                 case 'delete':
                     if ($limits['can_delete']) {
                         $deleted = bulk_delete_photos($pdo, $photoIds);
-                        audit_log($pdo, 'bulk_delete', "Bulk deleted $deleted photos");
+                        audit_log($pdo, 'admin', 'bulk_delete', 'photos', null, ['count' => $deleted], client_ip());
                         header('Location: /admin/bulk?action=select&success=1');
                         exit;
                     }

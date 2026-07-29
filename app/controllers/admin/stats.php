@@ -4,11 +4,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/stats.php';
 require_once __DIR__ . '/../../lib/currency.php';
+require_once __DIR__ . '/../../lib/auth.php';
 
 /**
  * GET /admin/stats — sales dashboard with top photos and event performance.
  */
 function admin_stats_controller(PDO $pdo, array $config): void {
+    require_admin();
     $siteName = $config['site']['name'] ?? 'Gallery';
     $currencyCode = $config['currency'] ?? 'GBP';
 

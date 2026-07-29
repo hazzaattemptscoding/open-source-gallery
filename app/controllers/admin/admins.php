@@ -47,7 +47,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
 
             if (empty($errors)) {
                 if (create_admin($pdo, $email, $password, $roleId)) {
-                    audit_log($pdo, 'create_admin', "Created admin: $email with role #$roleId");
+                    audit_log($pdo, 'admin', 'create_admin', 'admin_user', null, ['email' => $email, 'role_id' => $roleId], client_ip());
                     header('Location: /admin/admins?action=list&success=1');
                     exit;
                 } else {
@@ -63,7 +63,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
                 $errors[] = 'You cannot change your own role';
             } else {
                 if (update_admin_role($pdo, $adminId, $roleId)) {
-                    audit_log($pdo, 'update_admin_role', "Updated admin #$adminId role to #$roleId", null, null, $adminId);
+                    audit_log($pdo, 'admin', 'update_admin_role', 'admin_user', $adminId, ['role_id' => $roleId], client_ip());
                     header('Location: /admin/admins?action=list&success=1');
                     exit;
                 } else {
@@ -78,7 +78,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
                 $errors[] = 'You cannot delete your own account';
             } else {
                 if (delete_admin($pdo, $adminId)) {
-                    audit_log($pdo, 'delete_admin', "Deleted admin #$adminId", null, null, $adminId);
+                    audit_log($pdo, 'admin', 'delete_admin', 'admin_user', $adminId, [], client_ip());
                     header('Location: /admin/admins?action=list&success=1');
                     exit;
                 } else {

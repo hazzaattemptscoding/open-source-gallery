@@ -38,7 +38,7 @@ function admin_settings_controller(PDO $pdo, array $config): void {
         if (!empty($updates)) {
             $updated = batch_update_settings($pdo, $updates, $category);
             if ($updated > 0) {
-                audit_log($pdo, 'update_settings', "Updated $updated settings in category: $category");
+                audit_log($pdo, 'admin', 'update_settings', 'settings', null, ['category' => $category, 'count' => $updated], client_ip());
                 header("Location: /admin/settings?category=$category&mode=$mode&success=1");
                 exit;
             }

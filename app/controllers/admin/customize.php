@@ -33,7 +33,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
         } elseif (isset($_POST['action']) && $_POST['action'] === 'reset') {
             // Handle reset action
             if (reset_customize_settings()) {
-                audit_log($pdo, 'customize_reset', 'Reset site customization to defaults');
+                audit_log($pdo, 'admin', 'customize_reset', 'settings', null, [], client_ip());
                 header('Location: /admin/customize?success=1');
                 exit;
             } else {
@@ -44,7 +44,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             if (delete_logo($settings['site_logo_filename'] ?? '')) {
                 $settings['site_logo_filename'] = '';
                 save_customize_settings($settings);
-                audit_log($pdo, 'customize_delete_logo', 'Deleted site logo');
+                audit_log($pdo, 'admin', 'customize_delete_logo', 'settings', null, [], client_ip());
                 touch(CUSTOMIZE_CONFIG_FILE);
                 header('Location: /admin/customize?success=1');
                 exit;
@@ -79,7 +79,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
                     $filename = upload_customize_photo($_FILES['site_logo'], 'logo');
                     if ($filename) {
                         $formData['site_logo_filename'] = $filename;
-                        audit_log($pdo, 'customize_upload_logo', 'Uploaded site logo');
+                        audit_log($pdo, 'admin', 'customize_upload_logo', 'settings', null, ['filename' => $filename], client_ip());
                     } else {
                         $errors[] = 'Failed to upload logo. Ensure it is a valid image (JPEG, PNG, WebP) under 5MB.';
                     }
@@ -93,7 +93,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
 
             if (empty($errors) && save_customize_settings($formData)) {
                 $settings = $formData;
-                audit_log($pdo, 'customize_site', 'Updated site customization settings');
+                audit_log($pdo, 'admin', 'customize_site', 'settings', null, [], client_ip());
                 // Touch file to invalidate CSS cache
                 touch(CUSTOMIZE_CONFIG_FILE);
                 header('Location: /admin/customize?success=1');
