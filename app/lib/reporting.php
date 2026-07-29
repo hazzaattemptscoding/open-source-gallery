@@ -30,6 +30,7 @@ function get_customer_segments(PDO $pdo): array {
         SQL);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get customer segments: ' . $e->getMessage());
         return [];
     }
 }
@@ -42,6 +43,7 @@ function get_cohort_analysis(PDO $pdo): array {
         $stmt = $pdo->query('SELECT cohort_month, total_customers, returning_customers, revenue_pence, created_at FROM cohorts ORDER BY cohort_month DESC LIMIT 12');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get cohort analysis: ' . $e->getMessage());
         return [];
     }
 }
@@ -57,6 +59,7 @@ function calculate_ltv(PDO $pdo, string $customerEmail): ?int {
         $stmt->execute([$customerEmail]);
         return (int)($stmt->fetchColumn() ?? 0);
     } catch (Throwable $e) {
+        error_log('Failed to calculate LTV for ' . $customerEmail . ': ' . $e->getMessage());
         return null;
     }
 }
@@ -99,6 +102,7 @@ function get_repeat_rate(PDO $pdo): ?float {
         SQL);
         return (float)($stmt->fetchColumn() ?? 0);
     } catch (Throwable $e) {
+        error_log('Failed to get repeat rate: ' . $e->getMessage());
         return null;
     }
 }
@@ -112,6 +116,7 @@ function get_cohort_retention(PDO $pdo, string $cohortMonth): ?array {
         $stmt->execute([$cohortMonth]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('Failed to get cohort retention for ' . $cohortMonth . ': ' . $e->getMessage());
         return null;
     }
 }
@@ -130,6 +135,7 @@ function get_top_customers(PDO $pdo, int $limit = 10): array {
         $stmt->execute([$limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get top customers: ' . $e->getMessage());
         return [];
     }
 }

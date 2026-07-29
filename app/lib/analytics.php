@@ -58,6 +58,7 @@ function get_revenue_trend(
         }
         return $result;
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -85,6 +86,7 @@ function get_top_photos(PDO $pdo, int $limit = 10): array {
         $stmt->execute([$limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -109,6 +111,7 @@ function get_sales_by_event(PDO $pdo): array {
         SQL);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -137,6 +140,7 @@ function get_customer_insights(PDO $pdo): array {
         SQL);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -211,6 +215,7 @@ function get_analytics_summary(PDO $pdo): array {
 
         return $stats;
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -238,6 +243,7 @@ function get_order_distribution_by_hour(PDO $pdo): array {
         ksort($byHour);
         return array_values($byHour);
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }

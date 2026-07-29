@@ -34,6 +34,7 @@ function queue_email(
             $purpose,
         ]);
     } catch (Throwable $e) {
+        error_log('Failed to queue email for ' . $recipient . ': ' . $e->getMessage());
         return false;
     }
 }
@@ -63,6 +64,7 @@ function queue_email_from_template(
 
         return queue_email($pdo, $recipient, $subject, $bodyHtml, $bodyText, $templateName, $variables, $purpose);
     } catch (Throwable $e) {
+        error_log('Failed to queue templated email: ' . $e->getMessage());
         return false;
     }
 }
@@ -117,6 +119,7 @@ function mark_email_sent(PDO $pdo, int $emailId): bool {
         $stmt = $pdo->prepare('UPDATE emails SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute(['sent', $emailId]);
     } catch (Throwable $e) {
+        error_log('Failed to mark email ' . $emailId . ' as sent: ' . $e->getMessage());
         return false;
     }
 }
@@ -133,6 +136,7 @@ function mark_email_failed(PDO $pdo, int $emailId, string $error = ''): bool {
         SQL);
         return $stmt->execute(['failed', $error, $emailId]);
     } catch (Throwable $e) {
+        error_log('Failed to mark email ' . $emailId . ' as failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -151,6 +155,7 @@ function get_email_stats(PDO $pdo): ?array {
         SQL);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('Failed to get email stats: ' . $e->getMessage());
         return null;
     }
 }
@@ -183,6 +188,7 @@ function get_email_templates(PDO $pdo): array {
         $stmt = $pdo->query('SELECT * FROM email_templates ORDER BY display_name');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get email templates: ' . $e->getMessage());
         return [];
     }
 }
@@ -205,6 +211,7 @@ function update_email_template(PDO $pdo, int $templateId, array $data): bool {
             $templateId,
         ]);
     } catch (Throwable $e) {
+        error_log('Failed to update email template ' . $templateId . ': ' . $e->getMessage());
         return false;
     }
 }

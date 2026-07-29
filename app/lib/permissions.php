@@ -135,6 +135,7 @@ function get_all_roles(PDO $pdo): array {
         $stmt = $pdo->query('SELECT id, name, permissions, created_at FROM admin_roles ORDER BY id');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get admin roles: ' . $e->getMessage());
         return [];
     }
 }
@@ -152,6 +153,7 @@ function get_all_admins(PDO $pdo): array {
         SQL);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get all admins: ' . $e->getMessage());
         return [];
     }
 }
