@@ -20,6 +20,11 @@
     <ul class="cart-lines">
       <?php foreach ($lines as $line): ?>
         <li class="cart-line" data-type="<?= e($line['type']) ?>" data-id="<?= (int)$line['id'] ?>">
+          <?php if ($line['type'] === 'photo' && !empty($line['public_token'])): ?>
+            <span class="cart-line-image">
+              <img src="/media/d/<?= e($line['public_token']) ?>-400.jpg" alt="<?= e($line['description']) ?>" loading="lazy">
+            </span>
+          <?php endif; ?>
           <span class="cart-line-desc"><?= e($line['description']) ?></span>
           <span class="cart-line-price"><?= e(format_pence((int)$line['unit_price_pence'], $currencyCode)) ?></span>
           <button type="button" class="cart-line-remove" aria-label="Remove">&times;</button>

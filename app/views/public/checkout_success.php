@@ -17,7 +17,7 @@
   <p>Thank you for your purchase. A download link and receipt have been sent to <strong><?= e($order['email']) ?></strong>.</p>
 
   <div class="panel">
-    <h2>Order details</h2>
+    <h2>Order summary</h2>
     <div class="detail-row">
       <div class="detail-label">Order number</div>
       <div class="detail-value"><?= e($order['public_token']) ?></div>
@@ -26,20 +26,20 @@
       <div class="detail-label">Total</div>
       <div class="detail-value"><?= e(format_pence($order['total_pence'], $order['currency'])) ?></div>
     </div>
+    <div class="detail-row">
+      <div class="detail-label">Items</div>
+      <div class="detail-value">
+        <ul class="list-plain">
+          <?php foreach ($items as $item): ?>
+            <li><?= e($item['description']) ?>: <?= e(format_pence($item['unit_price_pence'], $order['currency'])) ?></li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    </div>
   </div>
 
-  <div class="panel">
-    <h2>Items</h2>
-    <ul class="list-plain">
-      <?php foreach ($items as $item): ?>
-        <li><?= e($item['description']) ?>: <?= e(format_pence($item['unit_price_pence'], $order['currency'])) ?></li>
-      <?php endforeach; ?>
-    </ul>
-  </div>
-
-  <div class="panel">
-    <h2>Download</h2>
-    <p><a href="<?= e($downloadLink) ?>" class="download-link">Download your files</a></p>
+  <div class="confirmation-cta">
+    <a href="<?= e($downloadLink) ?>" class="button">Download your files</a>
   </div>
 
   <p class="hint">If you don't see the download email within a few minutes, check your spam folder or <a href="/">return to the gallery</a>.</p>
