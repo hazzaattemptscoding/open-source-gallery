@@ -218,15 +218,23 @@ function cli_analytics_export(PDO $pdo, array $args): void {
 
     cli_log("Exporting analytics (last $days days, format: $format)...");
 
+    $startDate = (new DateTime('now', new DateTimeZone('UTC')))
+        ->modify("-{$days} days")
+        ->format('Y-m-d H:i:s');
+
     $stmt = $pdo->prepare(<<<'SQL'
-        SELECT DATE(created_at) as date, COUNT(*) as orders, SUM(total_pence) as revenue
+        SELECT created_at as timestamp, COUNT(*) as orders, SUM(total_pence) as revenue
         FROM orders
-        WHERE created_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY)
+        WHERE created_at >= ?
         GROUP BY DATE(created_at)
-        ORDER BY date DESC
+        ORDER BY timestamp DESC
     SQL);
-    $stmt->execute([$days]);
+    $stmt->execute([$startDate]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $rows = array_map(function($row) {
+        return array_merge($row, ['date' => date('Y-m-d', strtotime($row['timestamp']))]);
+    }, $rows);
 
     if ($format === 'csv') {
         echo "date,orders,revenue_pence\n";

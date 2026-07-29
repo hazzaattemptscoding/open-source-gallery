@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/cache.php';
+require_once __DIR__ . '/db_compat.php';
 
 /**
  * Bulk tag photos.
@@ -15,9 +16,8 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
         return 0;
     }
 
-    // Build multi-row INSERT: one query instead of N.
+    $inserted = 0;
     $placeholders = implode(',', array_map(fn($id) => '(?, ?, ?, ?)', $photoIds));
-
     $params = [];
     foreach ($photoIds as $photoId) {
         $params[] = (int)$photoId;
@@ -26,13 +26,35 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
         $params[] = $tags['class'] ?? null;
     }
 
-    $stmt = $pdo->prepare(<<<SQL
-        INSERT INTO photo_tags (photo_id, kart_number, driver_name, class)
-        VALUES $placeholders
-        ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
-    SQL);
+    if (db_supports_on_duplicate_key($pdo)) {
+        $stmt = $pdo->prepare(<<<SQL
+            INSERT INTO photo_tags (photo_id, kart_number, driver_name, class)
+            VALUES $placeholders
+            ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
+        SQL);
+        $stmt->execute($params);
+        $inserted = $stmt->rowCount();
+    } else {
+        foreach ($photoIds as $photoId) {
+            try {
+                $stmt = $pdo->prepare('INSERT INTO photo_tags (photo_id, kart_number, driver_name, class) VALUES (?, ?, ?, ?)');
+                $stmt->execute([
+                    (int)$photoId,
+                    $tags['kart'] ?? null,
+                    $tags['driver'] ?? null,
+                    $tags['class'] ?? null,
+                ]);
+                $inserted += $stmt->rowCount();
+            } catch (PDOException $e) {
+                if (strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+                    continue;
+                }
+                throw $e;
+            }
+        }
+    }
 
-    return $stmt->execute($params) ? $stmt->rowCount() : 0;
+    return $inserted;
 }
 
 /**

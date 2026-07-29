@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db_compat.php';
+
 /**
  * Get customer insights: segmentation by LTV.
  */
@@ -64,19 +66,23 @@ function calculate_ltv(PDO $pdo, string $customerEmail): ?int {
  */
 function update_customer_analytics(PDO $pdo): int {
     try {
+        $pdo->beginTransaction();
+
+        $pdo->query('DELETE FROM customer_analytics');
+
         $stmt = $pdo->query(<<<'SQL'
             INSERT INTO customer_analytics (customer_email, total_spent_pence, order_count, first_order_at, last_order_at, lifetime_value_pence)
             SELECT email, SUM(total_pence), COUNT(*), MIN(created_at), MAX(created_at), SUM(total_pence)
             FROM orders
             GROUP BY email
-            ON DUPLICATE KEY UPDATE
-                total_spent_pence = VALUES(total_spent_pence),
-                order_count = VALUES(order_count),
-                last_order_at = VALUES(last_order_at),
-                lifetime_value_pence = VALUES(lifetime_value_pence)
         SQL);
-        return $stmt->rowCount();
+
+        $inserted = $stmt->rowCount();
+        $pdo->commit();
+        return $inserted;
     } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('Failed to update customer analytics: ' . $e->getMessage());
         return 0;
     }
 }

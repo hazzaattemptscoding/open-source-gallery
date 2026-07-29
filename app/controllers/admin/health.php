@@ -244,25 +244,21 @@ function get_recent_errors(PDO $pdo): array {
 function get_quick_stats(PDO $pdo): array {
     try {
         $stats = [];
+        $oneDayAgo = (new DateTime('now', new DateTimeZone('UTC')))
+            ->modify('-1 day')
+            ->format('Y-m-d H:i:s');
 
-        // Recent orders (last 24 hours)
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT COUNT(*) as count
-            FROM orders
-            WHERE status = 'completed' AND created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)
-        SQL);
+        $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM orders WHERE status = ? AND created_at > ?');
+        $stmt->execute(['completed', $oneDayAgo]);
         $stats['orders_24h'] = (int)$stmt->fetchColumn();
 
-        // Recently uploaded photos
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT COUNT(*) as count
-            FROM photos
-            WHERE created_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)
-        SQL);
+        $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM photos WHERE created_at > ?');
+        $stmt->execute([$oneDayAgo]);
         $stats['photos_24h'] = (int)$stmt->fetchColumn();
 
         return $stats;
     } catch (Throwable $e) {
+        error_log('Failed to get quick stats: ' . $e->getMessage());
         return [];
     }
 }
