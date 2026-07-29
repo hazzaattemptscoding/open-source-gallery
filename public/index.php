@@ -118,8 +118,8 @@ switch ($path) {
         break;
 
     case '/admin/setup':
-        require __DIR__ . '/../app/controllers/admin/setup.php';
-        admin_setup_controller($pdo, $config);
+        require __DIR__ . '/../app/controllers/admin/setup_wizard.php';
+        admin_setup_wizard_controller($pdo, $config);
         break;
 
     case '/admin/login':
