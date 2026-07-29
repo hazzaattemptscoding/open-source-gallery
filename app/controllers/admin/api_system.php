@@ -124,7 +124,7 @@ function api_jobs_retry(PDO $pdo, array $input): void {
 function api_jobs_clear(PDO $pdo, array $input): void {
     $status = $input['status'] ?? 'failed';
 
-    if (!in_array($status, ['failed', 'completed'], true)) {
+    if (!in_array($status, ['failed', 'done'], true)) {
         api_error('Invalid status');
         return;
     }
