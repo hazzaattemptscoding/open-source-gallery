@@ -23,6 +23,7 @@ function get_current_admin_role(PDO $pdo): ?array {
         $stmt->execute([$_SESSION['admin_id']]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     } catch (Throwable $e) {
+        error_log('Failed to get admin role: ' . $e->getMessage());
         return null;
     }
 }
@@ -167,8 +168,12 @@ function create_admin(PDO $pdo, string $email, string $password, int $roleId): b
         SQL);
         $stmt->execute([$email, $hash, $roleId]);
         return true;
-    } catch (Throwable $e) {
-        return false;
+    } catch (PDOException $e) {
+        if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+            return false;
+        }
+        error_log('Database error creating admin: ' . $e->getMessage());
+        throw $e;
     }
 }
 
@@ -179,9 +184,10 @@ function update_admin_role(PDO $pdo, int $adminId, int $roleId): bool {
     try {
         $stmt = $pdo->prepare('UPDATE admin_users SET admin_role_id = ? WHERE id = ?');
         $stmt->execute([$roleId, $adminId]);
-        return true;
-    } catch (Throwable $e) {
-        return false;
+        return $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        error_log('Database error updating admin role: ' . $e->getMessage());
+        throw $e;
     }
 }
 
@@ -190,7 +196,6 @@ function update_admin_role(PDO $pdo, int $adminId, int $roleId): bool {
  */
 function delete_admin(PDO $pdo, int $adminId): bool {
     try {
-        // Don't allow deleting the last admin
         $stmt = $pdo->query('SELECT COUNT(*) FROM admin_users');
         if ((int)$stmt->fetchColumn() <= 1) {
             return false;
@@ -198,8 +203,9 @@ function delete_admin(PDO $pdo, int $adminId): bool {
 
         $stmt = $pdo->prepare('DELETE FROM admin_users WHERE id = ?');
         $stmt->execute([$adminId]);
-        return true;
-    } catch (Throwable $e) {
-        return false;
+        return $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        error_log('Database error deleting admin: ' . $e->getMessage());
+        throw $e;
     }
 }
