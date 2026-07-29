@@ -79,6 +79,38 @@ if ($path === '/api/styles.css') {
     exit;
 }
 
+// Serve customization assets (logos, etc)
+if (preg_match('#^/storage/customize/(.+)$#', $path, $assetMatch)) {
+    $filename = $assetMatch[1];
+    // Prevent directory traversal
+    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+        http_response_code(404);
+        exit;
+    }
+
+    $filepath = __DIR__ . '/../storage/customize/' . $filename;
+    if (!file_exists($filepath)) {
+        http_response_code(404);
+        exit;
+    }
+
+    // Determine MIME type
+    $mimeTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+    ];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $mimeType = $mimeTypes[$ext] ?? 'application/octet-stream';
+
+    header('Content-Type: ' . $mimeType);
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . filesize($filepath));
+    readfile($filepath);
+    exit;
+}
+
 // URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
 // cron is URL-based rather than CLI. cron/run.php lives outside the docroot
 // and has no direct HTTP path, so this is the only way to reach it over the web.
