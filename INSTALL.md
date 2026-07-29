@@ -2,206 +2,216 @@
 
 Self-hosted photo gallery and sales platform for sports photographers.
 
-## Prerequisites
+Choose your installation method below. **Docker is the easiest.**
 
-- **PHP 8.2+** with `exif`, `gd`, and `zip` extensions
-- **MySQL 5.7+** or **MariaDB 10.2+**
-- **Apache 2.4+** with `mod_rewrite`
-- **Cron** support (5-minute intervals recommended)
-- **Stripe API keys** for payment processing (test or live)
-- **Domain** with HTTPS support (required for secure payment processing)
+---
 
-## Installation Steps
+## Option 1: Docker (One Command) ⭐ Recommended
 
-### 1. Clone the Repository
+If you have Docker installed, this is all you need:
 
 ```bash
-git clone https://github.com/yourusername/open-source-gallery.git
+docker-compose up
+```
+
+Wait ~30 seconds for it to start. Then:
+
+1. Open http://localhost:8080
+2. Go to http://localhost:8080/admin/setup
+3. Create your admin account
+4. Start uploading photos
+
+**That's it.** Database is created automatically. All folders created. Everything ready.
+
+To stop: `Ctrl+C`  
+To restart: `docker-compose up`
+
+---
+
+## Option 2: MAMP (Mac, with Setup Script)
+
+### Prerequisites
+- MAMP installed and running (https://www.mamp.info/)
+- Git installed
+
+### Installation
+
+1. **Clone the repo:**
+```bash
+cd ~/Applications/MAMP/htdocs
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
+git checkout claude/plugin-skill-setup-y9v6kx
 ```
 
-### 2. Configure Environment
-
-Copy and edit the configuration template:
-
+2. **Run setup script:**
 ```bash
-cp config/config.template.php config/config.php
+bash setup.sh
 ```
 
-Edit `config/config.php` with your settings:
-- `site.name` — Your gallery name
-- `site.base_url` — Public site URL (must be HTTPS)
-- `database.*` — MySQL connection details
-- `stripe.publishable_key` — Stripe public key
-- `stripe.secret_key` — Stripe secret key
-- `stripe.webhook_secret` — Stripe webhook signing secret
-- `currency` — 3-letter currency code (GBP, USD, etc.)
-- `security.hmac_key` — Random 32-byte key for cart signing (generate with: `php -r 'echo bin2hex(random_bytes(32));'`)
-- `security.cron_secret` — Secret for cron endpoint URL (generate with: `php -r 'echo bin2hex(random_bytes(32));'`)
+This automatically:
+- Creates `config/config.php` with random security keys
+- Creates storage folders
+- Imports database schema
+- Shows you what to do next
 
-### 3. Create Database
+3. **In MAMP app:**
+   - Preferences → Web Server
+   - Set Document Root to: `/Applications/MAMP/htdocs/open-source-gallery/public`
+   - Click OK, restart servers
 
-```bash
-mysql -u root -p -e "CREATE DATABASE photo_gallery CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p photo_gallery < migrations/001_initial_schema.sql
-```
+4. **Go to setup:**
+   - http://localhost:8888/admin/setup
+   - Create your admin account
+   - Start uploading
 
-Or use the migration runner:
+---
 
-```bash
-php app/cli/migrate.php
-```
+## Option 3: Manual Setup (Any Server)
 
-### 4. Set Up Directory Permissions
+If you're deploying to actual hosting (Bluehost, IONOS, GoDaddy, etc.):
 
-Create storage directories:
+### Prerequisites
+- PHP 8.2+ with: `pdo_mysql`, `gd`, `zip`, `exif` extensions
+- MySQL 5.7+ or MariaDB 10.2+
+- SSH/SFTP access or FTP file manager
+- Apache 2.4+ with `mod_rewrite`
 
-```bash
-mkdir -p storage/hires
-mkdir -p storage/zips
-chmod 755 storage
-```
+### Steps
 
-Ensure Apache can write to public directories:
+1. **Upload files** via SFTP/FTP to your hosting provider's public HTML directory
 
-```bash
-chmod 755 public
-chmod 755 public/media
-chmod 755 public/media/d
-```
+2. **Create config file:**
+   - Open `config/config.example.php` in a text editor
+   - Copy it, rename to `config/config.php`
+   - Fill in your database credentials (from your hosting control panel)
+   - Save and upload
 
-### 5. Configure Apache
+3. **Create database:**
+   - Use your hosting's control panel (usually cPanel or similar)
+   - Create database: `photo_gallery`
+   - Create user: `gallery` with a strong password
+   - Give user full permissions on the database
 
-Create `.htaccess` in `public/` to route all requests through `public/index.php`:
+4. **Import schema:**
+   - Use your hosting's phpMyAdmin
+   - Select the `photo_gallery` database
+   - Click Import
+   - Choose `migrations/001_initial_schema.sql`
+   - Click Import
+   - Repeat with `migrations/002_add_media_type.sql`
 
-```apache
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php [QSA,L]
-</IfModule>
-```
+5. **Set permissions:**
+   - Create folder: `storage/hires`
+   - Create folder: `storage/zips`
+   - Create folder: `public/media/d`
+   - Make these writable by the web server (usually `755` or `777`)
 
-Enable HTTPS (via Let's Encrypt or your hosting provider).
+6. **Set up cron:**
+   - In your hosting control panel, add cron job:
+   ```
+   */5 * * * * php /home/username/public_html/app/cron/run.php
+   ```
+   - Or use the URL-based fallback in `config/config.php`: `security.cron_secret`
 
-### 6. Configure Cron
+7. **First admin account:**
+   - Visit: `https://yourdomain.com/admin/setup`
+   - Create your account
+   - You'll be redirected to login
+   - Set up two-factor authentication when prompted
 
-Set up a 5-minute cron job to run the job drain:
-
-```bash
-*/5 * * * * php /path/to/app/cron/run.php >> /var/log/photo-gallery-cron.log 2>&1
-```
-
-Or use the URL-based fallback (if CLI cron is unavailable):
-
-```bash
-*/5 * * * * curl -s https://yoursite.com/cron/{CRON_SECRET} >> /var/log/photo-gallery-cron.log 2>&1
-```
-
-Replace `{CRON_SECRET}` with the value from `config/config.php`.
-
-### 7. Create Admin Account
-
-```bash
-php app/cli/create-admin.php your@email.com
-```
-
-Follow the prompts to set a password and enable TOTP 2FA.
-
-### 8. Set Up Stripe Webhooks
-
-1. Log in to Stripe Dashboard
-2. Navigate to Developers → Webhooks
-3. Add webhook endpoint:
-   - URL: `https://yoursite.com/webhook/stripe`
+8. **Stripe setup (for payments):**
+   - Go to Stripe Dashboard
+   - Get test keys: https://dashboard.stripe.com/test/apikeys
+   - Paste into `config/config.php`: `stripe.publishable_key` and `stripe.secret_key`
+   - Create webhook: https://dashboard.stripe.com/test/webhooks
+   - URL: `https://yourdomain.com/webhook/stripe`
    - Events: `checkout.session.completed`, `charge.refunded`
-   - Signing secret: Copy to `config/config.php` as `stripe.webhook_secret`
+   - Copy webhook secret to `config/config.php`: `stripe.webhook_secret`
 
-### 9. Test the Installation
+---
 
-1. Visit `https://yoursite.com/admin/login` and log in
-2. Upload a test event and photo
-3. Tag and publish the photo
-4. Visit the gallery home page
-5. Add a photo to cart and complete a test checkout (use Stripe test card 4242 4242 4242 4242)
+## Troubleshooting
+
+### "Internal Server Error" (500)
+- **Check database:** Can you connect? Is `photo_gallery` database created?
+- **Check config:** Is `config/config.php` readable and filled in correctly?
+- **Check permissions:** Are `storage/` and `public/media/` writable by Apache?
+
+### "MySQL command not found" on Mac
+- MAMP's MySQL isn't in your PATH. Use phpMyAdmin instead (http://localhost:8888/phpmyadmin) to create the database and import the migrations.
+
+### Photos not showing / No derivatives
+- Check that `cron` is running: Look for recent `process_derivative_job` entries in the database (or check your hosting's cron logs)
+- Ensure `public/media/d/` is writable
+
+### "Email not sending"
+- Email is queued but not sent yet. It's a placeholder. Implement in `app/lib/email.php` with your mail service (SendGrid, AWS SES, etc.)
+
+### Stripe webhooks not working
+- Verify webhook secret in `config/config.php` matches Stripe Dashboard
+- Check audit logs: `SELECT * FROM audit_log WHERE action LIKE '%webhook%' ORDER BY created_at DESC LIMIT 10;`
+
+---
+
+## After Installation
+
+1. **Log in:** `/admin/login` (with the account you created)
+2. **Create an event:** Events → Create → fill in name, date, venue
+3. **Upload photos:** Upload → select photos → wait for processing
+4. **Publish event:** Go back to Events, toggle "Published" for your event
+5. **View gallery:** Visit home page (/) → see your event as a card → click to view photos
+6. **Add to cart:** Click the + button on photos → View Cart → Checkout with Stripe test card
+
+---
 
 ## File Structure
 
 ```
-.
-├── public/                  # Web root (DocumentRoot)
-│   ├── index.php           # Front controller
-│   ├── .htaccess           # Apache routing rules
-│   └── assets/             # CSS, JavaScript, images
-├── app/
-│   ├── bootstrap.php       # App initialization, config loading
-│   ├── controllers/        # Route handlers
-│   ├── lib/                # Shared libraries
-│   ├── views/              # HTML templates
-│   ├── cli/                # CLI utilities
-│   └── cron/               # Cron job runner
-├── migrations/             # Database schema
-├── config/
-│   └── config.php          # Application configuration
-└── storage/
-    ├── hires/              # Original uploaded photos
-    └── zips/               # Pre-built download bundles (optional)
+public/                          # Web root (Apache serves this)
+├── index.php                    # Entry point
+├── .htaccess                    # URL routing rules
+├── assets/                      # CSS, JavaScript
+└── media/d/                     # Derivative images (resized versions)
+
+app/                             # Application logic (hidden from web)
+├── controllers/                 # Page handlers
+├── lib/                         # Business logic
+├── views/                       # HTML templates
+└── cron/                        # Background jobs
+
+config/
+├── config.example.php           # Template (copy this)
+└── config.php                   # Your config (gitignored, never commit)
+
+storage/                         # Uploaded files (gitignored)
+├── hires/                       # Original photos
+├── zips/                        # Download bundles
+└── tmp/                         # Upload chunks
+
+migrations/                      # Database schema
+├── 001_initial_schema.sql
+└── 002_add_media_type.sql
 ```
 
-## Backup and Maintenance
+---
 
-### Database Backups
+## Security
 
-```bash
-mysqldump -u user -p photo_gallery > backup-$(date +%Y%m%d).sql
-```
+Before going live:
 
-### Storage Backups
+- [ ] Use HTTPS (Let's Encrypt or your host's SSL)
+- [ ] Change all default passwords
+- [ ] Enable two-factor authentication on your admin account
+- [ ] Set strong `security.hmac_key` and `security.cron_secret` in config
+- [ ] Test Stripe webhook signature validation (see `docs/SECURITY.md`)
+- [ ] Review audit logs regularly
+- [ ] Set up database backups
 
-Back up `storage/hires/` regularly; this contains all original photos.
+See `docs/SECURITY.md` for full security audit.
 
-### Log Rotation
-
-Configure log rotation for `cron.log` and audit logs to prevent disk bloat.
-
-## Troubleshooting
-
-### Photos Not Showing
-
-- Verify `public/media/d/` directory is writable
-- Check cron job is running (verify `audit_log` table has recent `process_derivative_job` entries)
-- Ensure GD extension is enabled: `php -m | grep gd`
-
-### Stripe Webhooks Not Processing
-
-- Verify webhook secret matches Stripe Dashboard
-- Check audit logs for webhook errors: `SELECT * FROM audit_log WHERE action = 'webhook_error' ORDER BY created_at DESC`
-- Confirm outbound HTTPS connectivity to Stripe API
-
-### Cart Not Working
-
-- Check browser console for JavaScript errors
-- Verify `config.php` has a valid `security.hmac_key` (32 bytes, hex-encoded)
-- Clear browser cookies and try again
-
-### Email Not Sending
-
-- Email delivery is stubbed in `app/lib/cron.php`. Implement via PHP's `mail()` function or an external SMTP service.
-
-## Security Considerations
-
-- All passwords use Argon2id hashing
-- Admin sessions use strict CSRF tokens
-- Cart is cryptographically signed; prices re-verified at checkout
-- Stripe webhook signatures validated with HMAC-SHA256
-- Rate limiting prevents brute force on checkout and downloads
-- All user input is escaped for output (XSS prevention)
-- All queries use prepared statements (SQL injection prevention)
-- Download links expire after 30 days and have per-customer download limits
-- Audit log tracks all sensitive operations (login, checkout, download, refund)
+---
 
 ## License
 
-AGPL-3.0. See LICENSE file for details.
+AGPL-3.0. See LICENSE file.

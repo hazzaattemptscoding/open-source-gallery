@@ -42,37 +42,37 @@ A self-hosted, premium photo gallery and sales platform built for sports photogr
 
 **Shared hosting friendly.** ~200GB storage limit? Supported (with 7-day image tiering). No CLI daemons? URL-based cron fallback. Database backup? Use standard MySQL tools. Email delivery via mail() or SMTP.
 
-## Quick Start
+## Quick Start (2 Minutes)
+
+### With Docker (Recommended)
 
 ```bash
-# 1. Clone and configure
-git clone https://github.com/yourusername/open-source-gallery.git
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
 cd open-source-gallery
-cp config/config.template.php config/config.php
-# Edit config.php with your Stripe keys and MySQL credentials
-
-# 2. Set up database
-mysql photo_gallery < migrations/001_initial_schema.sql
-
-# 3. Create directories
-mkdir -p storage/hires storage/zips public/media/d
-chmod 755 storage public
-
-# 4. Create admin account
-php app/cli/create-admin.php your@email.com
-
-# 5. Set up cron
-echo "*/5 * * * * php /path/to/app/cron/run.php" | crontab -
-
-# 6. Configure Apache
-# Copy .htaccess (provided) to public/
-# Point DocumentRoot to public/
-# Enable mod_rewrite
-
-# 7. Open https://yoursite.com/admin/login and start uploading!
+docker-compose up
 ```
 
-For detailed setup instructions, see [INSTALL.md](INSTALL.md).
+Then visit: http://localhost:8080/admin/setup
+
+Create admin account → Upload photos → Done.
+
+### With MAMP (Mac)
+
+```bash
+cd ~/Applications/MAMP/htdocs
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+bash setup.sh
+```
+
+Then:
+1. Set MAMP's Document Root to the `/public` folder
+2. Restart MAMP
+3. Visit: http://localhost:8888/admin/setup
+
+### On Production Hosting
+
+See [INSTALL.md](INSTALL.md) for detailed instructions.
 
 ## Architecture
 

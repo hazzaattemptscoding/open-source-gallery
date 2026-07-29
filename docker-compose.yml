@@ -1,27 +1,39 @@
-# Dev-only. Mirrors the PHP/MySQL versions targeted on shared hosting so bugs
-# show up locally instead of on IONOS. The app itself never requires Docker
-# or a daemon to run — see CLAUDE.md hard constraints.
+version: '3.8'
+
 services:
   db:
-    image: mysql:8.0
+    image: mariadb:10.11
+    container_name: powermedia-db
     environment:
-      MYSQL_DATABASE: gallery
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: photo_gallery
       MYSQL_USER: gallery
       MYSQL_PASSWORD: gallery
-      MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   app:
-    image: php:8.2-apache
+    build: .
+    container_name: powermedia-app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8080:80"
     volumes:
       - .:/var/www/html
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: photo_gallery
+      MYSQL_USER: gallery
+      MYSQL_PASSWORD: gallery
     working_dir: /var/www/html
 
 volumes:
