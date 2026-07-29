@@ -93,7 +93,24 @@ If you're deploying to actual hosting (Bluehost, IONOS, GoDaddy, etc.):
 - SSH/SFTP access or FTP file manager
 - Apache 2.4+ with `mod_rewrite`
 
-### Steps
+### Quick Verification (After Upload)
+
+After uploading files via FTP/SFTP, run this to check everything:
+
+```bash
+php host-setup.php
+```
+
+This verifies:
+- PHP version and required extensions
+- Directory structure and permissions
+- Database connectivity
+- Config file validity
+- Schema import status
+
+It provides clear error messages and solutions for common issues.
+
+### Manual Steps (Detailed)
 
 1. **Upload files** via SFTP/FTP to your hosting provider's public HTML directory
 
