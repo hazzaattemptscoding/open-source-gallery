@@ -184,3 +184,38 @@ Both features degrade gracefully:
 - Missing SMTP/Stripe shows on checklist, doesn't break site
 
 Ready for PR and integration testing.
+
+---
+
+## Full-Site Correctness & Robustness Audit (2026-07-29)
+
+Complete pass over every controller, view, and library plus a dependency audit.
+Findings only, no fixes applied yet. Full detail in docs/AUDIT.md.
+
+**Critical (3):**
+- C1: Bundle purchases can never be downloaded. Download loop reads photo_id only;
+  bundles store session_id/event_id. zip_build job is a stub. Every bundle sale is undeliverable.
+- C2: Email interpolator replaces `{key}` but templates use `{{key}}`. Every customer
+  email renders brace-wrapped values and broken links.
+- C3: GET_LOCK / ON DUPLICATE KEY UPDATE / DATE_* are MySQL-only and unguarded in
+  10 files. On SQLite, the rate limiter throws on the login path itself.
+
+**High (6):** duplicate download links on success-page refresh; missing
+download_cap_multiplier setting collapses cap to 1 (fetchColumn false vs ??);
+fragile Stripe webhook signature parsing (breaks on secret rotation, no replay
+window); Stripe errors swallowed to empty arrays; checkout failures logged
+nowhere; bulk status vocabulary vs schema ENUM mismatch (known, pending decision).
+
+**Medium (8) and Low (4):** silent try/catch-return-empty across 5 libraries,
+non-atomic download counting, zip filename collisions, cart signs with empty
+HMAC key on write path, non-ASCII Content-Disposition, upload init drops invalid
+files silently, LIMIT bound as string, currency config shape inconsistency.
+
+**Dependency audit:** runtime require block is empty (plain-upload deploy already
+works with no Composer). KEEP: phpseclib (suggest, remote mode only), PHPUnit
+(dev). Stripe integration is a hand-rolled curl wrapper, no SDK installed;
+hardening gaps filed as H3/H4. Nothing qualifies for inlining.
+
+**Sound:** admin auth (decoy hash, TOTP replay guard), CSRF, cart cookie read
+path, download token hashing, webhook idempotency, order transaction, derivative
+failure handling.
