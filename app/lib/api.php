@@ -36,7 +36,7 @@ function validate_api_key(PDO $pdo, string $providedKey): ?array {
     try {
         $hash = hash('sha256', $providedKey);
         $stmt = $pdo->prepare(<<<'SQL'
-            SELECT * FROM api_keys WHERE key_hash = ? AND enabled = 1
+            SELECT id, admin_id, name, permissions, enabled, created_at, last_used_at FROM api_keys WHERE key_hash = ? AND enabled = 1
         SQL);
         $stmt->execute([$hash]);
         $key = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -101,7 +101,9 @@ function api_get_photos(PDO $pdo, int $page = 1, int $perPage = 50): array {
 function api_get_photo(PDO $pdo, int $photoId): ?array {
     try {
         $stmt = $pdo->prepare(<<<'SQL'
-            SELECT * FROM photos WHERE id = ? AND status = 'live'
+            SELECT id, public_token, original_filename, price_pence, width, height,
+                   view_count, created_at, camera_make, camera_model, description
+            FROM photos WHERE id = ? AND status = 'live'
         SQL);
         $stmt->execute([$photoId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);

@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 function get_all_settings(PDO $pdo, string $category = ''): array {
     try {
-        $sql = 'SELECT * FROM settings';
+        $sql = 'SELECT id, category, key_name, value, type, display_label, help_text, order_by, is_advanced FROM settings';
         $params = [];
 
         if (!empty($category)) {
@@ -70,7 +70,7 @@ function set_setting(PDO $pdo, string $category, string $key, mixed $value): boo
  */
 function get_settings_by_category(PDO $pdo, bool $includeAdvanced = false): array {
     try {
-        $sql = 'SELECT * FROM settings';
+        $sql = 'SELECT id, category, key_name, value, type, display_label, help_text, order_by, is_advanced FROM settings';
         $params = [];
 
         if (!$includeAdvanced) {

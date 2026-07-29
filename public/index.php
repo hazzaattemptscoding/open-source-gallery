@@ -277,6 +277,11 @@ switch ($path) {
         admin_api_fulfillment_controller($pdo, $config);
         break;
 
+    case '/sitemap.xml':
+        require __DIR__ . '/../app/controllers/public/sitemap.php';
+        public_sitemap_controller($pdo, $config);
+        break;
+
     default:
         if (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';

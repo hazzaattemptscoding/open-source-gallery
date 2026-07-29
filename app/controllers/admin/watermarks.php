@@ -47,7 +47,7 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
     }
 
     try {
-        $stmt = $pdo->query('SELECT * FROM watermark_settings LIMIT 1');
+        $stmt = $pdo->query('SELECT id, position, opacity, scale, text, enabled, updated_at FROM watermark_settings LIMIT 1');
         $settings = $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
         $settings = null;

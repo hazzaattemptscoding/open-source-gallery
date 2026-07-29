@@ -37,7 +37,7 @@ function get_customer_segments(PDO $pdo): array {
  */
 function get_cohort_analysis(PDO $pdo): array {
     try {
-        $stmt = $pdo->query('SELECT * FROM cohorts ORDER BY cohort_month DESC LIMIT 12');
+        $stmt = $pdo->query('SELECT cohort_month, total_customers, returning_customers, revenue_pence, created_at FROM cohorts ORDER BY cohort_month DESC LIMIT 12');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
         return [];
@@ -102,7 +102,7 @@ function get_repeat_rate(PDO $pdo): ?float {
  */
 function get_cohort_retention(PDO $pdo, string $cohortMonth): ?array {
     try {
-        $stmt = $pdo->prepare('SELECT * FROM cohorts WHERE cohort_month = ?');
+        $stmt = $pdo->prepare('SELECT cohort_month, total_customers, returning_customers, revenue_pence, created_at FROM cohorts WHERE cohort_month = ?');
         $stmt->execute([$cohortMonth]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {

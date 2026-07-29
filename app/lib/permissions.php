@@ -131,7 +131,7 @@ function require_uploader_role(PDO $pdo): void {
  */
 function get_all_roles(PDO $pdo): array {
     try {
-        $stmt = $pdo->query('SELECT * FROM admin_roles ORDER BY id');
+        $stmt = $pdo->query('SELECT id, name, permissions, created_at FROM admin_roles ORDER BY id');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
         return [];

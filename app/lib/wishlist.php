@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 function get_customer_wishlist(PDO $pdo, string $customerToken): ?array {
     try {
-        $stmt = $pdo->prepare('SELECT * FROM wishlists WHERE customer_token = ? AND is_default = 1');
+        $stmt = $pdo->prepare('SELECT id, customer_token, name, is_default, created_at FROM wishlists WHERE customer_token = ? AND is_default = 1');
         $stmt->execute([$customerToken]);
         $wishlist = $stmt->fetch(PDO::FETCH_ASSOC);
 
