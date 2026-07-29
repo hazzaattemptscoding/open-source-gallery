@@ -249,19 +249,29 @@ migrations/                      # Database schema
 
 ---
 
+## Going Live
+
+**Ready to deploy to production?** Use the deployment guide:
+
+→ **[docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md)** — Complete pre-launch checklist and go-live guide
+
+This guide covers:
+- [ ] Security checklist (HTTPS, 2FA, keys, Stripe, email)
+- [ ] Performance & storage monitoring
+- [ ] Full customer flow testing
+- [ ] Day-one launch steps
+- [ ] Post-launch monitoring tasks
+- [ ] Scaling guidance
+
+**Running into issues?** See:
+
+→ **[docs/TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md)** — Quick reference for common problems
+
+---
+
 ## Security
 
-Before going live:
-
-- [ ] Use HTTPS (Let's Encrypt or your host's SSL)
-- [ ] Change all default passwords
-- [ ] Enable two-factor authentication on your admin account
-- [ ] Set strong `security.hmac_key` and `security.cron_secret` in config
-- [ ] Test Stripe webhook signature validation (see `docs/SECURITY.md`)
-- [ ] Review audit logs regularly
-- [ ] Set up database backups
-
-See `docs/SECURITY.md` for full security audit.
+See `docs/SECURITY.md` for security audit and hardening guidelines.
 
 ---
 

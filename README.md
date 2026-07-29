@@ -90,7 +90,7 @@ See [docs/architecture.md](docs/architecture.md) for:
 4. ✅ **Cart, Stripe, delivery** — Shopping cart, volume discounts, Stripe Checkout, webhook handling, download delivery
 5. ✅ **Stats + hardening** — Revenue dashboard, order history, rate limiting, audit logging, security headers
 6. ✅ **Open source release prep** — Config-driven branding, documentation, LICENSE, TRADEMARK, SECURITY audit
-7. ⏳ **Future enhancements** — Print fulfillment (Phase 2), email templates, SMTP support
+7. ✅ **Production readiness** — Email templates, admin settings UI, data export, audit logs, session management, deployment guide
 
 ## Technology Stack
 
@@ -185,11 +185,21 @@ A: Download links and audit logs contain customer IPs for security. Implement da
 **Q: Can I run this on Heroku / Docker / etc?**  
 A: Not the intended use case. This is built for shared hosting (Apache + cron). You *can* containerize it if you want, but you'd lose the simplicity benefit.
 
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** — Get up and running in minutes
+- **[INSTALL.md](INSTALL.md)** — Detailed installation for all platforms
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Pre-launch checklist and go-live guide
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — Common issues and solutions
+- **[docs/EMAIL.md](docs/EMAIL.md)** — Email configuration (SMTP, Gmail, SendGrid, AWS SES, Mailgun)
+- **[docs/SECURITY.md](docs/SECURITY.md)** — Security audit and hardening
+- **[docs/architecture.md](docs/architecture.md)** — Technical design and database schema
+
 ## Support
 
-- **Issue tracker:** GitHub Issues
-- **Discussions:** GitHub Discussions
-- **Docs:** [INSTALL.md](INSTALL.md), [docs/architecture.md](docs/architecture.md)
+- **Issue tracker:** [GitHub Issues](https://github.com/hazzaattemptscoding/open-source-gallery/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/hazzaattemptscoding/open-source-gallery/discussions)
+- **Stuck?** Check [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) first—it covers 99% of issues
 
 ---
 
