@@ -41,7 +41,7 @@ function admin_attempt_login(PDO $pdo, string $email, string $password, ?string 
         return ['ok' => false, 'reason' => 'rate_limited'];
     }
 
-    $stmt = $pdo->prepare('SELECT * FROM admin_users WHERE email = :email');
+    $stmt = $pdo->prepare('SELECT id, email, password_hash, totp_enabled, totp_secret, totp_last_step FROM admin_users WHERE email = :email');
     $stmt->execute(['email' => $email]);
     $admin = $stmt->fetch();
 

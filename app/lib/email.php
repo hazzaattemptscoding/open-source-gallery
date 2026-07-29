@@ -1,243 +1,225 @@
 <?php
+/**
+ * Email system: queue-based, template-driven notifications.
+ * All emails are queued and sent by cron worker for reliability.
+ */
+
 declare(strict_types=1);
 
-require_once __DIR__ . '/orders.php';
-require_once __DIR__ . '/currency.php';
-
 /**
- * Send transactional emails: order receipts and refund confirmations.
- * Renders HTML templates and sends via mail() or native SMTP.
+ * Queue an email for sending.
  */
-
-/**
- * Render an email template with variables.
- */
-function render_email_template(string $template, array $variables): string {
-    require_once __DIR__ . '/view.php';
-
-    $templateFile = __DIR__ . "/../templates/emails/{$template}.html";
-    if (!file_exists($templateFile)) {
-        return '';
-    }
-
-    ob_start();
+function queue_email(
+    PDO $pdo,
+    string $recipient,
+    string $subject,
+    string $bodyHtml,
+    string $bodyText = '',
+    string $template = '',
+    array $data = [],
+    string $purpose = 'notification'
+): bool {
     try {
-        extract($variables, EXTR_SKIP);
-        require $templateFile;
-        return ob_get_clean();
-    } finally {
-        ob_end_clean();
-    }
-}
-
-/**
- * Send receipt email with HTML template and download link after payment.
- */
-function send_receipt_email(PDO $pdo, array $config, int $orderId): bool {
-    $order = get_order_by_id($pdo, $orderId);
-    if (!$order) {
-        return false;
-    }
-
-    $items = get_order_items($pdo, $orderId);
-    if (empty($items)) {
-        return false;
-    }
-
-    $downloadLink = create_download_link($pdo, $orderId, $config);
-    $currencyCode = $config['currency'] ?? 'GBP';
-    $siteName = $config['site']['name'] ?? 'Gallery';
-    $supportEmail = $config['site']['support_email'] ?? 'support@example.com';
-
-    $to = $order['email'];
-    $subject = "{$siteName} — Your order receipt";
-    $orderNumber = $order['public_token'];
-    $total = format_pence((int)$order['total_pence'], $currencyCode);
-    $orderDate = date('F j, Y', strtotime($order['created_at']));
-
-    $html = render_email_template('receipt', [
-        'siteName' => $siteName,
-        'supportEmail' => $supportEmail,
-        'orderNumber' => $orderNumber,
-        'orderDate' => $orderDate,
-        'items' => $items,
-        'currencyCode' => $currencyCode,
-        'total' => $total,
-        'downloadLink' => $downloadLink,
-    ]);
-
-    if (empty($html)) {
-        return false;
-    }
-
-    return send_email($config, $to, $subject, $html, isHtml: true);
-}
-
-/**
- * Send refund notification email with HTML template.
- */
-function send_refund_email(PDO $pdo, array $config, int $orderId, string $refundType = 'full'): bool {
-    $order = get_order_by_id($pdo, $orderId);
-    if (!$order) {
-        return false;
-    }
-
-    $to = $order['email'];
-    $siteName = $config['site']['name'] ?? 'Gallery';
-    $supportEmail = $config['site']['support_email'] ?? 'support@example.com';
-    $refundWord = $refundType === 'full' ? 'refund' : 'partial refund';
-    $orderNumber = $order['public_token'];
-
-    $subject = "{$siteName} — {$refundWord} processed";
-
-    $html = render_email_template('refund', [
-        'siteName' => $siteName,
-        'supportEmail' => $supportEmail,
-        'orderNumber' => $orderNumber,
-        'refundWord' => $refundWord,
-    ]);
-
-    if (empty($html)) {
-        return false;
-    }
-
-    return send_email($config, $to, $subject, $html, isHtml: true);
-}
-
-/**
- * Send email via mail() or native SMTP.
- */
-function send_email(array $config, string $to, string $subject, string $body, bool $isHtml = false): bool {
-    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
-        return false;
-    }
-
-    $from = $config['smtp']['from_email'] ?? $config['site']['support_email'] ?? 'noreply@example.com';
-    if (!filter_var($from, FILTER_VALIDATE_EMAIL)) {
-        $from = 'noreply@example.com';
-    }
-
-    $fromName = $config['smtp']['from_name'] ?? $config['site']['name'] ?? 'Gallery';
-
-    $headers = "From: {$fromName} <{$from}>\r\n";
-    $headers .= "Reply-To: {$from}\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $contentType = $isHtml ? 'text/html; charset=UTF-8' : 'text/plain; charset=UTF-8';
-    $headers .= "Content-Type: {$contentType}\r\n";
-
-    if (!empty($config['smtp']['host'])) {
-        return send_email_smtp($config, $to, $subject, $body, $headers);
-    }
-
-    return (bool)mail($to, $subject, $body, $headers);
-}
-
-/**
- * Send email via native SMTP (no external dependencies).
- */
-function send_email_smtp(array $config, string $to, string $subject, string $body, string $headers): bool {
-    $host = $config['smtp']['host'] ?? '';
-    $port = (int)($config['smtp']['port'] ?? 587);
-    $user = $config['smtp']['user'] ?? '';
-    $pass = $config['smtp']['pass'] ?? '';
-
-    if (empty($host) || empty($user) || empty($pass)) {
-        return false;
-    }
-
-    try {
-        $socket = fsockopen($host, $port, $errno, $errstr, 10);
-        if (!$socket) {
-            return false;
-        }
-
-        stream_set_timeout($socket, 10);
-
-        $response = fgets($socket, 1024);
-        if (strpos($response, '220') === false) {
-            fclose($socket);
-            return false;
-        }
-
-        $from = extract_email_address($headers);
-        if (empty($from)) {
-            fclose($socket);
-            return false;
-        }
-
-        fputs($socket, "EHLO localhost\r\n");
-        fgets($socket, 1024);
-
-        fputs($socket, "STARTTLS\r\n");
-        fgets($socket, 1024);
-
-        if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-            fclose($socket);
-            return false;
-        }
-
-        fputs($socket, "EHLO localhost\r\n");
-        fgets($socket, 1024);
-
-        fputs($socket, "AUTH LOGIN\r\n");
-        $response = fgets($socket, 1024);
-        if (strpos($response, '334') === false) {
-            fclose($socket);
-            return false;
-        }
-
-        fputs($socket, base64_encode($user) . "\r\n");
-        $response = fgets($socket, 1024);
-        if (strpos($response, '334') === false) {
-            fclose($socket);
-            return false;
-        }
-
-        fputs($socket, base64_encode($pass) . "\r\n");
-        $response = fgets($socket, 1024);
-        if (strpos($response, '235') === false) {
-            fclose($socket);
-            return false;
-        }
-
-        fputs($socket, "MAIL FROM:<{$from}>\r\n");
-        fgets($socket, 1024);
-
-        fputs($socket, "RCPT TO:<{$to}>\r\n");
-        fgets($socket, 1024);
-
-        fputs($socket, "DATA\r\n");
-        fgets($socket, 1024);
-
-        fputs($socket, "To: {$to}\r\n");
-        fputs($socket, "Subject: {$subject}\r\n");
-        fputs($socket, $headers);
-        fputs($socket, "\r\n");
-        fputs($socket, $body . "\r\n");
-        fputs($socket, ".\r\n");
-        $response = fgets($socket, 1024);
-
-        fputs($socket, "QUIT\r\n");
-        fclose($socket);
-
-        return strpos($response, '250') !== false;
+        $stmt = $pdo->prepare(<<<'SQL'
+            INSERT INTO emails (recipient_email, subject, body_html, body_text, template_name, template_data, purpose, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+        SQL);
+        return $stmt->execute([
+            $recipient,
+            $subject,
+            $bodyHtml,
+            $bodyText ?: $bodyHtml,
+            $template,
+            !empty($data) ? json_encode($data) : null,
+            $purpose,
+        ]);
     } catch (Throwable $e) {
         return false;
     }
 }
 
 /**
- * Extract email address from headers (From: line).
+ * Queue email using a template with variable substitution.
  */
-function extract_email_address(string $headers): string {
-    if (preg_match('/From:.*?<(.+?)>/i', $headers, $matches)) {
-        return trim($matches[1]);
+function queue_email_from_template(
+    PDO $pdo,
+    string $recipient,
+    string $templateName,
+    array $variables,
+    string $purpose = 'notification'
+): bool {
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM email_templates WHERE name = ? AND enabled = 1');
+        $stmt->execute([$templateName]);
+        $template = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$template) {
+            return false;
+        }
+
+        $subject = interpolate_template($template['subject_template'], $variables);
+        $bodyHtml = interpolate_template($template['body_html_template'], $variables);
+        $bodyText = interpolate_template($template['body_text_template'] ?? '', $variables);
+
+        return queue_email($pdo, $recipient, $subject, $bodyHtml, $bodyText, $templateName, $variables, $purpose);
+    } catch (Throwable $e) {
+        return false;
     }
-    return '';
 }
 
-function get_order_by_id(PDO $pdo, int $orderId): ?array {
-    $stmt = $pdo->prepare('SELECT id, public_token, email, total_pence, created_at FROM orders WHERE id = ?');
-    $stmt->execute([$orderId]);
-    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+/**
+ * Interpolate template variables: {{var_name}} -> value
+ */
+function interpolate_template(string $template, array $variables): string {
+    foreach ($variables as $key => $value) {
+        $template = str_replace("{{$key}}", (string)$value, $template);
+    }
+    return $template;
+}
+
+/**
+ * Get all pending emails.
+ */
+function get_pending_emails(PDO $pdo, int $limit = 50): array {
+    try {
+        $stmt = $pdo->prepare(<<<'SQL'
+            SELECT * FROM emails
+            WHERE status = 'pending' AND retry_count < 3
+            ORDER BY created_at ASC
+            LIMIT ?
+        SQL);
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+/**
+ * Send email via configured mailer (PHP mail, SMTP, etc).
+ */
+function send_email_direct(string $recipient, string $subject, string $bodyHtml, string $bodyText = ''): bool {
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: noreply@" . parse_url($_SERVER['HTTP_HOST'] ?? '', PHP_URL_HOST) . "\r\n";
+
+    $body = $bodyText ?: strip_tags($bodyHtml);
+    return (bool)mail($recipient, $subject, $body, $headers);
+}
+
+/**
+ * Mark email as sent.
+ */
+function mark_email_sent(PDO $pdo, int $emailId): bool {
+    try {
+        $stmt = $pdo->prepare('UPDATE emails SET status = ?, sent_at = NOW() WHERE id = ?');
+        return $stmt->execute(['sent', $emailId]);
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Mark email as failed and increment retry count.
+ */
+function mark_email_failed(PDO $pdo, int $emailId, string $error = ''): bool {
+    try {
+        $stmt = $pdo->prepare(<<<'SQL'
+            UPDATE emails
+            SET status = ?, retry_count = retry_count + 1, error_message = ?
+            WHERE id = ?
+        SQL);
+        return $stmt->execute(['failed', $error, $emailId]);
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Get email statistics.
+ */
+function get_email_stats(PDO $pdo): ?array {
+    try {
+        $stmt = $pdo->query(<<<'SQL'
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                   SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
+                   SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
+            FROM emails
+        SQL);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * Get email queue (for admin dashboard).
+ */
+function get_email_queue(PDO $pdo, int $limit = 50): array {
+    try {
+        $stmt = $pdo->prepare(<<<'SQL'
+            SELECT id, recipient_email, subject, status, retry_count, created_at, sent_at
+            FROM emails
+            ORDER BY created_at DESC
+            LIMIT ?
+        SQL);
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+/**
+ * Get all email templates.
+ */
+function get_email_templates(PDO $pdo): array {
+    try {
+        $stmt = $pdo->query('SELECT * FROM email_templates ORDER BY display_name');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+/**
+ * Update email template.
+ */
+function update_email_template(PDO $pdo, int $templateId, array $data): bool {
+    try {
+        $stmt = $pdo->prepare(<<<'SQL'
+            UPDATE email_templates
+            SET subject_template = ?, body_html_template = ?, body_text_template = ?, enabled = ?
+            WHERE id = ?
+        SQL);
+        return $stmt->execute([
+            $data['subject_template'] ?? '',
+            $data['body_html_template'] ?? '',
+            $data['body_text_template'] ?? '',
+            $data['enabled'] ?? 1,
+            $templateId,
+        ]);
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Cron worker: process email queue.
+ */
+function process_email_queue(PDO $pdo): int {
+    $sent = 0;
+    $emails = get_pending_emails($pdo, 100);
+
+    foreach ($emails as $email) {
+        if (send_email_direct($email['recipient_email'], $email['subject'], $email['body_html'], $email['body_text'])) {
+            mark_email_sent($pdo, $email['id']);
+            $sent++;
+        } else {
+            mark_email_failed($pdo, $email['id'], 'Failed to send via mail()');
+        }
+    }
+
+    return $sent;
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($event['title']) ?> — <?= e($siteName) ?></title>
+<title><?= e($event['title']) ?>: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
 <!-- Full-screen hero -->
 <section class="hero">
   <?php if ($heroToken): ?>
-    <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="">
+    <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="<?= e($event['title']) ?> event photography">
   <?php endif; ?>
   <div class="hero-overlay">
     <h1><?= e($event['title']) ?></h1>
@@ -103,7 +103,9 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
     <div class="video-grid">
       <?php foreach ($videos as $video): ?>
         <div class="video-item">
-          <video controls preload="metadata" poster="/media/d/<?= e($video['public_token']) ?>-800.jpg">
+          <video controls preload="metadata" poster="/media/d/<?= e($video['public_token']) ?>-800.jpg"
+                 width="<?= (int)$video['width'] ?>"
+                 height="<?= (int)$video['height'] ?>">
             <source src="/media/v/<?= e($video['public_token']) ?>.mp4" type="video/mp4">
           </video>
         </div>

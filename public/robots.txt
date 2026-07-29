@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /search
+Allow: /api/photos
+Disallow: /admin
+Disallow: /cart
+Disallow: /checkout
+Disallow: /webhook
+
+Sitemap: https://{{ domain }}/sitemap.xml

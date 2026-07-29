@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($siteName) ?></title>
+<?php
+require_once __DIR__ . '/../../lib/seo.php';
+echo generate_meta_tags($GLOBALS['config'], $siteName, 'Professional sports photography gallery and sales platform', $GLOBALS['config']['site']['url'] ?? 'https://example.com');
+?>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<?= generate_organization_schema($GLOBALS['config']) ?? '' ?>
 </head>
 <body>
 <header class="site-header">
@@ -20,7 +24,7 @@
         <a class="event-card" href="/e/<?= e($event['slug']) ?>">
           <div class="event-card-image">
             <?php if ($event['cover_token']): ?>
-              <img src="/media/d/<?= e($event['cover_token']) ?>-800.jpg" alt="" loading="lazy">
+              <img src="/media/d/<?= e($event['cover_token']) ?>-800.jpg" alt="<?= e($event['title']) ?>" loading="lazy">
             <?php endif; ?>
           </div>
           <div class="event-card-body">

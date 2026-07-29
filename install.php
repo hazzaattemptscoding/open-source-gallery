@@ -114,75 +114,161 @@ foreach ($dirs as $dir) {
 
 header_text("Database Configuration");
 
-echo "Provide database credentials. If you don't have a database yet, we'll create one." . NEWLINE . NEWLINE;
+echo "Which database do you want to use?" . NEWLINE;
+echo "1. SQLite (recommended for local development) — single file, no server needed" . NEWLINE;
+echo "2. MySQL/MariaDB (for production) — traditional database server" . NEWLINE . NEWLINE;
 
-$dbHost = ask("Database host", "localhost");
-$dbPort = ask("Database port", "3306");
-$dbName = ask("Database name", "photo_gallery");
-$dbUser = ask("Database username", "gallery");
-$dbPass = ask("Database password (leave blank for no password)", "");
+$dbChoice = ask("Choose database", "1");
 
-// Try to create database if it doesn't exist
+if ($dbChoice === "1" || $dbChoice === "sqlite") {
+    $dbDriver = "sqlite";
+    $dbPath = ask("SQLite database path", "storage/gallery.sqlite");
+    $dbConfig = [
+        'driver' => 'sqlite',
+        'path'   => $dbPath,
+    ];
+} else {
+    $dbDriver = "mysql";
+    echo NEWLINE . "Provide database credentials. If you don't have a database yet, we'll create one." . NEWLINE . NEWLINE;
+
+    $dbHost = ask("Database host", "localhost");
+    $dbPort = ask("Database port", "3306");
+    $dbName = ask("Database name", "photo_gallery");
+    $dbUser = ask("Database username", "gallery");
+    $dbPass = ask("Database password (leave blank for no password)", "");
+
+    $dbConfig = [
+        'driver'  => 'mysql',
+        'host'    => $dbHost,
+        'port'    => (int)$dbPort,
+        'name'    => $dbName,
+        'user'    => $dbUser,
+        'pass'    => $dbPass,
+        'charset' => 'utf8mb4',
+    ];
+}
+
 echo NEWLINE . "Attempting to connect to database..." . NEWLINE;
 
 try {
-    $dsn = "mysql:host=$dbHost;port=$dbPort;charset=utf8mb4";
-    $pdo = new PDO($dsn, $dbUser, $dbPass ?: 'root', [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_TIMEOUT => 5,
-    ]);
-    success("Connected to MySQL server");
+    if ($dbDriver === 'sqlite') {
+        $pdo = new PDO("sqlite:" . $dbConfig['path'], null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
 
-    // Create database if it doesn't exist
-    try {
-        $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        success("Database '$dbName' ready");
-    } catch (PDOException $e) {
-        warning("Could not create database (may already exist): " . $e->getMessage());
-    }
+        // SQLite pragmas
+        $pdo->exec('PRAGMA journal_mode = WAL');
+        $pdo->exec('PRAGMA foreign_keys = ON');
+        $pdo->exec('PRAGMA synchronous = NORMAL');
 
-    // Select database
-    $pdo->exec("USE `$dbName`");
-    success("Selected database: $dbName");
+        success("Connected to SQLite");
+        success("Database file: " . $dbConfig['path']);
 
-    // Check if schema exists
-    $stmt = $pdo->query("SHOW TABLES LIKE 'migrations'");
-    if ($stmt->fetch()) {
-        success("Schema already imported");
-    } else {
-        warning("Schema not yet imported. Will import now...");
+        // Check if schema exists
+        $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='migrations'");
+        $hasSchema = (bool)$stmt->fetch();
 
-        // Import schema
-        $schemaFile = 'migrations/001_initial_schema.sql';
-        if (!file_exists($schemaFile)) {
-            error("Schema file not found: $schemaFile");
-        }
-
-        $schema = file_get_contents($schemaFile);
-
-        // Simple split - good enough for our schema
-        $statements = array_filter(
-            explode(';', $schema),
-            fn($s) => trim($s) && !str_starts_with(trim($s), '--')
-        );
-
-        foreach ($statements as $stmt) {
-            $stmt = trim($stmt);
-            if (!$stmt) continue;
-            try {
-                $pdo->exec($stmt);
-            } catch (PDOException $e) {
-                // Some statements might have issues, continue
-                warning("SQL: " . substr($e->getMessage(), 0, 50));
+        if ($hasSchema) {
+            success("Schema already imported");
+        } else {
+            warning("Schema not yet imported. Will import now...");
+            $schemaFile = 'migrations/001_initial_schema.sqlite.sql';
+            if (!file_exists($schemaFile)) {
+                error("Schema file not found: $schemaFile");
             }
+
+            $schema = file_get_contents($schemaFile);
+            $statements = array_filter(
+                explode(';', $schema),
+                fn($s) => trim($s) && !str_starts_with(trim($s), '--')
+            );
+
+            foreach ($statements as $stmt) {
+                $stmt = trim($stmt);
+                if (!$stmt) continue;
+                try {
+                    $pdo->exec($stmt);
+                } catch (PDOException $e) {
+                    warning("SQL: " . substr($e->getMessage(), 0, 50));
+                }
+            }
+
+            success("Schema imported");
+        }
+    } else {
+        // MySQL setup
+        $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};charset=utf8mb4";
+        $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['pass'] ?: 'root', [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 5,
+        ]);
+        success("Connected to MySQL server");
+
+        // Create database if it doesn't exist
+        try {
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbConfig['name']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            success("Database '{$dbConfig['name']}' ready");
+        } catch (PDOException $e) {
+            warning("Could not create database (may already exist): " . $e->getMessage());
         }
 
-        success("Schema imported");
+        // Select database
+        $pdo->exec("USE `{$dbConfig['name']}`");
+        success("Selected database: {$dbConfig['name']}");
+
+        // Check if schema exists
+        $stmt = $pdo->query("SHOW TABLES LIKE 'migrations'");
+        $hasSchema = (bool)$stmt->fetch();
+
+        if ($hasSchema) {
+            success("Schema already imported");
+        } else {
+            warning("Schema not yet imported. Will import now...");
+            $schemaFile = 'migrations/001_initial_schema.sql';
+            if (!file_exists($schemaFile)) {
+                error("Schema file not found: $schemaFile");
+            }
+
+            $schema = file_get_contents($schemaFile);
+            $statements = array_filter(
+                explode(';', $schema),
+                fn($s) => trim($s) && !str_starts_with(trim($s), '--')
+            );
+
+            foreach ($statements as $stmt) {
+                $stmt = trim($stmt);
+                if (!$stmt) continue;
+                try {
+                    $pdo->exec($stmt);
+                } catch (PDOException $e) {
+                    warning("SQL: " . substr($e->getMessage(), 0, 50));
+                }
+            }
+
+            success("Schema imported");
+        }
     }
 
 } catch (PDOException $e) {
-    error("Database connection failed: " . $e->getMessage() . NEWLINE .
-          "Check credentials and try again.");
+    warning("Database connection failed: " . $e->getMessage());
+    echo NEWLINE;
+    echo color("Troubleshooting:", 'bold') . NEWLINE;
+    if ($dbDriver === 'sqlite') {
+        echo "1. Make sure the storage/ directory is writable: chmod 755 storage/" . NEWLINE;
+    } else {
+        echo "1. Make sure MySQL/MariaDB is running" . NEWLINE;
+        echo "   On Mac: brew services start mysql" . NEWLINE;
+        echo "   On Linux: sudo systemctl start mysql" . NEWLINE;
+        echo NEWLINE;
+        echo "2. Verify your credentials are correct" . NEWLINE;
+    }
+    echo NEWLINE;
+    echo "3. Or try Docker instead (easiest):" . NEWLINE;
+    echo "   docker-compose up" . NEWLINE;
+    echo NEWLINE;
+    error("Installation requires a working database connection.");
 }
 
 // ============================================================================
@@ -207,14 +293,7 @@ $hmacKey = bin2hex(random_bytes(32));
 $cronSecret = bin2hex(random_bytes(32));
 
 $config = [
-    'db' => [
-        'host' => $dbHost,
-        'port' => (int)$dbPort,
-        'name' => $dbName,
-        'user' => $dbUser,
-        'pass' => $dbPass,
-        'charset' => 'utf8mb4',
-    ],
+    'db' => $dbConfig,
     'site' => [
         'name' => $siteName,
         'base_url' => $baseUrl,

@@ -9,6 +9,14 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../app/bootstrap.php';
+
+// If bootstrap detected a setup error, show diagnostic page
+if ($bootstrapError) {
+    http_response_code(500);
+    require __DIR__ . '/../app/views/errors/setup_diagnostic.php';
+    exit;
+}
+
 require __DIR__ . '/../app/lib/session.php';
 require __DIR__ . '/../app/lib/view.php';
 require __DIR__ . '/../app/lib/seeder.php';
@@ -32,6 +40,13 @@ if ($path === '') {
     $path = '/';
 }
 
+// When in remote admin mode, refuse all /admin routes on the public server
+if (($config['admin_mode'] ?? 'local') === 'remote' && strpos($path, '/admin') === 0) {
+    http_response_code(404);
+    echo '404 Not Found';
+    exit;
+}
+
 // URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
 // cron is URL-based rather than CLI. cron/run.php lives outside the docroot
 // and has no direct HTTP path, so this is the only way to reach it over the web.
@@ -53,6 +68,16 @@ switch ($path) {
     case '/':
         require __DIR__ . '/../app/controllers/public/home.php';
         public_home_controller($pdo, $config);
+        break;
+
+    case '/search':
+        require __DIR__ . '/../app/controllers/public/search.php';
+        public_search_controller($pdo, $config);
+        break;
+
+    case '/api/search':
+        require __DIR__ . '/../app/controllers/public/search.php';
+        public_search_api_controller($pdo, $config);
         break;
 
     case '/cart':
@@ -101,8 +126,8 @@ switch ($path) {
         break;
 
     case '/admin/setup':
-        require __DIR__ . '/../app/controllers/admin/setup.php';
-        admin_setup_controller($pdo, $config);
+        require __DIR__ . '/../app/controllers/admin/setup_wizard.php';
+        admin_setup_wizard_controller($pdo, $config);
         break;
 
     case '/admin/login':
@@ -165,6 +190,41 @@ switch ($path) {
         admin_health_check_controller($pdo, $config);
         break;
 
+    case '/admin/analytics':
+        require __DIR__ . '/../app/controllers/admin/analytics.php';
+        admin_analytics_controller($pdo, $config);
+        break;
+
+    case '/admin/print_orders':
+        require __DIR__ . '/../app/controllers/admin/print_orders.php';
+        admin_print_orders_controller($pdo, $config);
+        break;
+
+    case '/admin/admins':
+        require __DIR__ . '/../app/controllers/admin/admins.php';
+        admin_admins_controller($pdo, $config);
+        break;
+
+    case '/admin/emails':
+        require __DIR__ . '/../app/controllers/admin/emails.php';
+        admin_emails_controller($pdo, $config);
+        break;
+
+    case '/admin/bulk':
+        require __DIR__ . '/../app/controllers/admin/bulk.php';
+        admin_bulk_controller($pdo, $config);
+        break;
+
+    case '/admin/watermarks':
+        require __DIR__ . '/../app/controllers/admin/watermarks.php';
+        admin_watermarks_controller($pdo, $config);
+        break;
+
+    case '/admin/reporting':
+        require __DIR__ . '/../app/controllers/admin/reporting.php';
+        admin_reporting_controller($pdo, $config);
+        break;
+
     case '/admin/export/orders':
         require __DIR__ . '/../app/controllers/admin/export.php';
         admin_export_orders_controller($pdo, $config);
@@ -195,6 +255,41 @@ switch ($path) {
         admin_migrations_controller($pdo, $config);
         break;
 
+    case '/admin/api/health':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_health_controller($pdo, $config);
+        break;
+
+    case '/admin/api/jobs':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_jobs_controller($pdo, $config);
+        break;
+
+    case '/admin/api/cache':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_cache_controller($pdo, $config);
+        break;
+
+    case '/admin/api/perf':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_perf_controller($pdo, $config);
+        break;
+
+    case '/admin/api/batch':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_batch_controller($pdo, $config);
+        break;
+
+    case '/admin/api/fulfillment':
+        require __DIR__ . '/../app/controllers/admin/api_fulfillment.php';
+        admin_api_fulfillment_controller($pdo, $config);
+        break;
+
+    case '/sitemap.xml':
+        require __DIR__ . '/../app/controllers/public/sitemap.php';
+        public_sitemap_controller($pdo, $config);
+        break;
+
     default:
         if (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';
@@ -220,8 +315,14 @@ switch ($path) {
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);
+        } elseif (preg_match('#^/api/v1/photos/(\d+)$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/api/photos.php';
+            api_v1_photo_controller($pdo, (int)$m[1]);
+        } elseif ($path === '/api/v1/photos') {
+            require __DIR__ . '/../app/controllers/api/photos.php';
+            api_v1_photos_controller($pdo);
         } else {
             http_response_code(404);
-            echo '404 Not Found';
+            render(__DIR__ . '/../app/views/errors/404.php', []);
         }
 }

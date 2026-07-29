@@ -3,222 +3,451 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings — Admin</title>
+<title>Settings: Admin</title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
-.settings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+body { background: var(--bg-alt); }
+
+.settings-header {
+  background: var(--bg);
+  padding: 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
 }
-.form-group {
-    margin-bottom: 1.5rem;
+
+.settings-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text);
 }
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    font-size: 0.95rem;
+
+.settings-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
-.form-group input,
-.form-group textarea {
+
+.settings-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 2rem;
+  padding: 0 2rem 2rem;
+}
+
+.settings-nav {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.settings-nav a {
+  display: block;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  border-left: 3px solid transparent;
+  margin-bottom: 0.25rem;
+  transition: all 200ms var(--ease-out);
+  font-size: 0.95rem;
+}
+
+.settings-nav a:hover {
+  color: var(--text);
+  background: var(--bg-alt);
+}
+
+.settings-nav a.active {
+  color: var(--text);
+  font-weight: 600;
+  border-left-color: var(--text);
+  background: var(--bg);
+}
+
+.settings-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: var(--bg);
+  padding: 1rem;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.mode-toggle button {
+  padding: 0.5rem 1rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 160ms var(--ease-out);
+}
+
+.mode-toggle button:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.mode-toggle button.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.mode-toggle > span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+.settings-section {
+  background: var(--bg);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.settings-section-title {
+  padding: 1.5rem;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-group {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 200ms ease;
+}
+
+.settings-group:last-child {
+  border-bottom: none;
+}
+
+.settings-group:hover {
+  background: var(--bg-alt);
+}
+
+.setting-field {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.setting-label h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.setting-label p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.setting-input input,
+.setting-input select,
+.setting-input textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.setting-input input:focus,
+.setting-input select:focus,
+.setting-input textarea:focus {
+  outline: none;
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.05);
+}
+
+.setting-input textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: 'Geist Mono', monospace;
+  line-height: 1.5;
+}
+
+.setting-input input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.setting-input label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.setting-help {
+  background: rgba(17, 17, 17, 0.02);
+  border-left: 3px solid var(--text-muted);
+  padding: 0.75rem 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.setting-help strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.advanced-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(17, 17, 17, 0.06);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 2px;
+  margin-left: 0.5rem;
+}
+
+.settings-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-alt);
+  text-align: right;
+}
+
+button.submit {
+  padding: 0.75rem 1.5rem;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 160ms var(--ease-out);
+}
+
+button.submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.1);
+}
+
+button.submit:active {
+  transform: scale(0.98);
+}
+
+.success-msg {
+  background: rgba(52, 101, 56, 0.08);
+  color: var(--success);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(52, 101, 56, 0.2);
+  border-left: 3px solid var(--success);
+  font-weight: 500;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.cta-box {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.cta-box h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cta-box p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .settings-wrapper {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .settings-nav {
     width: 100%;
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+
+  .settings-nav a {
+    flex: 1;
     padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 0.95rem;
-}
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--text-primary);
-}
-.form-group .help-text {
+    text-align: center;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: 0;
+    white-space: nowrap;
     font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-top: 0.5rem;
-}
-.alert {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 4px;
-}
-.alert-error {
-    background-color: #fee;
-    color: #c33;
-    border: 1px solid #fcc;
-}
-.alert-success {
-    background-color: #efe;
-    color: #3c3;
-    border: 1px solid #cfc;
-}
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border);
-}
-button[type="submit"] {
-    background-color: #1a1a1a;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    font-size: 0.95rem;
-}
-button[type="submit"]:hover {
-    background-color: #333;
+  }
+
+  .settings-nav a.active {
+    border-left: none;
+    border-bottom-color: var(--text);
+  }
+
+  .setting-field {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .mode-toggle {
+    flex-wrap: wrap;
+  }
+
+  .mode-toggle > span {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.75rem;
+  }
 }
 </style>
 </head>
 <body>
-
 <header class="site-header">
   <a href="/admin" class="site-title">Settings</a>
-  <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Logout</button>
-  </form>
 </header>
 
-<main class="dashboard">
-  <h1>Site Settings</h1>
+<div class="settings-header">
+  <h1>Gallery Settings</h1>
+  <p>Customize your gallery, payment, email, and advanced configurations.</p>
+</div>
 
-  <?php if (!empty($errors)): ?>
-    <div class="alert alert-error">
-      <?php foreach ($errors as $error): ?>
-        <div>• <?= e($error) ?></div>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
+<div class="settings-wrapper">
+  <nav class="settings-nav">
+    <?php foreach ($categories as $cat): ?>
+      <a href="?category=<?= $cat ?>&mode=<?= $mode ?>" class="<?= $category === $cat ? 'active' : '' ?>">
+        <?= e(get_category_label($cat)) ?>
+      </a>
+    <?php endforeach; ?>
+  </nav>
 
-  <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= e($success) ?></div>
-  <?php endif; ?>
+  <div class="settings-main">
+    <?php if ($success): ?>
+      <div class="success-msg">✓ Settings updated successfully</div>
+    <?php endif; ?>
 
-  <form method="post" style="max-width: 1200px;">
-    <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
-
-    <!-- Site Settings -->
-    <div class="panel">
-      <h2 class="section-title">Site Information</h2>
-
-      <div class="form-group">
-        <label for="site_name">Gallery Name</label>
-        <input type="text" id="site_name" name="site_name" value="<?= e($settings['site_name'] ?? $defaultSiteName) ?>" required>
-        <div class="help-text">Shown in page titles, emails, and header</div>
-      </div>
-
-      <div class="form-group">
-        <label for="support_email">Support Email</label>
-        <input type="email" id="support_email" name="support_email" value="<?= e($settings['support_email'] ?? '') ?>">
-        <div class="help-text">Displayed in order receipts and refund emails</div>
-      </div>
-
-      <div class="form-group">
-        <label for="currency">Currency</label>
-        <input type="text" id="currency" name="currency" value="<?= e($settings['currency'] ?? $defaultCurrency) ?>" maxlength="3" placeholder="GBP" required>
-        <div class="help-text">ISO 4217 code (GBP, USD, EUR, etc.). All prices display in this currency</div>
-      </div>
+    <div class="mode-toggle">
+      <button class="<?= $mode === 'basic' ? 'active' : '' ?>" onclick="location.href='?category=<?= $category ?>&mode=basic'">
+        Basic Settings
+      </button>
+      <button class="<?= $mode === 'advanced' ? 'active' : '' ?>" onclick="location.href='?category=<?= $category ?>&mode=advanced'">
+        Advanced Settings
+      </button>
+      <?php if ($mode === 'advanced'): ?>
+        <span>⚠ Advanced settings may affect performance or security. Change carefully.</span>
+      <?php endif; ?>
     </div>
 
-    <!-- Stripe Settings -->
-    <div class="panel">
-      <h2 class="section-title">Stripe Payment Keys</h2>
-
-      <div class="form-group">
-        <label for="stripe_publishable_key">Publishable Key</label>
-        <input type="text" id="stripe_publishable_key" name="stripe_publishable_key" value="<?= e($settings['stripe_publishable_key'] ?? '') ?>" placeholder="pk_test_...">
-        <div class="help-text">From <a href="https://dashboard.stripe.com/test/apikeys" target="_blank">Stripe Dashboard</a> (test or live)</div>
-      </div>
-
-      <div class="form-group">
-        <label for="stripe_secret_key">Secret Key</label>
-        <input type="text" id="stripe_secret_key" name="stripe_secret_key" value="<?= e($settings['stripe_secret_key'] ?? '') ?>" placeholder="sk_test_...">
-        <div class="help-text">Keep this secret — never share it. Used for payment processing</div>
-      </div>
-
-      <div class="form-group">
-        <label for="stripe_webhook_secret">Webhook Secret</label>
-        <input type="text" id="stripe_webhook_secret" name="stripe_webhook_secret" value="<?= e($settings['stripe_webhook_secret'] ?? '') ?>" placeholder="whsec_...">
-        <div class="help-text">From Stripe Dashboard → Webhooks (for order confirmation and refunds)</div>
-      </div>
-    </div>
-
-    <!-- Email Settings -->
-    <div class="panel">
-      <h2 class="section-title">Email Configuration</h2>
-
-      <p style="margin-bottom: 1rem; color: var(--text-muted);">
-        Leave SMTP host blank to use your server's <code>mail()</code> function (most shared hosting).
-        Or configure SMTP for guaranteed delivery. See <a href="/docs/EMAIL.md">docs/EMAIL.md</a> for provider details.
-      </p>
-
-      <div class="form-group">
-        <label for="smtp_from_email">From Email Address</label>
-        <input type="email" id="smtp_from_email" name="smtp_from_email" value="<?= e($settings['smtp_from_email'] ?? '') ?>" placeholder="noreply@yourdomain.com">
-        <div class="help-text">Sender email (use your domain for better deliverability)</div>
-      </div>
-
-      <div class="form-group">
-        <label for="smtp_from_name">From Name</label>
-        <input type="text" id="smtp_from_name" name="smtp_from_name" value="<?= e($settings['smtp_from_name'] ?? '') ?>" placeholder="Your Gallery Name">
-        <div class="help-text">Name shown in customer's email client</div>
-      </div>
-
-      <div style="margin-bottom: 2rem; padding: 1rem; background-color: #f5f5f5; border-radius: 4px;">
-        <strong style="display: block; margin-bottom: 1rem;">SMTP Server (optional)</strong>
-
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="smtp_host">SMTP Host</label>
-          <input type="text" id="smtp_host" name="smtp_host" value="<?= e($settings['smtp_host'] ?? '') ?>" placeholder="smtp.gmail.com">
-          <div class="help-text">e.g., smtp.gmail.com, smtp.sendgrid.net. Leave blank to use mail()</div>
+    <form method="post">
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <h3><?= e(get_category_label($category)) ?></h3>
         </div>
 
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="smtp_port">SMTP Port</label>
-          <input type="number" id="smtp_port" name="smtp_port" value="<?= e($settings['smtp_port'] ?? '587') ?>" min="1" max="65535">
-          <div class="help-text">587 (STARTTLS) or 465 (SSL/TLS)</div>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="smtp_user">SMTP Username</label>
-          <input type="text" id="smtp_user" name="smtp_user" value="<?= e($settings['smtp_user'] ?? '') ?>" placeholder="your-email@gmail.com">
-          <div class="help-text">For Gmail: your email. For others: check provider docs</div>
-        </div>
-
-        <div class="form-group">
-          <label for="smtp_pass">SMTP Password</label>
-          <input type="password" id="smtp_pass" name="smtp_pass" value="<?= e($settings['smtp_pass'] ?? '') ?>" placeholder="••••••••">
-          <div class="help-text">
-            For Gmail: <a href="https://myaccount.google.com/security" target="_blank">create an App Password</a>, not your account password.
-            Stored encrypted in database.
+        <?php if (empty($displaySettings)): ?>
+          <div class="empty-state">
+            No <?= $mode === 'advanced' ? 'advanced' : 'basic' ?> settings available in this category.
           </div>
-        </div>
+        <?php else: ?>
+          <?php foreach ($displaySettings as $setting): ?>
+            <div class="settings-group">
+              <div class="setting-field">
+                <div class="setting-label">
+                  <h4>
+                    <?= e($setting['label']) ?>
+                    <?php if ($setting['is_advanced']): ?>
+                      <span class="advanced-badge">Advanced</span>
+                    <?php endif; ?>
+                  </h4>
+                  <?php if ($setting['description']): ?>
+                    <p><?= e($setting['description']) ?></p>
+                  <?php endif; ?>
+                </div>
+
+                <div class="setting-input">
+                  <?php if ($setting['type'] === 'boolean'): ?>
+                    <label>
+                      <input type="checkbox" name="setting_<?= e($setting['key_name']) ?>" value="1" <?= $setting['value'] === '1' ? 'checked' : '' ?>>
+                      Enable
+                    </label>
+                  <?php elseif ($setting['type'] === 'text'): ?>
+                    <textarea name="setting_<?= e($setting['key_name']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>"><?= e($setting['value']) ?></textarea>
+                  <?php else: ?>
+                    <input type="<?= $setting['type'] === 'email' ? 'email' : 'text' ?>" name="setting_<?= e($setting['key_name']) ?>" value="<?= e($setting['value']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>" <?= $setting['required'] ? 'required' : '' ?>>
+                  <?php endif; ?>
+
+                  <?php if ($setting['type'] === 'integer'): ?>
+                    <div class="setting-help">
+                      <strong>Format:</strong> Enter a number
+                    </div>
+                  <?php elseif ($setting['type'] === 'email'): ?>
+                    <div class="setting-help">
+                      <strong>Format:</strong> Valid email address (name@example.com)
+                    </div>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+
+          <div class="settings-footer">
+            <button type="submit" class="submit">Save Changes</button>
+          </div>
+        <?php endif; ?>
       </div>
-    </div>
+    </form>
 
-    <div style="margin-top: 2rem;">
-      <button type="submit">Save Settings</button>
-    </div>
-  </form>
-
-  <div style="margin-top: 3rem; padding: 1.5rem; background-color: #f9f9f9; border-radius: 4px;">
-    <h3 style="margin-top: 0;">Testing Email Configuration</h3>
-    <ol style="margin-bottom: 0;">
-      <li>Save settings above</li>
-      <li>Create a test event and upload a test photo</li>
-      <li>Complete a test order using Stripe test card <code>4242 4242 4242 4242</code></li>
-      <li>Check your email inbox for the receipt</li>
-      <li>If not received, check spam folder, then verify config with <code>php verify-setup.php</code></li>
-    </ol>
+    <?php if ($mode === 'basic' && !empty(array_filter($allSettings, fn($s) => $s['is_advanced']))): ?>
+      <div class="cta-box">
+        <h3>Need more options?</h3>
+        <p>Switch to <strong>Advanced Settings</strong> above to access additional configuration options for power users.</p>
+      </div>
+    <?php endif; ?>
   </div>
-
-</main>
+</div>
 
 </body>
 </html>

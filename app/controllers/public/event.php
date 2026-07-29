@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cart.php';
+require_once __DIR__ . '/../../lib/cache_headers.php';
 
 /**
  * Event page, matching both /e/{event-slug} (full-event grid across all
@@ -34,6 +35,8 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
         return;
     }
     $eventId = (int)$event['id'];
+
+    set_cache_headers('short');
 
     $stmt = $pdo->prepare('SELECT id, slug, name, sort_order FROM sessions WHERE event_id = ? ORDER BY sort_order ASC');
     $stmt->execute([$eventId]);

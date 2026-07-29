@@ -55,6 +55,8 @@ function run_cron_drain(PDO $pdo): void {
                 $success = process_zip_build_job($pdo, $payload);
             } elseif ($type === 'cleanup') {
                 $success = process_cleanup_job($pdo, $payload);
+            } elseif ($type === 'view_count') {
+                $success = process_view_count_job($pdo, $payload);
             }
         } catch (Throwable $e) {
             $success = false;
@@ -103,20 +105,78 @@ function process_email_job(PDO $pdo, array $payload): bool {
 
 /**
  * Pre-builds ZIP files of purchased photos and caches them for quick download.
- * Currently stubbed; in production would build ZIP in /storage/zips/{orderId}.zip
+ * Reduces latency on high-traffic download endpoints by pre-building during
+ * cron instead of blocking the download request.
  */
 function process_zip_build_job(PDO $pdo, array $payload): bool {
+    require_once __DIR__ . '/orders.php';
+
     $orderId = (int)($payload['order_id'] ?? 0);
 
     if ($orderId <= 0) {
         return false;
     }
 
-    // For now, ZIP building is stubbed. In a production setup with large
-    // order counts, this would pre-build ZIPs for quick download delivery.
-    // The download endpoint currently builds ZIPs on-demand.
+    $items = get_order_items($pdo, $orderId);
+    if (empty($items)) {
+        return false;
+    }
 
-    return true;
+    $files = [];
+    foreach ($items as $item) {
+        $photoId = (int)($item['photo_id'] ?? 0);
+        if (!$photoId) {
+            continue;
+        }
+
+        $stmt = $pdo->prepare('SELECT event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?');
+        $stmt->execute([$photoId]);
+        $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($photo) {
+            $eventId = (int)$photo['event_id'];
+            $token = (string)$photo['public_token'];
+            $ext = (string)($photo['file_extension'] ?? 'jpg');
+            $filePath = __DIR__ . "/../storage/hires/{$eventId}/{$token}.{$ext}";
+
+            if (file_exists($filePath)) {
+                $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
+                $files[] = [
+                    'path' => $filePath,
+                    'name' => $filename,
+                ];
+            }
+        }
+    }
+
+    if (empty($files)) {
+        return false;
+    }
+
+    $zipDir = __DIR__ . '/../storage/zips';
+    if (!is_dir($zipDir)) {
+        @mkdir($zipDir, 0755, true);
+    }
+
+    $zipPath = "{$zipDir}/{$orderId}.zip";
+
+    // Clean up any stale ZIP (in case rebuild is needed)
+    if (file_exists($zipPath)) {
+        unlink($zipPath);
+    }
+
+    $zip = new ZipArchive();
+    if (!$zip->open($zipPath, ZipArchive::CREATE)) {
+        return false;
+    }
+
+    foreach ($files as $file) {
+        $zip->addFile($file['path'], $file['name']);
+    }
+
+    $zip->close();
+
+    return file_exists($zipPath);
 }
 
 /**
@@ -142,6 +202,35 @@ function process_cleanup_job(PDO $pdo, array $payload): bool {
     if (file_exists($largePath)) {
         @unlink($largePath);
     }
+
+    return true;
+}
+
+/**
+ * Async view count increment. API endpoint queues these jobs so the response
+ * is fast; cron processes the queued increments asynchronously. Batches view
+ * counts by date to avoid excessive database traffic.
+ */
+function process_view_count_job(PDO $pdo, array $payload): bool {
+    $photoId = (int)($payload['photo_id'] ?? 0);
+    $eventId = (int)($payload['event_id'] ?? 0);
+
+    if ($photoId <= 0 || $eventId <= 0) {
+        return false;
+    }
+
+    // Increment photo view count
+    $pdo->prepare('UPDATE photos SET view_count = view_count + 1 WHERE id = ?')
+        ->execute([$photoId]);
+
+    // Increment daily stats for analytics
+    $today = date('Y-m-d');
+    $stmt = $pdo->prepare('
+        INSERT INTO stats_daily (stat_date, event_id, photo_views)
+        VALUES (?, ?, 1)
+        ON DUPLICATE KEY UPDATE photo_views = photo_views + 1
+    ');
+    $stmt->execute([$today, $eventId]);
 
     return true;
 }

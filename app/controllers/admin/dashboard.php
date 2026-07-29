@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/csrf.php';
+require_once __DIR__ . '/../../lib/setup.php';
 
 function admin_dashboard_controller(PDO $pdo, array $config): void
 {
@@ -18,10 +19,15 @@ function admin_dashboard_controller(PDO $pdo, array $config): void
     $stmt->execute(['id' => current_admin_id()]);
     $admin = $stmt->fetch();
 
+    $setupComplete = is_setup_complete($pdo);
+    $setupChecklist = !$setupComplete ? get_setup_checklist($pdo) : [];
+
     render(__DIR__ . '/../../views/admin/dashboard.php', [
         'adminEmail' => $admin['email'],
         'totpEnabled' => (bool) $admin['totp_enabled'],
         'siteName' => $config['site']['name'],
         'csrfToken' => csrf_token(),
+        'setupComplete' => $setupComplete,
+        'setupChecklist' => $setupChecklist,
     ]);
 }

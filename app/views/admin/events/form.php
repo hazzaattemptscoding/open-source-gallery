@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($isNew ? 'Create event' : 'Edit event') ?> — <?= e($siteName) ?></title>
+<title><?= e($isNew ? 'Create event' : 'Edit event') ?>: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
 </head>
@@ -21,7 +21,7 @@
 
     <label for="title">Event title</label>
     <input type="text" id="title" name="title" value="<?= e($event['title'] ?? '') ?>" required maxlength="190">
-    <p class="hint">Shown to customers. Example: Club100 Rye — Round 6</p>
+    <p class="hint">Shown to customers. Example: Club100 Rye - Round 6</p>
 
     <label for="venue">Venue</label>
     <input type="text" id="venue" name="venue" value="<?= e($event['venue'] ?? '') ?>" maxlength="190">

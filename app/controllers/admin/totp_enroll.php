@@ -11,7 +11,7 @@ function admin_totp_enroll_controller(PDO $pdo, array $config): void
 {
     require_admin();
 
-    $stmt = $pdo->prepare('SELECT * FROM admin_users WHERE id = :id');
+    $stmt = $pdo->prepare('SELECT id, totp_enabled FROM admin_users WHERE id = :id');
     $stmt->execute(['id' => current_admin_id()]);
     $admin = $stmt->fetch();
 

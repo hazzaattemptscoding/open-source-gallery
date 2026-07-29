@@ -198,6 +198,105 @@ This checks everything and tells you what needs fixing.
 
 ---
 
+## Advanced: Remote Admin Mode (Optional)
+
+**Default behavior:** Admin panel runs on the same server as your public gallery. Everything is self-contained, simplest setup.
+
+**Remote admin mode:** Admin panel runs on a **separate server** (your home machine, laptop, staging server, etc.) and connects to your production database and file storage over the network. Useful if you want:
+- Admin panel isolated from the public-facing server for security
+- Admin panel on a local machine while the gallery runs on shared hosting
+- Separate backup/development admin server
+
+### When You DON'T Need This
+
+**Use local mode (default) if:**
+- You want the simplest possible setup ✓ (recommended for most)
+- Your hosting supports local-only access (all shared hosting does) ✓
+- You want everything on one server ✓
+
+### Enabling Remote Admin Mode
+
+**Prerequisites:** Your hosting provider must support:
+1. **Remote MySQL connections** — check if your host allows connecting to MySQL from an external IP. Most shared hosts do NOT allow this by default. Contact support: "Can we enable remote MySQL connections restricted to IP X.X.X.X?"
+2. **SFTP access** — virtually all hosts support this (same credentials as uploading files)
+
+**To enable:**
+
+1. **In `config/config.php` on the production server:**
+   ```php
+   'admin_mode' => 'remote',  // Changed from 'local'
+   ```
+
+2. **On your separate admin machine, clone the repo and create `config/config.php`:**
+   ```php
+   return [
+       // ... regular config ...
+       'admin_mode' => 'remote',
+       'admin_remote' => [
+           // Production database (ask your host for these)
+           'db_host'    => '192.0.2.1',      // Production server's IP/hostname
+           'db_port'    => 3306,
+           'db_name'    => 'photo_gallery',
+           'db_user'    => 'gallery_remote', // Usually restricted user
+           'db_pass'    => 'your_password',
+
+           // SFTP to access uploaded files
+           'sftp_host'      => '192.0.2.1',
+           'sftp_port'      => 22,
+           'sftp_user'      => 'your_sftp_user',
+           'sftp_pass'      => 'your_sftp_pass',
+           'sftp_key_file'  => '',  // Or path to SSH private key instead of password
+           'storage_path'   => '/home/username/storage',  // Full path on production server
+       ],
+   ];
+   ```
+
+3. **On the admin machine, run the admin entry point:**
+   ```bash
+   # Local development:
+   php -S localhost:8001 -t admin/
+
+   # Or deploy admin/ to a separate web server
+   # Visit: http://localhost:8001/
+   ```
+
+4. **On the production server:** The public-facing site continues as normal, but returns 404 for `/admin/*` routes.
+
+### Requirements & Limitations
+
+- **Remote MySQL must be enabled on your host** — most shared hosts require you to enable this and often restrict by IP address for security
+- **SFTP access required** — for uploading and managing files
+- **Network latency** — database queries and file operations will be slightly slower (milliseconds)
+- **Admin panel is the only thing remote** — public site still runs where you deploy it
+- **No special dependencies** — uses phpseclib (pure PHP, no system extensions needed)
+
+### Checking If Your Host Supports It
+
+**Before attempting remote mode:**
+
+```sql
+-- Connect to your production database from your admin machine:
+mysql -h 192.0.2.1 -u gallery_remote -p photo_gallery
+
+-- If this works, you're good. If it fails with "Access denied", your host
+-- doesn't allow remote connections. Contact support to enable it.
+```
+
+**For SFTP, test with any SFTP client:**
+```bash
+sftp your_sftp_user@192.0.2.1
+# If you can log in, SFTP is configured correctly
+```
+
+### IONOS-Specific Notes
+
+**IONOS shared hosting:**
+- ✓ Supports SFTP (standard)
+- ? Remote MySQL connections: Check with support. Some plans allow it (requires enabling), some don't. **Not all IONOS plans support remote MySQL.** Ask specifically: "Does this plan allow remote MySQL connections? Can we restrict by IP?"
+- If not supported, use local mode (default)
+
+---
+
 ## After Installation
 
 ### First: Configure Stripe & Email (if not done during install)

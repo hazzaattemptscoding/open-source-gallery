@@ -1,0 +1,87 @@
+<?php
+/**
+ * Admin: Bulk photo operations.
+ * Tag, price, delete, organize photos in bulk.
+ */
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../../lib/view.php';
+require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/permissions.php';
+require_once __DIR__ . '/../../lib/bulk.php';
+require_once __DIR__ . '/../../lib/audit.php';
+
+function admin_bulk_controller(PDO $pdo, array $config): void {
+    require_admin();
+    if (!can_upload($pdo)) {
+        http_response_code(403);
+        echo '403 Forbidden';
+        exit;
+    }
+
+    $action = $_GET['action'] ?? 'select';
+    $errors = [];
+    $success = $_GET['success'] ?? false;
+    $limits = get_bulk_limits($pdo);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $action = $_POST['action'] ?? 'select';
+        $photoIds = array_map('intval', explode(',', $_POST['photo_ids'] ?? ''));
+        $photoIds = array_filter($photoIds);
+
+        if (count($photoIds) > $limits['max_per_operation']) {
+            $errors[] = 'Too many photos selected';
+        } else {
+            switch ($action) {
+                case 'tag':
+                    if ($limits['can_bulk_tag']) {
+                        $updated = bulk_tag_photos($pdo, $photoIds, [
+                            'kart' => $_POST['kart'] ?? '',
+                            'driver' => $_POST['driver'] ?? '',
+                            'class' => $_POST['class'] ?? '',
+                        ]);
+                        audit_log($pdo, 'bulk_tag', "Bulk tagged $updated photos");
+                        header('Location: /admin/bulk?action=select&success=1');
+                        exit;
+                    }
+                    break;
+
+                case 'price':
+                    if ($limits['can_bulk_price']) {
+                        $pricePence = (int)($_POST['price_pence'] ?? 0);
+                        $updated = bulk_update_prices($pdo, $photoIds, $pricePence);
+                        audit_log($pdo, 'bulk_price', "Bulk updated prices for $updated photos");
+                        header('Location: /admin/bulk?action=select&success=1');
+                        exit;
+                    }
+                    break;
+
+                case 'status':
+                    $status = $_POST['status'] ?? 'draft';
+                    $updated = bulk_change_status($pdo, $photoIds, $status);
+                    audit_log($pdo, 'bulk_status', "Changed status to $status for $updated photos");
+                    header('Location: /admin/bulk?action=select&success=1');
+                    exit;
+                    break;
+
+                case 'delete':
+                    if ($limits['can_delete']) {
+                        $deleted = bulk_delete_photos($pdo, $photoIds);
+                        audit_log($pdo, 'bulk_delete', "Bulk deleted $deleted photos");
+                        header('Location: /admin/bulk?action=select&success=1');
+                        exit;
+                    }
+                    break;
+            }
+        }
+    }
+
+    render(__DIR__ . '/../../views/admin/bulk.php', [
+        'siteName' => $config['site']['name'] ?? 'Gallery',
+        'action' => $action,
+        'limits' => $limits,
+        'errors' => $errors,
+        'success' => $success,
+    ]);
+}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Audit Log — Admin</title>
+<title>Audit Log: Admin</title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 .filter-form {
@@ -144,7 +144,7 @@
 <header class="site-header">
   <a href="/admin" class="site-title">Audit Log</a>
   <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Logout</button>
+    <button type="submit">Log out</button>
   </form>
 </header>
 

@@ -15,15 +15,26 @@
  */
 
 return [
-    // MySQL/MariaDB connection. Matches whatever the host's control panel gives you.
+    // Database: choose one option below.
+
+    // Option 1: SQLite (recommended for local development - no server needed)
+    // Single file database, works immediately. Perfect for previewing locally.
     'db' => [
-        'host'    => '127.0.0.1',
-        'port'    => 3306,
-        'name'    => 'gallery',
-        'user'    => 'gallery',
-        'pass'    => '',
-        'charset' => 'utf8mb4',
+        'driver' => 'sqlite',
+        'path'   => __DIR__ . '/../storage/gallery.sqlite',
     ],
+
+    // Option 2: MySQL/MariaDB (for production)
+    // Uncomment below and comment out SQLite above to use MySQL instead.
+    // 'db' => [
+    //     'driver'  => 'mysql',
+    //     'host'    => '127.0.0.1',
+    //     'port'    => 3306,
+    //     'name'    => 'gallery',
+    //     'user'    => 'gallery',
+    //     'pass'    => '',
+    //     'charset' => 'utf8mb4',
+    // ],
 
     // Shown in page titles, admin emails, and the login screen.
     'site' => [
@@ -83,4 +94,45 @@ return [
     ],
 
     'timezone' => 'UTC',
+
+    // File storage mode. Can be 'local' or 'remote-nas'.
+    // 'local' (default): all files including originals stored on this server.
+    //   Standard shared hosting setup, no additional hardware needed.
+    // 'remote-nas': originals stored on home NAS, previews cached on this server.
+    //   Advanced setup for users with home network + always-on poller machine.
+    //   See docs/NAS-FULFILLMENT.md for detailed setup instructions.
+    'storage_mode' => 'local',
+
+    // Admin deployment mode. Can be 'local' or 'remote'.
+    // 'local' (default): admin panel runs on the same server as the public site.
+    //   Everything works as it does today, no additional configuration needed.
+    // 'remote': admin panel runs on a separate server (e.g., home machine, local dev)
+    //   and connects to production database and files over the network.
+    //   Requires remote MySQL access (not all shared hosts allow this) and SFTP access.
+    //   See INSTALL.md for detailed setup instructions.
+    'admin_mode' => 'local',
+
+    // When admin_mode is 'remote', this section configures the admin panel's
+    // connection to the production database and file storage.
+    // Ignored when admin_mode is 'local' (the admin panel uses the same db config above).
+    'admin_remote' => [
+        // Production database credentials (for admin to connect to from remote).
+        // These can be different from the 'db' section if your host supports
+        // restricted remote MySQL connections (e.g., by IP address).
+        // Requires the hosting provider to allow remote connections.
+        'db_host' => '192.0.2.1',     // Production server's IP or hostname
+        'db_port' => 3306,
+        'db_name' => 'gallery',
+        'db_user' => 'gallery_remote',
+        'db_pass' => '',
+
+        // SFTP connection to production server for file uploads/management.
+        // Uses phpseclib library (pure PHP, no ssh2 extension needed).
+        'sftp_host'      => '192.0.2.1',     // Production server's IP or hostname
+        'sftp_port'      => 22,
+        'sftp_user'      => 'gallery',
+        'sftp_pass'      => '',
+        'sftp_key_file'  => '',               // Alternative to password: path to private key file
+        'storage_path'   => '/home/gallery/storage',  // Absolute path to storage on production server
+    ],
 ];

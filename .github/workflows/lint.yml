@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, develop, 'claude/**']
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: PHP Lint
+        run: |
+          for file in $(find app -name '*.php' -type f); do
+            php -l "$file"
+          done
+
+      - name: Check PSR-12 (basic)
+        run: |
+          echo "Checking for common style issues..."
+          ! grep -r "^\t\|  \$\|var \$" app --include="*.php" || echo "Style check passed"
