@@ -1,14 +1,30 @@
 <?php declare(strict_types=1); ?>
-<h2 class="step-title">Email Setup</h2>
-<p class="step-description">Customers receive order confirmations and download links via email. <strong>Skippable:</strong> the site works without this, but customers won't get emails.</p>
+<h2 class="step-title">Email Delivery</h2>
+<p class="step-description">Customers receive order confirmations and download links. Optional but recommended for customer experience.</p>
+
+<div class="help-section">
+    <div class="help-toggle" onclick="toggleHelp(this)">
+        <span class="help-toggle-icon">▸</span>
+        <span>How to find your email provider's SMTP settings</span>
+    </div>
+    <div class="help-content hidden">
+        <strong>Gmail:</strong> Use your full Gmail address. <a href="https://support.google.com/accounts/answer/185833" target="_blank" style="color: #111; text-decoration: underline;">Create an App Password</a> (not your regular password).
+        <br><br>
+        <strong>Outlook:</strong> Use your full Outlook/Hotmail address and regular password.
+        <br><br>
+        <strong>IONOS:</strong> Check your IONOS control panel → Email → Settings for SMTP details.
+        <br><br>
+        <strong>Other provider?</strong> Search "[your-provider] SMTP settings" or contact their support. Most provide a help article.
+    </div>
+</div>
 
 <div class="form-group">
-    <label>Email Provider</label>
+    <label>Which email provider do you use?</label>
     <div class="provider-select">
         <button type="button" class="provider-option active" onclick="selectProvider('gmail')">Gmail</button>
         <button type="button" class="provider-option" onclick="selectProvider('outlook')">Outlook</button>
         <button type="button" class="provider-option" onclick="selectProvider('ionos')">IONOS</button>
-        <button type="button" class="provider-option" onclick="selectProvider('custom')">Custom</button>
+        <button type="button" class="provider-option" onclick="selectProvider('custom')">Other</button>
     </div>
     <input type="hidden" id="provider" name="provider" value="gmail">
 </div>
@@ -61,6 +77,13 @@
 </div>
 
 <script>
+function toggleHelp(el) {
+    const content = el.nextElementSibling;
+    const icon = el.querySelector('.help-toggle-icon');
+    content.classList.toggle('hidden');
+    icon.style.transform = content.classList.contains('hidden') ? '' : 'rotate(90deg)';
+}
+
 function selectProvider(provider) {
     document.getElementById('provider').value = provider;
     document.querySelectorAll('.provider-option').forEach(btn => btn.classList.remove('active'));

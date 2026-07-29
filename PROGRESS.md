@@ -65,6 +65,8 @@
 - `/app/lib/fulfillment.php` (260 lines)
 - `/app/controllers/admin/api_fulfillment.php` (140 lines)
 - `/tools/poller.php` (230 lines, standalone executable)
+- `/tools/poller_setup.php` (interactive setup script for poller configuration)
+- `/tools/config_validator.php` (tests SMTP, Stripe, NAS connectivity)
 - `/docs/NAS-FULFILLMENT.md` (450 lines, detailed setup guide)
 
 ### FEATURE B
@@ -106,6 +108,17 @@
 - **Contextual help**: Provider quick-picks, expandable helper text
 - **Session-less steps**: Each form is independent, can return to any step
 
+### Ease-of-Use Improvements
+- **Expandable help sections**: Email, Stripe, storage mode, and admin mode steps have inline "?" toggles
+  - Hide by default (reduces cognitive load)
+  - Show on click with plain-language explanations
+  - Smooth animation (icon rotates, content slides open)
+- **Contextual links**: Email setup links to Gmail App Password docs, Stripe links to API keys dashboard
+- **Provider auto-fill**: Selecting Gmail/Outlook/IONOS auto-fills SMTP host and port
+- **Plain language**: Simplified explanations for storage mode ("Local" vs "Remote NAS") and admin mode
+- **Interactive poller setup**: tools/poller_setup.php guides users through configuration with prompts
+- **Config validator**: tools/config_validator.php tests SMTP, Stripe, and NAS connectivity before going live
+
 ---
 
 ## Testing Checklist
@@ -136,10 +149,8 @@
 - **Monitoring**: Could add web UI to monitor fulfillment jobs
 
 ### FEATURE B
-- **Config persistence**: Currently stores in settings table, ideally writes to config.php
-- **Email validation**: Could test SMTP connectivity during setup
-- **Stripe validation**: Could verify keys with API call during setup
-- **Provider expansion**: Easy to add more SMTP providers
+- **Config persistence**: Currently stores in settings table, ideally writes to config.php (poller_setup.php and config_validator.php partially address this)
+- **Provider expansion**: Easy to add more SMTP providers to quick-pick UI
 
 ---
 

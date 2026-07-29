@@ -2,6 +2,20 @@
 <h2 class="step-title">File Storage</h2>
 <p class="step-description">Where to store original photo files. <strong>Skippable:</strong> defaults to local storage.</p>
 
+<div class="help-section">
+    <div class="help-toggle" onclick="toggleHelp(this)">
+        <span class="help-toggle-icon">▸</span>
+        <span>Which storage mode should I choose?</span>
+    </div>
+    <div class="help-content hidden">
+        <strong>Local storage:</strong> All your photos live on this server. This is the default and works great for most galleries.
+        <br><br>
+        <strong>Remote NAS:</strong> You have a home server or NAS device connected to the internet and an always-on machine running a poller script. This stores original high-resolution files on your NAS to save space on the hosting server, while keeping preview images here. Only choose this if you're comfortable running a background script on a home machine.
+        <br><br>
+        <strong>Not sure?</strong> Start with Local storage. You can change it later in your settings.
+    </div>
+</div>
+
 <div class="form-group">
     <label>Storage Mode</label>
     <div class="mode-options">
@@ -16,15 +30,18 @@
     </div>
 </div>
 
-<div style="background: #f5f5f5; border: 1px solid #d0d0d0; border-radius: 6px; padding: 16px; margin: 24px 0; font-size: 13px; color: #666;">
-    <strong>Remote NAS mode</strong> is for advanced users with a home NAS and always-on machine. It stores originals on your NAS and only previews on this server. See <a href="/docs/NAS-FULFILLMENT.md" style="color: #111; text-decoration: underline;">setup guide</a> for details.
-</div>
-
 <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
     <button type="submit" name="skip" class="button button-secondary" style="width: 100%; margin-bottom: 12px;">Skip for now (use Local)</button>
 </div>
 
 <script>
+function toggleHelp(el) {
+    const content = el.nextElementSibling;
+    const icon = el.querySelector('.help-toggle-icon');
+    content.classList.toggle('hidden');
+    icon.style.transform = content.classList.contains('hidden') ? '' : 'rotate(90deg)';
+}
+
 document.querySelectorAll('.mode-option').forEach(label => {
     label.addEventListener('click', function() {
         document.querySelectorAll('.mode-option').forEach(l => l.classList.remove('active'));

@@ -356,6 +356,66 @@ declare(strict_types=1);
             border: 1px solid #d0d0d0;
         }
 
+        .help-section {
+            margin: 20px 0;
+            padding: 16px;
+            background: #f9f9f8;
+            border-left: 3px solid #d0d0d0;
+            border-radius: 4px;
+        }
+
+        .help-toggle {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .help-toggle:hover {
+            color: #111;
+        }
+
+        .help-toggle-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            transition: transform 160ms ease-out;
+        }
+
+        .help-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 160ms ease-out;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .help-content.hidden {
+            max-height: 0;
+        }
+
+        .help-content ul {
+            margin: 8px 0 8px 20px;
+            padding: 0;
+        }
+
+        .help-content li {
+            margin: 4px 0;
+        }
+
+        .help-content code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
         @media (max-width: 640px) {
             .wizard-container {
                 padding: 24px 16px;
