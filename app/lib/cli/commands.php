@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../email.php';
+require_once __DIR__ . '/../settings.php';
 
 function cli_migrate(PDO $pdo, array $args): void {
     $direction = $args[0] ?? 'up';
@@ -252,4 +253,74 @@ function cli_cron_test(PDO $pdo): void {
     } catch (Throwable $e) {
         cli_error('Cron failed: ' . $e->getMessage());
     }
+}
+
+function cli_settings_get(PDO $pdo, array $args): void {
+    $category = $args[0] ?? null;
+    $key = $args[1] ?? null;
+
+    if (!$category || !$key) {
+        cli_log('Usage: settings:get <category> <key>');
+        cli_log('Example: settings:get email from_address');
+        return;
+    }
+
+    $value = get_setting($pdo, $category, $key);
+    if ($value === null) {
+        cli_log("Setting not found: $category.$key");
+        return;
+    }
+
+    echo "Value: " . (is_array($value) ? json_encode($value) : $value) . "\n";
+}
+
+function cli_settings_set(PDO $pdo, array $args): void {
+    $category = $args[0] ?? null;
+    $key = $args[1] ?? null;
+    $value = $args[2] ?? null;
+
+    if (!$category || !$key || $value === null) {
+        cli_log('Usage: settings:set <category> <key> <value>');
+        cli_log('Example: settings:set email from_address noreply@example.com');
+        return;
+    }
+
+    $errors = validate_setting($pdo, $category, $key, $value);
+    if (!empty($errors)) {
+        foreach ($errors as $err) {
+            cli_log("Error: $err");
+        }
+        return;
+    }
+
+    if (set_setting($pdo, $category, $key, $value)) {
+        cli_success("Setting updated: $category.$key = $value");
+    } else {
+        cli_error("Failed to update setting");
+    }
+}
+
+function cli_settings_list(PDO $pdo, array $args): void {
+    $category = $args[0] ?? null;
+
+    $settings = $category ? get_all_settings($pdo, $category) : get_all_settings($pdo);
+
+    if (empty($settings)) {
+        cli_log('No settings found');
+        return;
+    }
+
+    echo "\nSettings:\n";
+    echo str_repeat('-', 80) . "\n";
+
+    $currentCat = null;
+    foreach ($settings as $s) {
+        if ($currentCat !== $s['category']) {
+            $currentCat = $s['category'];
+            echo "\n[" . strtoupper($currentCat) . "]\n";
+        }
+        $value = strlen($s['value']) > 40 ? substr($s['value'], 0, 40) . '...' : $s['value'];
+        printf("  %-20s = %s\n", $s['key_name'], $value);
+    }
+    echo str_repeat('-', 80) . "\n";
 }

@@ -32,6 +32,9 @@ try {
         'config:validate' => cli_config_validate($config),
         'analytics:export' => cli_analytics_export($pdo, $args),
         'cron:test' => cli_cron_test($pdo),
+        'settings:get' => cli_settings_get($pdo, $args),
+        'settings:set' => cli_settings_set($pdo, $args),
+        'settings:list' => cli_settings_list($pdo, $args),
         default => cli_error("Unknown command: $command"),
     };
 } catch (Throwable $e) {
@@ -57,6 +60,11 @@ Email:
   email:queue           Show pending email queue
   email:retry           Retry failed emails
 
+Settings:
+  settings:list         List all settings (or filtered by category)
+  settings:get          Get a specific setting value
+  settings:set          Set a setting value
+
 Backup:
   backup:create         Create database backup
 
@@ -68,6 +76,11 @@ Analytics:
 
 Maintenance:
   cron:test             Test cron job execution
+
+Examples:
+  php app/cli.php settings:list email
+  php app/cli.php settings:get email from_address
+  php app/cli.php settings:set email from_address noreply@example.com
 
 Options:
   help                  Show this message
