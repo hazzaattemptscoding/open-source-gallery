@@ -190,6 +190,26 @@ switch ($path) {
         admin_admins_controller($pdo, $config);
         break;
 
+    case '/admin/emails':
+        require __DIR__ . '/../app/controllers/admin/emails.php';
+        admin_emails_controller($pdo, $config);
+        break;
+
+    case '/admin/bulk':
+        require __DIR__ . '/../app/controllers/admin/bulk.php';
+        admin_bulk_controller($pdo, $config);
+        break;
+
+    case '/admin/watermarks':
+        require __DIR__ . '/../app/controllers/admin/watermarks.php';
+        admin_watermarks_controller($pdo, $config);
+        break;
+
+    case '/admin/reporting':
+        require __DIR__ . '/../app/controllers/admin/reporting.php';
+        admin_reporting_controller($pdo, $config);
+        break;
+
     case '/admin/export/orders':
         require __DIR__ . '/../app/controllers/admin/export.php';
         admin_export_orders_controller($pdo, $config);
@@ -245,6 +265,12 @@ switch ($path) {
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);
+        } elseif (preg_match('#^/api/v1/photos/(\d+)$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/api/photos.php';
+            api_v1_photo_controller($pdo, (int)$m[1]);
+        } elseif ($path === '/api/v1/photos') {
+            require __DIR__ . '/../app/controllers/api/photos.php';
+            api_v1_photos_controller($pdo);
         } else {
             http_response_code(404);
             echo '404 Not Found';
