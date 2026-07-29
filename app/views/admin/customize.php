@@ -201,24 +201,29 @@
         <h3>Color Palette</h3>
         <div class="color-group">
           <div class="color-input-wrapper">
-            <label for="text">Text Color</label>
+            <label for="text">Primary Text</label>
             <input type="color" id="text" name="text" value="<?= e($settings['text'] ?? '#111111') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Body copy and headings</small>
           </div>
           <div class="color-input-wrapper">
-            <label for="text_muted">Text Muted</label>
+            <label for="text_muted">Secondary Text</label>
             <input type="color" id="text_muted" name="text_muted" value="<?= e($settings['text_muted'] ?? '#787774') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Labels, hints, metadata</small>
           </div>
           <div class="color-input-wrapper">
-            <label for="bg">Background</label>
+            <label for="bg">Page Background</label>
             <input type="color" id="bg" name="bg" value="<?= e($settings['bg'] ?? '#ffffff') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Main page background</small>
           </div>
           <div class="color-input-wrapper">
-            <label for="bg_alt">Alt Background</label>
+            <label for="bg_alt">Section Background</label>
             <input type="color" id="bg_alt" name="bg_alt" value="<?= e($settings['bg_alt'] ?? '#f9f9f8') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Panels, cards, sections</small>
           </div>
           <div class="color-input-wrapper">
-            <label for="border">Borders</label>
+            <label for="border">Borders & Dividers</label>
             <input type="color" id="border" name="border" value="<?= e($settings['border'] ?? '#eaeaea') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Lines, borders, separators</small>
           </div>
         </div>
       </div>
@@ -286,8 +291,9 @@
       </div>
 
       <div class="customize-buttons">
-        <button type="submit" style="background: var(--text); color: var(--bg); border: none; border-radius: 4px; cursor: pointer;">Save Changes</button>
-        <button type="button" class="preview-button" onclick="openPublicPreview();">Preview Public Site</button>
+        <button type="submit" style="background: var(--text); color: var(--bg); border: none; border-radius: 4px; cursor: pointer; flex: 2;">Save Changes</button>
+        <button type="button" class="preview-button" onclick="openPublicPreview();" style="flex: 1;">Preview</button>
+        <button type="button" onclick="if(confirm('Reset all customizations to defaults?')) { document.querySelectorAll('input[type=color], input[type=text], input[type=number], select').forEach(f => f.value = f.getAttribute('value')); }" style="background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px; flex: 1;">Reset</button>
       </div>
     </form>
   </div>
