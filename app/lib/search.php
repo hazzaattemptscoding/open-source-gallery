@@ -2,9 +2,12 @@
 /**
  * Full-text search and advanced filtering for photos.
  * Searches: original_filename, captions, tags (kart, driver, class)
+ * Uses caching for facets and trending photos.
  */
 
 declare(strict_types=1);
+
+require_once __DIR__ . '/cache.php';
 
 /**
  * Search photos with full-text search and filters.
@@ -126,8 +129,15 @@ function search_photos(
 /**
  * Get search facets (available filter options).
  * Shows counts for kart numbers, drivers, classes, etc.
+ * Cached for 15 minutes to avoid repeated expensive queries.
  */
 function get_search_facets(PDO $pdo, array $currentFilters = []): array {
+    // Check cache first (15 min TTL).
+    $cacheKey = 'search_facets_all';
+    if (cache_has($cacheKey)) {
+        return cache_get($cacheKey);
+    }
+
     $facets = [
         'events' => [],
         'karts' => [],
@@ -189,6 +199,9 @@ function get_search_facets(PDO $pdo, array $currentFilters = []): array {
         SQL);
         $facets['classes'] = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
+        // Cache for 15 minutes (900 seconds).
+        cache_set($cacheKey, $facets, 900);
+
     } catch (Throwable $e) {
         // Silently fail (search not critical)
     }
@@ -198,8 +211,15 @@ function get_search_facets(PDO $pdo, array $currentFilters = []): array {
 
 /**
  * Get trending/popular photos (used for homepage, "trending" section).
+ * Cached for 1 day to avoid repeated expensive queries.
  */
 function get_trending_photos(PDO $pdo, int $limit = 12): array {
+    // Check cache first (1 day TTL = 86400 seconds).
+    $cacheKey = "trending_photos_$limit";
+    if (cache_has($cacheKey)) {
+        return cache_get($cacheKey);
+    }
+
     try {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT p.id, p.public_token, p.original_filename, p.price_pence,
@@ -213,7 +233,12 @@ function get_trending_photos(PDO $pdo, int $limit = 12): array {
             LIMIT ?
         SQL);
         $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $photos = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        // Cache for 1 day (86400 seconds).
+        cache_set($cacheKey, $photos, 86400);
+
+        return $photos;
     } catch (Throwable $e) {
         return [];
     }
