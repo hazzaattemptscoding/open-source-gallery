@@ -9,6 +9,14 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../app/bootstrap.php';
+
+// If bootstrap detected a setup error, show diagnostic page
+if ($bootstrapError) {
+    http_response_code(500);
+    require __DIR__ . '/../app/views/errors/setup_diagnostic.php';
+    exit;
+}
+
 require __DIR__ . '/../app/lib/session.php';
 require __DIR__ . '/../app/lib/view.php';
 require __DIR__ . '/../app/lib/seeder.php';
