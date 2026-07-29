@@ -103,7 +103,9 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
     <div class="video-grid">
       <?php foreach ($videos as $video): ?>
         <div class="video-item">
-          <video controls preload="metadata" poster="/media/d/<?= e($video['public_token']) ?>-800.jpg">
+          <video controls preload="metadata" poster="/media/d/<?= e($video['public_token']) ?>-800.jpg"
+                 width="<?= (int)$video['width'] ?>"
+                 height="<?= (int)$video['height'] ?>">
             <source src="/media/v/<?= e($video['public_token']) ?>.mp4" type="video/mp4">
           </video>
         </div>

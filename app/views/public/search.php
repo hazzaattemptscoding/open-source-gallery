@@ -304,7 +304,9 @@
                 <img src="/media/d/<?= e($photo['public_token']) ?>-800.jpg"
                      alt="<?= e($photo['original_filename']) ?>"
                      class="search-result-image"
-                     loading="lazy">
+                     loading="lazy"
+                     width="<?= (int)$photo['width'] ?>"
+                     height="<?= (int)$photo['height'] ?>">
                 <div class="search-result-info">
                   <div class="search-result-title"><?= e($photo['original_filename']) ?></div>
                   <div class="search-result-meta"><?= e($photo['event_title']) ?></div>
