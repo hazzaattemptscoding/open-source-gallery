@@ -58,7 +58,7 @@ function webhook_stripe_controller(PDO $pdo, array $config): void {
         http_response_code(200);
         echo json_encode(['ok' => true]);
     } catch (Throwable $e) {
-        audit_log($pdo, 'webhook_error', ['error' => $e->getMessage()]);
+        audit_log($pdo, 'system', 'webhook_error', null, null, ['error' => $e->getMessage()]);
         http_response_code(500);
         echo json_encode(['error' => 'Processing failed']);
     }
