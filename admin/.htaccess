@@ -1,0 +1,6 @@
+# Routes everything except real files/directories through index.php
+# Allows clean URLs for admin panel routes
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]

@@ -1,0 +1,12 @@
+{
+    "name": "hazzaattemptscoding/open-source-gallery",
+    "description": "Self-hosted photo gallery and sales platform for sports photographers",
+    "license": "AGPL-3.0",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {},
+    "suggest": {
+        "phpseclib/phpseclib": "Required for remote admin mode (when admin_mode = 'remote'). Install with: composer require phpseclib/phpseclib"
+    }
+}

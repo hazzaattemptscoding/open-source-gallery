@@ -83,4 +83,37 @@ return [
     ],
 
     'timezone' => 'UTC',
+
+    // Admin deployment mode. Can be 'local' or 'remote'.
+    // 'local' (default): admin panel runs on the same server as the public site.
+    //   Everything works as it does today, no additional configuration needed.
+    // 'remote': admin panel runs on a separate server (e.g., home machine, local dev)
+    //   and connects to production database and files over the network.
+    //   Requires remote MySQL access (not all shared hosts allow this) and SFTP access.
+    //   See INSTALL.md for detailed setup instructions.
+    'admin_mode' => 'local',
+
+    // When admin_mode is 'remote', this section configures the admin panel's
+    // connection to the production database and file storage.
+    // Ignored when admin_mode is 'local' (the admin panel uses the same db config above).
+    'admin_remote' => [
+        // Production database credentials (for admin to connect to from remote).
+        // These can be different from the 'db' section if your host supports
+        // restricted remote MySQL connections (e.g., by IP address).
+        // Requires the hosting provider to allow remote connections.
+        'db_host' => '192.0.2.1',     // Production server's IP or hostname
+        'db_port' => 3306,
+        'db_name' => 'gallery',
+        'db_user' => 'gallery_remote',
+        'db_pass' => '',
+
+        // SFTP connection to production server for file uploads/management.
+        // Uses phpseclib library (pure PHP, no ssh2 extension needed).
+        'sftp_host'      => '192.0.2.1',     // Production server's IP or hostname
+        'sftp_port'      => 22,
+        'sftp_user'      => 'gallery',
+        'sftp_pass'      => '',
+        'sftp_key_file'  => '',               // Alternative to password: path to private key file
+        'storage_path'   => '/home/gallery/storage',  // Absolute path to storage on production server
+    ],
 ];

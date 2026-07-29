@@ -32,6 +32,13 @@ if ($path === '') {
     $path = '/';
 }
 
+// When in remote admin mode, refuse all /admin routes on the public server
+if (($config['admin_mode'] ?? 'local') === 'remote' && strpos($path, '/admin') === 0) {
+    http_response_code(404);
+    echo '404 Not Found';
+    exit;
+}
+
 // URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
 // cron is URL-based rather than CLI. cron/run.php lives outside the docroot
 // and has no direct HTTP path, so this is the only way to reach it over the web.
