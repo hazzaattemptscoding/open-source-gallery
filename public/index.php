@@ -247,6 +247,31 @@ switch ($path) {
         admin_migrations_controller($pdo, $config);
         break;
 
+    case '/admin/api/health':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_health_controller($pdo, $config);
+        break;
+
+    case '/admin/api/jobs':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_jobs_controller($pdo, $config);
+        break;
+
+    case '/admin/api/cache':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_cache_controller($pdo, $config);
+        break;
+
+    case '/admin/api/perf':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_perf_controller($pdo, $config);
+        break;
+
+    case '/admin/api/batch':
+        require __DIR__ . '/../app/controllers/admin/api_system.php';
+        admin_api_batch_controller($pdo, $config);
+        break;
+
     default:
         if (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';
