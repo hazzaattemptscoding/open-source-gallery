@@ -15,7 +15,7 @@
 </head>
 <body>
 <header class="site-header">
-  <a href="/" class="site-title">Gallery</a>
+  <a href="/" class="site-title"><?= e($siteName ?? 'Gallery') ?></a>
 </header>
 
 <main>

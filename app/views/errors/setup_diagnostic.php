@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>PowerMedia Gallery</h1>
+            <h1><?= e($config['site']['name'] ?? 'Photo Gallery') ?></h1>
             <p>Setup Required</p>
         </div>
 
