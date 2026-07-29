@@ -28,6 +28,7 @@
   <div class="panel">
     <h2>Monitor</h2>
     <ul class="list-plain">
+      <li><a href="/admin/health">→ System health</a> — Database, cron, email, storage status</li>
       <li><a href="/admin/stats">→ Sales dashboard</a> — Orders, revenue, top photos</li>
       <li><a href="/admin/orders">→ Order history</a> — Browse orders, customer emails, status</li>
       <li><a href="/admin/audit-log">→ Audit log</a> — All mutations, logins, exports, webhooks</li>

@@ -160,6 +160,11 @@ switch ($path) {
         admin_my_sessions_controller($pdo, $config);
         break;
 
+    case '/admin/health':
+        require __DIR__ . '/../app/controllers/admin/health.php';
+        admin_health_check_controller($pdo, $config);
+        break;
+
     case '/admin/export/orders':
         require __DIR__ . '/../app/controllers/admin/export.php';
         admin_export_orders_controller($pdo, $config);
