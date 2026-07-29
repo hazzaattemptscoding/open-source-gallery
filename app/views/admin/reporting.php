@@ -6,14 +6,124 @@
 <title>Advanced Reporting: Admin</title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
-.reporting-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-.metric-card { background: #fff; border: 1px solid #eee; padding: 1.5rem; border-radius: 8px; }
-.metric-card h3 { font-size: 0.9rem; color: #666; margin: 0 0 0.5rem 0; text-transform: uppercase; }
-.metric-card .value { font-size: 2rem; font-weight: 600; }
-.segments-table, .cohorts-table, .customers-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-.segments-table th, .cohorts-table th, .customers-table th, .segments-table td, .cohorts-table td, .customers-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
-.segments-table th, .cohorts-table th, .customers-table th { background: #f9f9f9; font-weight: 600; }
+.reporting-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.reporting-container h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 1.5rem 0;
+}
+
+.reporting-container h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 2.5rem 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.metric-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border-radius: 8px;
+  transition: all 160ms var(--ease-out);
+}
+
+.metric-card:hover {
+  border-color: var(--text-muted);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.metric-card h3 {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.metric-card .value {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.segments-table,
+.cohorts-table,
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.segments-table th,
+.cohorts-table th,
+.customers-table th,
+.segments-table td,
+.cohorts-table td,
+.customers-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.segments-table th,
+.cohorts-table th,
+.customers-table th {
+  background: var(--bg-alt);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.segments-table tbody tr,
+.cohorts-table tbody tr,
+.customers-table tbody tr {
+  transition: background 160ms ease;
+}
+
+.segments-table tbody tr:hover,
+.cohorts-table tbody tr:hover,
+.customers-table tbody tr:hover {
+  background: var(--bg-alt);
+}
+
+@media (max-width: 768px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .segments-table,
+  .cohorts-table,
+  .customers-table {
+    font-size: 0.9rem;
+  }
+
+  .segments-table th,
+  .cohorts-table th,
+  .customers-table th,
+  .segments-table td,
+  .cohorts-table td,
+  .customers-table td {
+    padding: 0.5rem 0.75rem;
+  }
+}
 </style>
 </head>
 <body>
