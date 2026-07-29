@@ -30,6 +30,7 @@
     <ul class="list-plain">
       <li><a href="/admin/stats">→ Sales dashboard</a> — Orders, revenue, top photos</li>
       <li><a href="/admin/orders">→ Order history</a> — Browse orders, customer emails, status</li>
+      <li><a href="/admin/audit-log">→ Audit log</a> — All mutations, logins, exports, webhooks</li>
     </ul>
   </div>
 
@@ -38,6 +39,13 @@
     <ul class="list-plain">
       <li><a href="/admin/settings">→ Settings</a> — Stripe keys, email configuration, site details</li>
       <li><a href="/admin/export">→ Export Data</a> — Download orders, photos, customers, events as CSV</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>Security</h2>
+    <ul class="list-plain">
+      <li><a href="/admin/my-sessions">→ My Sessions</a> — View and revoke your active sessions</li>
     </ul>
   </div>
 

@@ -150,6 +150,16 @@ switch ($path) {
         admin_export_page_controller($pdo, $config);
         break;
 
+    case '/admin/audit-log':
+        require __DIR__ . '/../app/controllers/admin/audit_log.php';
+        admin_audit_log_controller($pdo, $config);
+        break;
+
+    case '/admin/my-sessions':
+        require __DIR__ . '/../app/controllers/admin/my_sessions.php';
+        admin_my_sessions_controller($pdo, $config);
+        break;
+
     case '/admin/export/orders':
         require __DIR__ . '/../app/controllers/admin/export.php';
         admin_export_orders_controller($pdo, $config);
