@@ -55,6 +55,16 @@ switch ($path) {
         public_home_controller($pdo, $config);
         break;
 
+    case '/search':
+        require __DIR__ . '/../app/controllers/public/search.php';
+        public_search_controller($pdo, $config);
+        break;
+
+    case '/api/search':
+        require __DIR__ . '/../app/controllers/public/search.php';
+        public_search_api_controller($pdo, $config);
+        break;
+
     case '/cart':
         require __DIR__ . '/../app/controllers/public/cart.php';
         public_cart_page_controller($pdo, $config);
@@ -163,6 +173,21 @@ switch ($path) {
     case '/admin/health':
         require __DIR__ . '/../app/controllers/admin/health.php';
         admin_health_check_controller($pdo, $config);
+        break;
+
+    case '/admin/analytics':
+        require __DIR__ . '/../app/controllers/admin/analytics.php';
+        admin_analytics_controller($pdo, $config);
+        break;
+
+    case '/admin/print_orders':
+        require __DIR__ . '/../app/controllers/admin/print_orders.php';
+        admin_print_orders_controller($pdo, $config);
+        break;
+
+    case '/admin/admins':
+        require __DIR__ . '/../app/controllers/admin/admins.php';
+        admin_admins_controller($pdo, $config);
         break;
 
     case '/admin/export/orders':
