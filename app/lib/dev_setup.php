@@ -193,7 +193,8 @@ function dev_reset_schema(PDO $pdo): void {
 
         // Run migrations
         require_once __DIR__ . '/migrations.php';
-        $pending = migrations_pending($pdo);
+        $migrationsDir = __DIR__ . '/../../migrations';
+        $pending = migrations_pending($pdo, $migrationsDir);
         if (!empty($pending)) {
             migrations_apply($pdo, $pending);
             echo "[✓] Schema created with " . count($pending) . " migrations\n";
