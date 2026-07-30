@@ -101,12 +101,19 @@ p {
 a {
   color: var(--text);
   text-decoration: underline;
-  transition: opacity 200ms ease-out;
+  transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1),
+              text-decoration-thickness 150ms cubic-bezier(0.23, 1, 0.32, 1);
+  text-decoration-thickness: 1px;
 }
 
 a:hover {
   color: #333333;
   text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
 }
 
 /* Forms */
@@ -148,6 +155,19 @@ textarea:focus {
   outline-offset: 2px;
 }
 
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--error);
+  background: rgba(159, 47, 45, 0.02);
+}
+
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus {
+  outline-color: var(--error);
+}
+
 /* Buttons */
 
 button, .button {
@@ -165,9 +185,10 @@ button, .button {
   letter-spacing: 0.02em;
   text-decoration: none;
   text-align: center;
-  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), 
-              background 160ms cubic-bezier(0.23, 1, 0.32, 1),
-              border-color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              background 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              border-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              filter 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 button:hover:not(:disabled),
@@ -178,7 +199,14 @@ button:hover:not(:disabled),
 
 button:active:not(:disabled),
 .button:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  filter: brightness(0.95);
+}
+
+button:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
 }
 
 button:disabled,
@@ -244,7 +272,7 @@ button:disabled,
   background: var(--bg);
   border: 1px solid var(--border);
   padding: 3rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   animation: fadeInUp 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -383,12 +411,12 @@ button:disabled,
 }
 
 .cart-badge.is-bumped {
-  animation: cartBump 320ms var(--ease-out);
+  animation: cartBump 280ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @keyframes cartBump {
   0% { transform: scale(1); }
-  40% { transform: scale(1.12); }
+  40% { transform: scale(1.08); }
   100% { transform: scale(1); }
 }
 
@@ -603,19 +631,26 @@ body.lightbox-open {
   font-weight: 500;
   white-space: nowrap;
   border-radius: 3px;
-  transition: border-color 150ms ease-out, color 150ms ease-out, background-color 150ms ease-out;
+  transition: color 120ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
 }
 
 .session-nav a:hover {
   border-color: var(--text);
   color: var(--text);
   background: var(--bg-alt);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) inset;
 }
 
 .session-nav a.active {
   color: var(--bg);
   background: var(--text);
   border-color: var(--text);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12) inset;
+}
+
+.session-nav a:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: -2px;
 }
 
 /* Filter bar */
@@ -689,16 +724,26 @@ body.lightbox-open {
   padding: 0.75rem 1.5rem;
   background: var(--text);
   color: var(--bg);
-  border: none;
+  border: 1px solid var(--text);
   border-radius: 0;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s ease-out;
+  transition: background 140ms ease-out, border-color 140ms ease-out, transform 140ms ease-out, filter 140ms ease-out;
+}
+
+.search-form button:hover {
+  background: #333333;
+  border-color: #333333;
 }
 
 .search-form button:active {
-  transform: scale(0.98);
-  transition: transform 160ms ease-out;
+  transform: scale(0.97);
+  filter: brightness(0.95);
+}
+
+.search-form button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
 }
 
 .search-layout {
@@ -1629,7 +1674,18 @@ body.lightbox-open {
   align-items: center;
   justify-content: center;
   z-index: 3000;
-  animation: fadeIn 200ms ease-out;
+  animation: lightboxEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes lightboxEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .lightbox-content {
@@ -1759,17 +1815,17 @@ body.lightbox-open {
 /* Phase 4: Loading Skeletons */
 @keyframes shimmer {
   0% {
-    transform: translateX(-1000px);
+    background-position: -1000px 0;
   }
   100% {
-    transform: translateX(1000px);
+    background-position: 1000px 0;
   }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-alt) 25%, #f0ede8 50%, var(--bg-alt) 75%);
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, var(--bg-alt) 0%, #f5f3f0 40%, #f0ede8 50%, #f5f3f0 60%, var(--bg-alt) 100%);
+  background-size: 1200px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
   will-change: transform;
   border-radius: 6px;
 }
@@ -1844,12 +1900,24 @@ body.lightbox-open {
   font-weight: 500;
 }
 
+.form-error::before {
+  content: "✗ ";
+  font-weight: 700;
+  margin-right: 0.25rem;
+}
+
 .form-success {
   font-size: var(--text-sm);
   color: var(--success);
   margin-top: var(--space-2);
   display: block;
   font-weight: 500;
+}
+
+.form-success::before {
+  content: "✓ ";
+  font-weight: 700;
+  margin-right: 0.25rem;
 }
 
 /* Phase 4: Toast Notifications */
@@ -1863,8 +1931,8 @@ body.lightbox-open {
   border-radius: 8px;
   font-size: var(--text-sm);
   z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  animation: slideUpIn 400ms var(--ease-out);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  animation: slideUpIn 180ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 .toast.success {
