@@ -224,8 +224,13 @@ function check_storage_health(): array {
  */
 function get_recent_errors(PDO $pdo): array {
     try {
+        // audit_log's column is `meta` (JSON), not `details` — this query
+        // threw "column not found" on every call, silently caught below,
+        // so this panel was permanently empty regardless of actual errors.
+        // Aliased back to `details` so app/views/admin/health.php's
+        // existing $error['details'] reference needs no change.
         $stmt = $pdo->query(<<<'SQL'
-            SELECT action, details, created_at
+            SELECT action, meta AS details, created_at
             FROM audit_log
             WHERE action LIKE '%failed%' OR action LIKE '%error%'
             ORDER BY created_at DESC
@@ -234,6 +239,7 @@ function get_recent_errors(PDO $pdo): array {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('get_recent_errors: ' . $e->getMessage());
         return [];
     }
 }

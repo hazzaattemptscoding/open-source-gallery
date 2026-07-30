@@ -66,7 +66,7 @@ function public_search_controller(PDO $pdo, array $config): void {
         'query' => $query,
         'filters' => $filters,
         'results' => $results,
-        'currencyCode' => $config['currency']['code'] ?? 'GBP',
+        'currencyCode' => $config['currency'] ?? 'GBP',
     ]);
 }
 

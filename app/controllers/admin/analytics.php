@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/analytics.php';
+require_once __DIR__ . '/../../lib/currency.php';
 
 function admin_analytics_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -30,10 +31,11 @@ function admin_analytics_controller(PDO $pdo, array $config): void {
         'hourly_distribution' => get_order_distribution_by_hour($pdo),
     ];
 
+    $currencyCode = $config['currency'] ?? 'GBP';
     render(__DIR__ . '/../../views/admin/analytics.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'analytics' => $analytics,
-        'currencyCode' => $config['currency']['code'] ?? 'GBP',
-        'currencySymbol' => $config['currency']['symbol'] ?? '£',
+        'currencyCode' => $currencyCode,
+        'currencySymbol' => currency_symbol($currencyCode),
     ]);
 }

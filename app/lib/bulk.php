@@ -58,14 +58,21 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
 }
 
 /**
- * Bulk update photo prices.
- * DEPRECATED: Pricing is configured per-event, not per-photo in the schema.
- * All photos in an event use the event's price_single_pence value.
- * This function always returns 0 (unsupported feature).
+ * Bulk set a per-photo price override. NULL means "inherit the event's
+ * price_single_pence" (see migrations/009_add_photo_price_override.sql);
+ * this function only ever sets an explicit override, never clears one back
+ * to NULL — clearing is a distinct admin action, not a bulk-price value.
  */
 function bulk_update_prices(PDO $pdo, array $photoIds, int $pricePence): int {
-    // Per-photo pricing not supported. Pricing is per-event in schema.
-    return 0;
+    if (empty($photoIds)) {
+        return 0;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($photoIds), '?'));
+    $stmt = $pdo->prepare("UPDATE photos SET price_pence = ? WHERE id IN ($placeholders)");
+    $stmt->execute(array_merge([$pricePence], array_map('intval', $photoIds)));
+
+    return $stmt->rowCount();
 }
 
 /**

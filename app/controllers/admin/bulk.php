@@ -48,9 +48,15 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
                     break;
 
                 case 'price':
-                    // Per-photo pricing not supported - pricing is per-event
-                    $errors[] = 'Per-photo pricing is not supported. Pricing is configured per event.';
-                    break;
+                    $pricePence = (int)($_POST['price_pence'] ?? -1);
+                    if ($pricePence < 0) {
+                        $errors[] = 'Price must be a non-negative number of pence';
+                        break;
+                    }
+                    $updated = bulk_update_prices($pdo, $photoIds, $pricePence);
+                    audit_log($pdo, 'admin', 'bulk_price', 'photos', null, ['price_pence' => $pricePence, 'count' => $updated], client_ip());
+                    header('Location: /admin/bulk?action=select&success=1');
+                    exit;
 
                 case 'status':
                     $status = $_POST['status'] ?? 'hidden';

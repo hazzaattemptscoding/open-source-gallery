@@ -277,9 +277,8 @@ button:active {
         <div class="form-group">
           <label>New Status:</label>
           <select name="status">
-            <option value="draft">Draft</option>
             <option value="live">Live</option>
-            <option value="archived">Archived</option>
+            <option value="hidden">Hidden</option>
           </select>
         </div>
       </div>
