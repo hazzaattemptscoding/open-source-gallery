@@ -35,7 +35,7 @@ function admin_login_controller(PDO $pdo, array $config): void
             $totpCode = trim($_POST['totp_code'] ?? '');
             $totpCode = $totpCode === '' ? null : $totpCode;
 
-            $result = admin_attempt_login($pdo, $emailValue, $password, $totpCode, client_ip());
+            $result = admin_attempt_login($pdo, $config, $emailValue, $password, $totpCode, client_ip());
 
             if ($result['ok']) {
                 header('Location: /admin');

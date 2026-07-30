@@ -538,3 +538,44 @@ looks wrong, nothing arrives. Fixed: the header now uses
 `HTTP_HOST` (stripped of port) or the machine hostname, never an empty
 domain. Split into a testable `build_mail_fallback_headers()` function,
 tests added.
+
+## DEV_MODE Configuration: Local Development Support
+
+Added `'dev_mode'` config flag to simplify local development without disabling security.
+
+**Config shape**:
+- `'dev_mode' => 'production'` (default, safe for production)
+- `'dev_mode' => 'local'` (relaxed only for `http://localhost`)
+
+**Changes in local mode only**:
+1. **Cookies**: Allow non-Secure flag when request isn't HTTPS (still sets HttpOnly and SameSite=Strict)
+2. **HSTS header**: Skipped (meaningless without HTTPS)
+3. **Rate limiting**: Thresholds raised 10x (50+ attempts instead of 5) to prevent lockout during repeated testing
+4. **Email**: Logged to `storage/dev-emails.log` instead of sending (no SMTP or mail() configuration needed)
+5. **Background jobs**: Manual trigger at `/admin/jobs/run` (no cron running every 5 minutes on localhost)
+
+**What stays fully active in local mode**:
+- CSRF token generation and verification
+- Session management (regenerate on login, destroy on logout)
+- Audit logging
+- All security headers except HSTS
+- Output escaping (XSS prevention)
+- Rate limiting itself (just raised thresholds)
+- All other checks (auth, permission gates, validation)
+
+**Files changed**:
+- `config/config.example.php`: Added `dev_mode` with documentation
+- `public/index.php`: Skip HSTS header when dev_mode is 'local'
+- `app/lib/mailer.php`: New `log_email_to_dev_file()` function, `send_email_via_configured_transport()` branches on dev_mode
+- `app/lib/rate_limit.php`: New `adjust_rate_limit_for_dev()` helper
+- `app/lib/auth.php`: Updated `admin_attempt_login()` signature to accept $config, uses adjusted limits
+- `app/controllers/admin/login.php`: Pass $config to admin_attempt_login()
+- `app/controllers/public/checkout.php`: Use adjusted limits for checkout rate limit
+- `tests/TestCase.php`: Added `getTestConfig()` helper returning dev_mode=local config
+- `tests/integration/AdminAuthTest.php`: Updated all calls to admin_attempt_login() to pass $config
+- `tests/integration/DevModeTest.php` (new): Tests for rate limit adjustment and email logging
+- `INSTALL.md`: Added "Local Development Configuration (DEV_MODE)" section with setup and safety warnings
+
+**Testing**: DevModeTest.php verifies rate limit adjustment and email logging behavior in both modes. All 58 tests passing (55 existing + 3 new DevMode tests).
+
+**Critical safety note**: Never deploy with `'dev_mode' => 'local'`. Production must use `'dev_mode' => 'production'` or omit it (default). HSTS is disabled in local mode and emails aren't sent — both are essential for production. The config example ships with 'production' as default, so accidental deployments starting from config.example.php are safe.

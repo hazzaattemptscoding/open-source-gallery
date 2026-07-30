@@ -335,6 +335,62 @@ sftp your_sftp_user@192.0.2.1
 
 ---
 
+## Local Development Configuration (DEV_MODE)
+
+When running locally for development, set `'dev_mode' => 'local'` in `config/config.php` to disable security restrictions that don't apply to `http://localhost`:
+
+**Open `config/config.php` and change:**
+```php
+'dev_mode' => 'production',  // ← Change this
+```
+
+**To:**
+```php
+'dev_mode' => 'local',
+```
+
+### What Changes in Local Mode
+
+| Feature | Production | Local Dev |
+|---------|-----------|-----------|
+| HTTP Cookies | HTTPS only | HTTP allowed (still secure) |
+| HSTS Header | Enabled | Disabled (meaningless on HTTP) |
+| Rate Limiting | 5 attempts per window | 50+ attempts (no lockout during testing) |
+| Email Sending | Real SMTP/mail() | Logged to `storage/dev-emails.log` |
+| Background Jobs | Cron every 5 min | Manual trigger at `/admin/jobs/run` |
+
+**Everything else stays fully active:** CSRF protection, session management, audit logging, security headers, output escaping, rate limits themselves.
+
+### Running Jobs Manually in Local Dev
+
+Background jobs (photo processing, email delivery) don't run on `http://localhost` without cron. To trigger them:
+
+1. Go to the admin panel: `http://localhost:8080/admin`
+2. Click **"System"** → **"Run Jobs"** or visit `/admin/jobs/run`
+3. Jobs process for up to 20 seconds per click
+4. Repeat to drain the queue
+
+### Viewing Sent Emails in Local Dev
+
+Emails don't get sent in local mode — they're written to `storage/dev-emails.log`:
+
+```bash
+tail -f storage/dev-emails.log
+```
+
+Each email shows the recipient, subject, and full HTML body. Useful for testing the checkout flow.
+
+### Important: Never Deploy With `dev_mode: 'local'`
+
+This is a development-only setting. Production servers must use `'dev_mode' => 'production'` or omit it (default). Accidentally deploying with `'dev_mode': 'local'` disables HSTS and allows cookie theft over HTTP.
+
+**Checklist before deploying:**
+- [ ] `'dev_mode' => 'production'` in `config/config.php`
+- [ ] Real SMTP configured or mail() working
+- [ ] Cron scheduled to run `/public/cron.php` every 5 minutes
+
+---
+
 ## After Installation
 
 ### First: Configure Stripe & Email (if not done during install)

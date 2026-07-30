@@ -63,3 +63,15 @@ function check_rate_limit(PDO $pdo, string $bucket, string $rl_key, int $window_
 function get_client_ip(): string {
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
+
+/**
+ * Adjust rate limit threshold for local dev. In production, limits are strict
+ * to prevent brute force. In local dev, limits are much higher to avoid
+ * locking out the tester during repeated manual testing.
+ */
+function adjust_rate_limit_for_dev(array $config, int $productionMax): int {
+    if (($config['dev_mode'] ?? 'production') === 'local') {
+        return max($productionMax * 10, 1000); // At least 10x higher, minimum 1000
+    }
+    return $productionMax;
+}

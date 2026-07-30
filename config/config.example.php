@@ -15,6 +15,17 @@
  */
 
 return [
+    // Development mode. Set to 'local' for local dev, 'production' for live.
+    // 'local' = relaxed security for dev convenience:
+    //   - cookies work over HTTP (not just HTTPS)
+    //   - HSTS header skipped (meaningless without HTTPS)
+    //   - rate limits raised (fewer test lockouts)
+    //   - emails logged to file, not sent
+    //   - manual cron trigger available in admin panel
+    // 'production' (default) = full security, strict headers, real emails, no cron shortcuts.
+    // NEVER set to 'local' on a live server.
+    'dev_mode' => 'production',
+
     // Database: choose one option below.
 
     // Option 1: SQLite (recommended for local development - no server needed)

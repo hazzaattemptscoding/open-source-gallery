@@ -29,7 +29,7 @@ class AdminAuthTest extends TestCase {
         ]);
 
         // Test successful login.
-        $result = \admin_attempt_login($this->pdo, 'admin@example.com', 'SecurePassword123!', null, '127.0.0.1');
+        $result = \admin_attempt_login($this->pdo, $this->config, 'admin@example.com', 'SecurePassword123!', null, '127.0.0.1');
 
         $this->assertTrue($result['ok'], 'Login should succeed with correct credentials');
     }

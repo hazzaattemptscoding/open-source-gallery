@@ -35,11 +35,33 @@ function smtp_is_available(array $smtpConfig): bool
 /** Single send entrypoint every email call site should use instead of mail() directly. */
 function send_email_via_configured_transport(array $config, string $recipient, string $subject, string $bodyHtml, string $bodyText = ''): bool
 {
+    // In local dev mode, log emails to file instead of sending
+    if (($config['dev_mode'] ?? 'production') === 'local') {
+        return log_email_to_dev_file($recipient, $subject, $bodyHtml);
+    }
+
     $smtp = $config['smtp'] ?? [];
 
     return smtp_is_available($smtp)
         ? send_email_smtp($smtp, $recipient, $subject, $bodyHtml, $bodyText)
         : send_email_mail_fallback($smtp, $recipient, $subject, $bodyHtml, $bodyText);
+}
+
+/** Log outgoing email to storage/dev-emails.log for local dev inspection. */
+function log_email_to_dev_file(string $recipient, string $subject, string $bodyHtml): bool
+{
+    $logFile = __DIR__ . '/../../storage/dev-emails.log';
+    @mkdir(dirname($logFile), 0755, true);
+
+    $entry = sprintf(
+        "[%s] To: %s | Subject: %s\n%s\n\n",
+        date('Y-m-d H:i:s'),
+        $recipient,
+        $subject,
+        $bodyHtml
+    );
+
+    return (bool)@file_put_contents($logFile, $entry, FILE_APPEND);
 }
 
 function send_email_smtp(array $smtp, string $recipient, string $subject, string $bodyHtml, string $bodyText): bool
