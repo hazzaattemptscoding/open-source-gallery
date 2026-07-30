@@ -3,6 +3,5 @@
 -- This supports the "mark individual photos as premium" feature without
 -- requiring separate bundle pricing logic.
 
-INSERT INTO migrations (filename, applied_at) VALUES ('009_add_photo_price_override.sql', CURRENT_TIMESTAMP);
 
 ALTER TABLE photos ADD COLUMN price_pence INT UNSIGNED NULL COMMENT 'Per-photo price override; NULL inherits event price_single_pence';

@@ -57,11 +57,22 @@ $pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $db
     PDO::ATTR_EMULATE_PREPARES => false,
 ]);
 
-// Run migrations.
+// Run migrations. 001 is a special case per app/lib/migrations.php's own
+// doc comment (it creates the `migrations` table the runner checks against),
+// so it's applied directly here; everything after 001 goes through the real
+// runner so the test schema matches production exactly instead of drifting
+// to whatever subset of tables migration 001 alone happened to create.
+require_once APP_ROOT . '/app/lib/migrations.php';
+
 $migrationFile = APP_ROOT . '/migrations/001_initial_schema.sql';
 if (file_exists($migrationFile)) {
     $sql = file_get_contents($migrationFile);
     $pdo->exec($sql);
+}
+
+$migrationsDir = APP_ROOT . '/migrations';
+foreach (migrations_pending($pdo, $migrationsDir) as $filename) {
+    migrations_apply($pdo, $migrationsDir, $filename);
 }
 
 // Store PDO instance globally for tests to access.

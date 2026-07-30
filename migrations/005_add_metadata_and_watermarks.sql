@@ -1,6 +1,5 @@
 -- Migration: Add photo metadata, EXIF, and watermark customization
 
-INSERT INTO migrations (filename, applied_at) VALUES ('005_add_metadata_and_watermarks.sql', CURRENT_TIMESTAMP);
 
 -- Photo metadata (EXIF, technical specs)
 ALTER TABLE photos ADD COLUMN exif_data JSON AFTER original_filename;
@@ -11,7 +10,9 @@ ALTER TABLE photos ADD COLUMN focal_length VARCHAR(50);
 ALTER TABLE photos ADD COLUMN aperture VARCHAR(20);
 ALTER TABLE photos ADD COLUMN shutter_speed VARCHAR(50);
 ALTER TABLE photos ADD COLUMN iso INT UNSIGNED;
-ALTER TABLE photos ADD COLUMN taken_at DATETIME;
+-- taken_at already exists (migrations/001_initial_schema.sql) — this used
+-- to re-add it, which fails outright on any database that already has 001
+-- applied, i.e. every real install.
 
 CREATE INDEX idx_camera_make ON photos(camera_make);
 CREATE INDEX idx_taken_at ON photos(taken_at);

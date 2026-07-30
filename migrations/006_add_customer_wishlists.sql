@@ -1,6 +1,5 @@
 -- Migration: Add customer wishlists and favorites
 
-INSERT INTO migrations (filename, applied_at) VALUES ('006_add_customer_wishlists.sql', CURRENT_TIMESTAMP);
 
 -- Customer wishlists (persistent via signed tokens)
 CREATE TABLE wishlists (

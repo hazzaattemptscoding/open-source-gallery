@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 function get_all_settings(PDO $pdo, string $category = ''): array {
     try {
-        $sql = 'SELECT id, category, key_name, value, type, display_label, help_text, order_by, is_advanced FROM settings';
+        $sql = 'SELECT id, category, key_name, value, type, display_label, help_text, placeholder, required, order_by, is_advanced FROM settings_registry';
         $params = [];
 
         if (!empty($category)) {
@@ -34,7 +34,7 @@ function get_all_settings(PDO $pdo, string $category = ''): array {
  */
 function get_setting(PDO $pdo, string $category, string $key, mixed $default = null): mixed {
     try {
-        $stmt = $pdo->prepare('SELECT value, type FROM settings WHERE category = ? AND key_name = ?');
+        $stmt = $pdo->prepare('SELECT value, type FROM settings_registry WHERE category = ? AND key_name = ?');
         $stmt->execute([$category, $key]);
         $setting = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -56,7 +56,7 @@ function set_setting(PDO $pdo, string $category, string $key, mixed $value): boo
         $stringValue = is_array($value) || is_object($value) ? json_encode($value) : (string)$value;
 
         $stmt = $pdo->prepare(<<<'SQL'
-            UPDATE settings SET value = ? WHERE category = ? AND key_name = ?
+            UPDATE settings_registry SET value = ? WHERE category = ? AND key_name = ?
         SQL);
 
         return $stmt->execute([$stringValue, $category, $key]);
@@ -70,7 +70,7 @@ function set_setting(PDO $pdo, string $category, string $key, mixed $value): boo
  */
 function get_settings_by_category(PDO $pdo, bool $includeAdvanced = false): array {
     try {
-        $sql = 'SELECT id, category, key_name, value, type, display_label, help_text, order_by, is_advanced FROM settings';
+        $sql = 'SELECT id, category, key_name, value, type, display_label, help_text, placeholder, required, order_by, is_advanced FROM settings_registry';
         $params = [];
 
         if (!$includeAdvanced) {
@@ -117,7 +117,7 @@ function validate_setting(PDO $pdo, string $category, string $key, mixed $value)
     $errors = [];
 
     try {
-        $stmt = $pdo->prepare('SELECT type, required FROM settings WHERE category = ? AND key_name = ?');
+        $stmt = $pdo->prepare('SELECT type, required FROM settings_registry WHERE category = ? AND key_name = ?');
         $stmt->execute([$category, $key]);
         $setting = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -170,7 +170,7 @@ function batch_update_settings(PDO $pdo, array $updates, string $category): int 
  */
 function get_setting_categories(PDO $pdo): array {
     try {
-        $stmt = $pdo->query('SELECT DISTINCT category FROM settings ORDER BY category');
+        $stmt = $pdo->query('SELECT DISTINCT category FROM settings_registry ORDER BY category');
         return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
     } catch (Throwable $e) {
         return [];

@@ -1,6 +1,5 @@
 -- Migration: Add print fulfillment support
 
-INSERT INTO migrations (filename, applied_at) VALUES ('003_add_print_fulfillment.sql', CURRENT_TIMESTAMP);
 
 -- Print providers
 CREATE TABLE print_providers (

@@ -1,6 +1,5 @@
 -- Migration: Add REST API and advanced reporting
 
-INSERT INTO migrations (filename, applied_at) VALUES ('007_add_api_and_reporting.sql', CURRENT_TIMESTAMP);
 
 -- API keys for integrations
 CREATE TABLE api_keys (
