@@ -2,9 +2,15 @@
 
 Self-hosted photo gallery and sales platform for sports photographers.
 
-## Auto-Installers (Recommended) ⭐ Fastest & Easiest
+**Two separate install flows:**
+- **Local Development** (this page) — zero manual steps, auto-config, dummy data, local testing
+- **Production** (shared hosting, VPS) — manual config, real database, live deployment
 
-**One command handles everything: installs PHP, MySQL, runs setup wizard, starts server.**
+---
+
+## 🚀 Local Development (30 seconds, zero setup)
+
+**For testing and development only.** Auto-detects PHP/MySQL, generates config with dev defaults, seeds dummy data, starts the server.
 
 ### macOS
 ```bash
@@ -28,21 +34,34 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 .\install-windows.ps1
 ```
 
-**What happens:**
-- Auto-detects PHP, MySQL, Git (installs if missing)
-- Runs the interactive PHP setup wizard
-- Creates database automatically
-- Starts development server on http://localhost:8080
-- Opens browser to admin setup page
-- You create your admin account and start uploading
+**What happens automatically:**
+- Detects PHP and SQLite/MySQL
+- Generates `config/config.php` with dev defaults
+- Drops and recreates database schema
+- Seeds dummy data (1 event, 1 session, 10 photos)
+- Generates random admin password
+- Starts `php -S localhost:8000`
 
-See [QUICK-START.md](QUICK-START.md) for troubleshooting and detailed steps.
+**You get:**
+```
+Access the gallery: http://localhost:8000
+Admin email:        admin@localhost
+Admin password:     <printed to terminal>
+```
+
+That's it. Everything is configured. Change password, upload real photos, test features.
+
+**Notes:**
+- Emails logged to `storage/dev-emails.log` (not sent)
+- Rate limits raised 10x (no lockout during testing)
+- Dummy Stripe/SMTP config already set
+- Database is SQLite by default (no MySQL needed)
 
 ---
 
-## Universal Installer (Works Everywhere)
+## 📦 Production Installation
 
-**Works on Windows, Mac, Linux, shared hosting, VPS:**
+**For live servers:** shared hosting (IONOS, Bluehost, etc), VPS, or any real domain.
 
 ```bash
 git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
@@ -50,14 +69,17 @@ cd open-source-gallery
 php install.php
 ```
 
-The interactive installer will:
-- Check your environment (PHP version, extensions)
-- Ask for your database details (defaults provided)
-- Create database and import schema automatically
-- Generate secure config file
-- Tell you exactly what to do next
+The interactive installer:
+- Checks PHP version and extensions
+- Asks for database details (MySQL or SQLite on disk)
+- Creates database and runs migrations
+- Generates `config/config.php` with YOUR values (not dev defaults)
+- Shows you what to do next (add cron, enable HTTPS, etc)
 
-Then visit the URL it gives you and create your admin account. Done.
+**Then:**
+1. Visit your gallery URL
+2. Go to `/admin/setup` to create your admin account
+3. Add Stripe keys and configure email in Settings
 
 **Troubleshooting?** Run this anytime:
 ```bash
@@ -66,7 +88,11 @@ php verify-setup.php
 
 ---
 
-## Option 1: Docker (Fastest) ⭐ Alternative
+## Alternative: Docker or MAMP (Development Alternatives)
+
+For local development, you can also use:
+
+### Option 1: Docker (Fastest) ⭐ Alternative
 
 If you have Docker installed, this is all you need:
 
