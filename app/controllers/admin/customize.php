@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/customize.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_customize_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -27,8 +28,8 @@ function admin_customize_controller(PDO $pdo, array $config): void {
     $settings = get_customize_settings();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Validate CSRF token
-        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+        // Validate CSRF token (reusable, not one-time-use, for multi-action form)
+        if (!csrf_verify_reusable($_POST['csrf_token'] ?? null)) {
             $errors[] = 'Invalid security token. Please try again.';
         } elseif (isset($_POST['action']) && $_POST['action'] === 'reset') {
             // Handle reset action
@@ -107,10 +108,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
     $availableFonts = get_available_fonts();
     $cssOverrides = get_customize_css_overrides($settings);
 
-    // Generate CSRF token if not already in session
-    if (!isset($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
+    $csrfToken = csrf_token();
 
     if ($preview_mode === 'public') {
         // Load sample events for preview
@@ -140,7 +138,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             'cssOverrides' => $cssOverrides,
             'errors' => $errors,
             'success' => $success,
-            'csrfToken' => $_SESSION['csrf_token'],
+            'csrfToken' => $csrfToken,
         ]);
     }
 }

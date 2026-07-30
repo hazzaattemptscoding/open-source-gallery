@@ -13,7 +13,7 @@
 
 <main>
 <div class="error-page">
-  <div class="error-code">⏳</div>
+  <div class="error-code">●</div>
   <h1 class="error-title">Payment Pending</h1>
   <p class="error-description">Payment processing. Check your email for download links once confirmed.</p>
   <div class="error-actions">

@@ -12,7 +12,7 @@ require_once __DIR__ . '/partials/layout_header.php';
   <?php if (!empty($errors)): ?>
     <div class="error-box">
       <?php foreach ($errors as $err): ?>
-        <p>✗ <?= e($err) ?></p>
+        <p><strong>Error:</strong> <?= e($err) ?></p>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
