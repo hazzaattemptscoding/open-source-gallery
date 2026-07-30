@@ -6,6 +6,7 @@
 <title>Photos: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
+<link rel="stylesheet" href="/assets/css/admin-refined.css">
 </head>
 <body>
 <div class="dashboard">

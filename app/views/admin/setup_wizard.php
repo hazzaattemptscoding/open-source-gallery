@@ -9,6 +9,7 @@ declare(strict_types=1);
     <title>Setup Wizard — <?= htmlspecialchars($siteName) ?></title>
     <link rel="stylesheet" href="/assets/css/podium-ink.css">
     <link rel="stylesheet" href="/assets/css/admin.css">
+    <link rel="stylesheet" href="/assets/css/admin-refined.css">
 <link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>

@@ -395,7 +395,6 @@
 
 .session-select-row {
   margin: 2rem 0;
-  display: none;
   display: flex;
   gap: 1rem;
   align-items: center;

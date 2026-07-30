@@ -1,0 +1,524 @@
+/* PowerMedia admin — refinement layer.
+   Loads AFTER admin.css. Overrides by cascade order, not by !important.
+   Square corners are kept deliberately: the editorial world is sharp-cornered
+   and consistent across the existing sheet. This layer changes hierarchy,
+   not identity. */
+
+/* ---------------------------------------------------------------
+   1. Tokens
+   The five colours the admin customiser writes (--bg, --bg-alt,
+   --text, --text-muted, --border) are left alone so customisation
+   keeps working. Everything below derives from them or is new.
+   --------------------------------------------------------------- */
+
+:root {
+  --accent: oklch(0.520 0.185 318);
+  --accent-hover: oklch(0.455 0.190 318);
+  --accent-quiet: oklch(0.962 0.020 318);
+  --accent-text: oklch(0.985 0.005 315);
+
+  --divider: var(--border);
+  --divider-strong: color-mix(in oklch, var(--text) 18%, transparent);
+
+  --status-live: oklch(0.510 0.105 155);
+  --status-processing: oklch(0.560 0.130 250);
+  --status-failed: var(--error);
+  --status-idle: var(--text-muted);
+
+  --stack-tight: var(--space-4);
+  --stack: var(--space-6);
+  --stack-loose: var(--space-8);
+}
+
+/* ---------------------------------------------------------------
+   2. Weight discipline
+   Three levels only: 600 headings, 500 labels and controls, 400 body.
+   Previously labels, badges, icons and inline <strong> all sat at 600
+   and competed with the headings above them.
+   --------------------------------------------------------------- */
+
+.dashboard h1,
+.dashboard h2,
+.dashboard h3 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.dashboard h1 { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
+.dashboard h2 { font-size: var(--text-lg); }
+.dashboard h3 { font-size: var(--text-md); }
+
+.tag-input-group label,
+.session-select-row label,
+label {
+  font-weight: 500;
+}
+
+.checklist-item .icon,
+.photo-status-badge {
+  font-weight: 500;
+}
+
+/* Inline <strong> inside notices was doing a heading's job.
+   The notice container now carries the emphasis instead. */
+.job-drain-notice strong,
+.bulk-panel p strong {
+  font-weight: 500;
+}
+
+p, li, td {
+  text-wrap: pretty;
+}
+
+/* ---------------------------------------------------------------
+   3. Button hierarchy
+   admin.css defines five near-identical dark-filled buttons, so a
+   destructive write looks exactly like opening a file picker. These
+   rules keep the existing class names and markup, and separate them
+   into one accent action per view plus quiet secondaries.
+   --------------------------------------------------------------- */
+
+.btn-pill,
+.btn-choose,
+.btn-start-upload,
+.btn-add-tag,
+.btn-apply,
+.tag-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.7rem 1.25rem;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 140ms var(--ease-out),
+    border-color 140ms var(--ease-out),
+    color 140ms var(--ease-out),
+    transform 140ms var(--ease-out);
+}
+
+/* Committed actions — the one accent per screen */
+.btn-start-upload,
+.btn-apply {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-text);
+}
+
+.btn-start-upload:hover:not(:disabled),
+.btn-apply:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Supporting actions — quiet, outlined */
+.btn-pill,
+.btn-choose,
+.btn-add-tag {
+  background: transparent;
+  border: 1px solid var(--divider-strong);
+  color: var(--text);
+}
+
+.btn-pill:hover,
+.btn-choose:hover,
+.btn-add-tag:hover {
+  background: var(--bg-alt);
+  border-color: var(--text);
+}
+
+/* Destructive */
+.tag-remove-btn {
+  background: transparent;
+  border: 1px solid var(--divider-strong);
+  color: var(--error);
+  padding: 0.4rem 0.75rem;
+  font-size: var(--text-xs);
+}
+
+.tag-remove-btn:hover {
+  background: var(--error);
+  border-color: var(--error);
+  color: var(--bg);
+}
+
+.btn-pill:active,
+.btn-choose:active,
+.btn-start-upload:active,
+.btn-add-tag:active,
+.btn-apply:active,
+.tag-remove-btn:active {
+  transform: scale(0.97);
+}
+
+.btn-start-upload:disabled,
+.btn-apply:disabled,
+.btn-add-tag:disabled {
+  background: var(--bg-alt);
+  border-color: var(--divider);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------
+   4. Focus
+   admin.css only styles focus on one tag input. Everything else
+   relies on the UA default, which the flat palette nearly erases.
+   --------------------------------------------------------------- */
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tag-photo-thumb:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+   5. Separators and rhythm
+   The reported problem: stacked blocks with no boundary between
+   them. A hairline plus asymmetric spacing (more above a heading
+   than below it) does most of the work.
+   --------------------------------------------------------------- */
+
+.admin-section {
+  padding-top: var(--stack);
+  margin-top: var(--stack);
+  border-top: 1px solid var(--divider);
+}
+
+.admin-section:first-of-type {
+  padding-top: 0;
+  margin-top: var(--stack-tight);
+  border-top: none;
+}
+
+.admin-section > h2:first-child,
+.admin-section > h3:first-child {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+}
+
+.panel {
+  padding-top: var(--stack);
+  margin-top: var(--stack);
+  border-top: 1px solid var(--divider);
+}
+
+.panel:first-of-type {
+  border-top: none;
+  margin-top: var(--stack-tight);
+  padding-top: 0;
+}
+
+.panel h2 {
+  margin: 0 0 var(--space-4);
+}
+
+.dashboard > h1 + p {
+  color: var(--text-muted);
+  margin-bottom: var(--stack);
+}
+
+/* Section label: use above a group instead of a bold paragraph */
+.section-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+
+/* ---------------------------------------------------------------
+   6. Numbered step sequences
+   Only for genuinely ordered flows (choose session, then add files).
+   Do not use for unordered lists — the number would be decoration.
+   --------------------------------------------------------------- */
+
+.step {
+  padding-left: 2.25rem;
+  position: relative;
+  margin-bottom: var(--stack);
+}
+
+.step::before {
+  content: attr(data-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-quiet);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.step > .step-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+  line-height: 1.5rem;
+}
+
+/* ---------------------------------------------------------------
+   7. Notices and status
+   Replaces bold inline sentences with a tinted band that reads as
+   system state rather than as emphasised body copy.
+   --------------------------------------------------------------- */
+
+.job-drain-notice,
+.notice {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-quiet);
+  color: var(--accent);
+  border: none;
+  font-size: var(--text-sm);
+  margin: var(--stack-tight) 0;
+}
+
+.notice-warn {
+  background: color-mix(in oklch, var(--error) 8%, var(--bg));
+  color: var(--error);
+}
+
+.upload-file-status.status-done,
+.status-live { color: var(--status-live); }
+.upload-file-status.status-uploading,
+.status-processing { color: var(--status-processing); }
+.upload-file-status.status-error,
+.status-failed { color: var(--status-failed); }
+.upload-file-status.status-pending,
+.status-idle { color: var(--status-idle); }
+
+.photo-status-badge {
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+}
+
+/* ---------------------------------------------------------------
+   8. Lists, tables, panels
+   --------------------------------------------------------------- */
+
+.list-plain li {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.list-plain li:last-child {
+  border-bottom: none;
+}
+
+.list-plain a {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.list-plain a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--stack-tight);
+}
+
+.admin-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-bottom: 1px solid var(--divider-strong);
+}
+
+.admin-table td {
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-bottom: 1px solid var(--divider);
+  font-size: var(--text-sm);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table td:last-child,
+.admin-table th:last-child {
+  padding-right: 0;
+}
+
+.bulk-panel {
+  background: var(--bg-alt);
+  border: 1px solid var(--divider);
+  padding: var(--space-5);
+  margin: var(--stack) 0;
+}
+
+.bulk-panel h3 {
+  margin: 0 0 var(--space-2);
+}
+
+.bulk-panel > p:first-of-type {
+  margin-top: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Separate the reversible action from the committed one */
+.bulk-panel .btn-apply {
+  margin-top: var(--space-5);
+  padding-top: 0.7rem;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.bulk-actions .spacer {
+  flex: 1;
+}
+
+/* ---------------------------------------------------------------
+   9. Selection
+   --------------------------------------------------------------- */
+
+.tag-photo-thumb {
+  border: 1px solid var(--divider);
+  transition: border-color 140ms var(--ease-out);
+}
+
+.tag-photo-thumb:hover {
+  border-color: var(--text-muted);
+}
+
+.tag-photo-thumb.selected {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.admin-photo-thumb {
+  transition: transform 140ms var(--ease-out);
+}
+
+.admin-photo-thumb:active {
+  transform: scale(0.985);
+}
+
+/* ---------------------------------------------------------------
+   10. Upload zone
+   --------------------------------------------------------------- */
+
+.upload-zone {
+  border: 1px dashed var(--divider-strong);
+  background: transparent;
+  padding: var(--space-7);
+  margin: 0 0 var(--space-4);
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-quiet);
+}
+
+.upload-zone .hint {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.session-select-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.session-select-row select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.7rem;
+  border: 1px solid var(--divider-strong);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+/* ---------------------------------------------------------------
+   11. Accessibility
+   --------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+
+  .btn-pill:active,
+  .btn-choose:active,
+  .btn-start-upload:active,
+  .btn-add-tag:active,
+  .btn-apply:active,
+  .admin-photo-thumb:active {
+    transform: none;
+  }
+}
+
+@media (hover: none) {
+  .btn-pill:hover,
+  .btn-choose:hover,
+  .btn-add-tag:hover,
+  .upload-zone:hover {
+    background: transparent;
+    border-color: var(--divider-strong);
+  }
+}
+
+@media (max-width: 640px) {
+  .session-select-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .session-select-row .btn-start-upload {
+    width: 100%;
+  }
+
+  .admin-table th:nth-child(3),
+  .admin-table td:nth-child(3),
+  .admin-table th:nth-child(4),
+  .admin-table td:nth-child(4) {
+    display: none;
+  }
+}
