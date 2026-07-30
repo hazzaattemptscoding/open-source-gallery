@@ -1,115 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
+<?php
+$pageTitle = 'Settings';
+$currentPage = 'settings';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
+
 <style>
-body { background: var(--bg-alt); }
-
-.settings-header {
-  background: var(--bg);
-  padding: 2rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2rem;
-}
-
-.settings-header h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.settings-header p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.settings-wrapper {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  gap: 2rem;
-  padding: 0 2rem 2rem;
-}
-
-.settings-nav {
-  width: 200px;
-  flex-shrink: 0;
-}
-
-.settings-nav a {
-  display: block;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  color: var(--text-muted);
-  border-left: 3px solid transparent;
-  margin-bottom: 0.25rem;
-  transition: all 200ms var(--ease-out);
-  font-size: 0.95rem;
-}
-
-.settings-nav a:hover {
-  color: var(--text);
-  background: var(--bg-alt);
-}
-
-.settings-nav a.active {
-  color: var(--text);
-  font-weight: 600;
-  border-left-color: var(--text);
-  background: var(--bg);
-}
-
-.settings-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.mode-toggle {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 2rem;
-  background: var(--bg);
-  padding: 1rem;
-  border-radius: 3px;
-  border: 1px solid var(--border);
-}
-
-.mode-toggle button {
-  padding: 0.5rem 1rem;
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 160ms var(--ease-out);
-}
-
-.mode-toggle button:hover {
-  color: var(--text);
-  border-color: var(--text);
-}
-
-.mode-toggle button.active {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
-}
-
-.mode-toggle > span {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-left: auto;
-}
-
 .settings-section {
   background: var(--bg);
   margin-bottom: 2rem;
@@ -123,9 +18,9 @@ body { background: var(--bg-alt); }
   border-bottom: 1px solid var(--border);
 }
 
-.settings-section-title h3 {
+.settings-section-title h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -277,6 +172,60 @@ button.submit:active {
   font-size: 0.95rem;
 }
 
+.settings-breadcrumb {
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.settings-breadcrumb a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.settings-breadcrumb a:hover {
+  color: var(--text);
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: var(--bg);
+  padding: 1rem;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.mode-toggle button {
+  padding: 0.5rem 1rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 160ms var(--ease-out);
+}
+
+.mode-toggle button:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.mode-toggle button.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.mode-toggle > span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
 .cta-box {
   margin-top: 3rem;
   padding: 2rem;
@@ -299,36 +248,6 @@ button.submit:active {
 }
 
 @media (max-width: 900px) {
-  .settings-wrapper {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .settings-nav {
-    width: 100%;
-    display: flex;
-    gap: 0;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--border);
-    border-radius: 0;
-  }
-
-  .settings-nav a {
-    flex: 1;
-    padding: 0.75rem;
-    text-align: center;
-    border-left: none;
-    border-bottom: 3px solid transparent;
-    margin-bottom: 0;
-    white-space: nowrap;
-    font-size: 0.85rem;
-  }
-
-  .settings-nav a.active {
-    border-left: none;
-    border-bottom-color: var(--text);
-  }
-
   .setting-field {
     grid-template-columns: 1fr;
     gap: 0.5rem;
@@ -345,112 +264,102 @@ button.submit:active {
   }
 }
 </style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/admin" class="site-title">Settings</a>
-</header>
 
-<div class="settings-header">
-  <h1>Gallery Settings</h1>
-  <p>Customize your gallery, payment, email, and advanced configurations.</p>
+<h1>Settings: <?= e(get_category_label($category)) ?></h1>
+
+<div class="settings-breadcrumb">
+  <strong>Category:</strong>
+  <?php foreach ($categories as $cat): ?>
+    <?php if ($cat !== $categories[0]): ?> • <?php endif; ?>
+    <?php if ($category === $cat): ?>
+      <span><?= e(get_category_label($cat)) ?></span>
+    <?php else: ?>
+      <a href="/admin/settings/<?= e($cat) ?>"><?= e(get_category_label($cat)) ?></a>
+    <?php endif; ?>
+  <?php endforeach; ?>
 </div>
 
-<div class="settings-wrapper">
-  <nav class="settings-nav">
-    <?php foreach ($categories as $cat): ?>
-      <a href="?category=<?= $cat ?>&mode=<?= $mode ?>" class="<?= $category === $cat ? 'active' : '' ?>">
-        <?= e(get_category_label($cat)) ?>
-      </a>
-    <?php endforeach; ?>
-  </nav>
+<?php if ($success): ?>
+  <div class="success-msg">✓ Settings updated successfully</div>
+<?php endif; ?>
 
-  <div class="settings-main">
-    <?php if ($success): ?>
-      <div class="success-msg">✓ Settings updated successfully</div>
-    <?php endif; ?>
+<div class="mode-toggle">
+  <button class="<?= $mode === 'basic' ? 'active' : '' ?>" onclick="location.href='/admin/settings/<?= e($category) ?>?mode=basic'">
+    Basic Settings
+  </button>
+  <button class="<?= $mode === 'advanced' ? 'active' : '' ?>" onclick="location.href='/admin/settings/<?= e($category) ?>?mode=advanced'">
+    Advanced Settings
+  </button>
+  <?php if ($mode === 'advanced'): ?>
+    <span>⚠ Advanced settings may affect performance or security. Change carefully.</span>
+  <?php endif; ?>
+</div>
 
-    <div class="mode-toggle">
-      <button class="<?= $mode === 'basic' ? 'active' : '' ?>" onclick="location.href='?category=<?= $category ?>&mode=basic'">
-        Basic Settings
-      </button>
-      <button class="<?= $mode === 'advanced' ? 'active' : '' ?>" onclick="location.href='?category=<?= $category ?>&mode=advanced'">
-        Advanced Settings
-      </button>
-      <?php if ($mode === 'advanced'): ?>
-        <span>⚠ Advanced settings may affect performance or security. Change carefully.</span>
-      <?php endif; ?>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+  <div class="settings-section">
+    <div class="settings-section-title">
+      <h2><?= e(get_category_label($category)) ?></h2>
     </div>
 
-    <form method="post">
-      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
-      <div class="settings-section">
-        <div class="settings-section-title">
-          <h3><?= e(get_category_label($category)) ?></h3>
-        </div>
-
-        <?php if (empty($displaySettings)): ?>
-          <div class="empty-state">
-            No <?= $mode === 'advanced' ? 'advanced' : 'basic' ?> settings available in this category.
-          </div>
-        <?php else: ?>
-          <?php foreach ($displaySettings as $setting): ?>
-            <div class="settings-group">
-              <div class="setting-field">
-                <div class="setting-label">
-                  <h4>
-                    <?= e($setting['label']) ?>
-                    <?php if ($setting['is_advanced']): ?>
-                      <span class="advanced-badge">Advanced</span>
-                    <?php endif; ?>
-                  </h4>
-                  <?php if ($setting['description']): ?>
-                    <p><?= e($setting['description']) ?></p>
-                  <?php endif; ?>
-                </div>
-
-                <div class="setting-input">
-                  <?php if ($setting['type'] === 'boolean'): ?>
-                    <label>
-                      <input type="checkbox" name="setting_<?= e($setting['key_name']) ?>" value="1" <?= $setting['value'] === '1' ? 'checked' : '' ?>>
-                      Enable
-                    </label>
-                  <?php elseif ($setting['type'] === 'text'): ?>
-                    <textarea name="setting_<?= e($setting['key_name']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>"><?= e($setting['value']) ?></textarea>
-                  <?php else: ?>
-                    <input type="<?= $setting['type'] === 'email' ? 'email' : 'text' ?>" name="setting_<?= e($setting['key_name']) ?>" value="<?= e($setting['value']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>" <?= $setting['required'] ? 'required' : '' ?>>
-                  <?php endif; ?>
-
-                  <?php if ($setting['type'] === 'integer'): ?>
-                    <div class="setting-help">
-                      <strong>Format:</strong> Enter a number
-                    </div>
-                  <?php elseif ($setting['type'] === 'email'): ?>
-                    <div class="setting-help">
-                      <strong>Format:</strong> Valid email address (name@example.com)
-                    </div>
-                  <?php endif; ?>
-                </div>
-              </div>
-            </div>
-          <?php endforeach; ?>
-
-          <div class="settings-footer">
-            <button type="submit" class="submit">Save Changes</button>
-          </div>
-        <?php endif; ?>
+    <?php if (empty($displaySettings)): ?>
+      <div class="empty-state">
+        No <?= $mode === 'advanced' ? 'advanced' : 'basic' ?> settings available in this category.
       </div>
-    </form>
+    <?php else: ?>
+      <?php foreach ($displaySettings as $setting): ?>
+        <div class="settings-group">
+          <div class="setting-field">
+            <div class="setting-label">
+              <h4>
+                <?= e($setting['label']) ?>
+                <?php if ($setting['is_advanced']): ?>
+                  <span class="advanced-badge">Advanced</span>
+                <?php endif; ?>
+              </h4>
+              <?php if ($setting['description']): ?>
+                <p><?= e($setting['description']) ?></p>
+              <?php endif; ?>
+            </div>
 
-    <?php if ($mode === 'basic' && !empty(array_filter($allSettings, fn($s) => $s['is_advanced']))): ?>
-      <div class="cta-box">
-        <h3>Need more options?</h3>
-        <p>Switch to <strong>Advanced Settings</strong> above to access additional configuration options for power users.</p>
+            <div class="setting-input">
+              <?php if ($setting['type'] === 'boolean'): ?>
+                <label>
+                  <input type="checkbox" name="setting_<?= e($setting['key_name']) ?>" value="1" <?= $setting['value'] === '1' ? 'checked' : '' ?>>
+                  Enable
+                </label>
+              <?php elseif ($setting['type'] === 'text'): ?>
+                <textarea name="setting_<?= e($setting['key_name']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>"><?= e($setting['value']) ?></textarea>
+              <?php else: ?>
+                <input type="<?= $setting['type'] === 'email' ? 'email' : 'text' ?>" name="setting_<?= e($setting['key_name']) ?>" value="<?= e($setting['value']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>" <?= $setting['required'] ? 'required' : '' ?>>
+              <?php endif; ?>
+
+              <?php if ($setting['type'] === 'integer'): ?>
+                <div class="setting-help">
+                  <strong>Format:</strong> Enter a number
+                </div>
+              <?php elseif ($setting['type'] === 'email'): ?>
+                <div class="setting-help">
+                  <strong>Format:</strong> Valid email address (name@example.com)
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+
+      <div class="settings-footer">
+        <button type="submit" class="submit">Save Changes</button>
       </div>
     <?php endif; ?>
   </div>
-</div>
+</form>
 
-</body>
-</html>
+<?php if ($mode === 'basic' && !empty(array_filter($allSettings, fn($s) => $s['is_advanced']))): ?>
+  <div class="cta-box">
+    <h3>Need more options?</h3>
+    <p>Switch to <strong>Advanced Settings</strong> above to access additional configuration options for power users.</p>
+  </div>
+<?php endif; ?>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

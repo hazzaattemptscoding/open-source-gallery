@@ -69,7 +69,7 @@
         <span class="admin-nav-link-icon">🎨</span>
         <span>Customization</span>
       </a>
-      <a href="/admin/settings" class="admin-nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>">
+      <a href="/admin/settings/site" class="admin-nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>">
         <span class="admin-nav-link-icon">⚙️</span>
         <span>Settings</span>
       </a>

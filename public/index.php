@@ -243,11 +243,6 @@ switch ($path) {
         admin_orders_controller($pdo, $config);
         break;
 
-    case '/admin/settings':
-        require __DIR__ . '/../app/controllers/admin/settings.php';
-        admin_settings_controller($pdo, $config);
-        break;
-
     case '/admin/customize':
         require __DIR__ . '/../app/controllers/admin/customize.php';
         admin_customize_controller($pdo, $config);
@@ -374,7 +369,12 @@ switch ($path) {
         break;
 
     default:
-        if (strpos($path, '/admin/events') === 0) {
+        if (preg_match('#^/admin/settings(?:/([a-z_]+))?$#', $path, $m)) {
+            // Handle /admin/settings or /admin/settings/{category}
+            $_GET['category'] = $m[1] ?? 'site';
+            require __DIR__ . '/../app/controllers/admin/settings.php';
+            admin_settings_controller($pdo, $config);
+        } elseif (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';
             admin_events_controller($pdo, $config);
         } elseif (strpos($path, '/admin/sessions') === 0) {
