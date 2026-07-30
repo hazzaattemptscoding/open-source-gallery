@@ -134,27 +134,26 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
 
     $files = [];
     foreach ($items as $item) {
-        $photoId = (int)($item['photo_id'] ?? 0);
-        if (!$photoId) {
-            continue;
-        }
+        $photoIds = resolve_order_item_photo_ids($pdo, $item);
 
-        $stmt = $pdo->prepare('SELECT event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?');
-        $stmt->execute([$photoId]);
-        $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+        foreach ($photoIds as $photoId) {
+            $stmt = $pdo->prepare('SELECT event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?');
+            $stmt->execute([$photoId]);
+            $photo = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($photo) {
-            $eventId = (int)$photo['event_id'];
-            $token = (string)$photo['public_token'];
-            $ext = (string)($photo['file_extension'] ?? 'jpg');
-            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
+            if ($photo) {
+                $eventId = (int)$photo['event_id'];
+                $token = (string)$photo['public_token'];
+                $ext = (string)($photo['file_extension'] ?? 'jpg');
+                $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
 
-            if (file_exists($filePath)) {
-                $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
-                $files[] = [
-                    'path' => $filePath,
-                    'name' => $filename,
-                ];
+                if (file_exists($filePath)) {
+                    $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
+                    $files[] = [
+                        'path' => $filePath,
+                        'name' => $filename,
+                    ];
+                }
             }
         }
     }
@@ -180,8 +179,24 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
         return false;
     }
 
+    // Same collision handling as download.php's on-demand stream_zip():
+    // bundles routinely contain photos with identical original_filename
+    // values (e.g. every export from the same camera session named
+    // "IMG_0001.jpg"), and ZipArchive::addFile() silently overwrites an
+    // existing entry of the same name rather than erroring, so without
+    // this a pre-built bundle zip can quietly contain fewer files than
+    // the order actually paid for.
+    $nameCount = [];
     foreach ($files as $file) {
-        $zip->addFile($file['path'], $file['name']);
+        $name = $file['name'];
+        $nameCount[$name] = ($nameCount[$name] ?? 0) + 1;
+
+        if ($nameCount[$name] > 1) {
+            $pathInfo = pathinfo($name);
+            $name = $pathInfo['filename'] . '_' . $nameCount[$name] . '.' . ($pathInfo['extension'] ?? '');
+        }
+
+        $zip->addFile($file['path'], $name);
     }
 
     $zip->close();
