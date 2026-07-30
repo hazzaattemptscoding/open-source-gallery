@@ -486,8 +486,14 @@ button:disabled,
 .hero {
   position: relative;
   width: 100%;
-  height: 50vh;
-  min-height: 350px;
+  /* CLAUDE.md's product rule: "Gallery pages open with a full-screen hero
+     photo" — this was 50vh (40vh on mobile), a banner, not a full-screen
+     opening. 100dvh accounts for mobile browser chrome (address bar, etc)
+     shrinking the viewport after scroll; 100vh is the fallback for
+     browsers without dynamic-viewport-unit support. */
+  height: 100vh;
+  height: 100dvh;
+  min-height: 480px;
   background: var(--bg-alt);
   display: flex;
   align-items: flex-end;
@@ -536,6 +542,31 @@ button:disabled,
   margin: 0 0 1rem;
   font-size: clamp(1.75rem, 5vw, 2.5rem);
   letter-spacing: -0.03em;
+}
+
+.hero-search-box {
+  max-width: 500px;
+}
+
+.hero-search-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.hero-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.hero-search-input:focus {
+  outline: 1px solid var(--text);
+  outline-offset: -1px;
 }
 
 .hero-details {
@@ -652,35 +683,6 @@ body.lightbox-open {
 
 .clear-filters:hover {
   color: var(--text);
-}
-
-/* Search */
-
-.search-box {
-  padding: 1.5rem 2rem;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-}
-
-.search-input {
-  width: 100%;
-  max-width: 500px;
-  padding: 0.75rem;
-  font-size: 0.95rem;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-family: inherit;
-  border-radius: 4px;
-}
-
-.search-input::placeholder {
-  color: var(--text-muted);
-}
-
-.search-input:focus {
-  outline: 1px solid var(--text);
-  outline-offset: -1px;
 }
 
 /* Search results page */
@@ -1335,8 +1337,9 @@ body.lightbox-open {
   }
 
   .hero {
-    height: 40vh;
-    min-height: 280px;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 420px;
   }
 
   .cart-page {

@@ -20,6 +20,9 @@
   <div class="hero-overlay">
     <span class="hero-eyebrow">Event Gallery</span>
     <h1 class="hero-title"><?= e($event['title']) ?></h1>
+    <div class="hero-search-box">
+      <input type="text" id="searchInput" class="hero-search-input" placeholder="Search by name, number, or class...">
+    </div>
   </div>
 </section>
 
@@ -82,11 +85,6 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
   <?php endif; ?>
 </form>
 <?php endif; ?>
-
-<!-- Search box (prominent) -->
-<div class="search-box">
-  <input type="text" id="searchInput" class="search-input" placeholder="Search by name, number, or class...">
-</div>
 
 <main id="photos">
   <!-- Photo grid with empty state -->

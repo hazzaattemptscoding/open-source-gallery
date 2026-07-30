@@ -73,6 +73,17 @@ photoGrid.addEventListener('click', (e) => {
     addToCart('photo', parseInt(cartBtn.dataset.photoId, 10), cartBtn);
     return;
   }
+  // The empty-state's "Clear filters" button, when this grid was populated
+  // by the /api/photos AJAX fragment rather than a full page load: the
+  // fragment has no server-rendered $basePath to inline into an onclick,
+  // so it reads the same data-base-path the filter form already carries
+  // (see the progressive-enhancement filter handler below) instead.
+  const resetBtn = e.target.closest('[data-reset-filters]');
+  if (resetBtn) {
+    const basePath = filterForm ? filterForm.dataset.basePath : '/';
+    window.location.href = basePath || '/';
+    return;
+  }
   const thumb = e.target.closest('.photo-thumb');
   if (thumb) {
     openLightbox(parseInt(thumb.dataset.index, 10));
