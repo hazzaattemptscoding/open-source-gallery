@@ -500,9 +500,41 @@ single-tenant app by explicit product design; flagged for `docs/
 v2-plan.md` as a decision to revisit only if multi-tenant use is ever in
 scope.
 
-### Still pending in this pass
+## Manual end-to-end verification
 
-- Write `docs/v2-plan.md` (Part 2 of this task).
-- Manual end-to-end Stripe test-mode checkout to confirm a receipt email
-  actually arrives — the one claim that was completely false before this
-  pass, warranting a check beyond the automated test suite.
+`docs/v2-plan.md` is written (see that file for Part 2). Full test suite:
+55/55 passing.
+
+**Real Stripe test-mode checkout was not possible in this environment.**
+No Stripe test keys are configured, and this sandbox's outbound proxy
+returns 403 on a tunnel to `api.stripe.com` (confirmed by direct `curl`).
+Stating this plainly rather than skipping the check silently: a genuine
+live-Stripe round-trip needs to happen on the maintainer's own dev
+environment before this branch is treated as fully verified end to end.
+
+What was verified instead, directly against the real production code
+(not a test double): a full manual run of `create_order()` ->
+`mark_order_paid()` -> `send_receipt_email()` -> `render_receipt_email()`
+-> the real `mail()` transport, with a `sendmail_path` stub capturing the
+actual outgoing message. The rendered email contained real order data
+(order token, line item description, price, total, working download
+link) confirming the receipt pipeline Part 1 built genuinely produces a
+deliverable email, not just a passing unit test.
+
+**Found by this manual run, not by the automated suite:**
+`send_email_mail_fallback()` (`app/lib/mailer.php`) built the `From`
+header as `'noreply@' . parse_url($_SERVER['HTTP_HOST'] ?? 'localhost',
+PHP_URL_HOST)`. `parse_url()` returns `null` for any bare hostname, with
+or without a scheme, so this always produced `From: noreply@` with an
+empty domain, on every live request and every cron-driven send (cron has
+no `HTTP_HOST` at all). It also ignored `smtp.from_email` entirely, the
+config value self-hosters are told to set. Most receiving mail servers
+reject or spam-filter a `From` address with no domain, so `mail()`
+fallback installs (the zero-config default for anyone who skips SMTP
+setup) were silently undeliverable in exactly the same failure shape as
+the pre-fix missing send functions: `mail()` returns `true`, nothing
+looks wrong, nothing arrives. Fixed: the header now uses
+`smtp.from_email` when set, and falls back to the request's real
+`HTTP_HOST` (stripped of port) or the machine hostname, never an empty
+domain. Split into a testable `build_mail_fallback_headers()` function,
+tests added.
