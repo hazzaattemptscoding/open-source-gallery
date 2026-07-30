@@ -22,7 +22,7 @@ Phase 2's attack-surface, sink, credential, and collection-scoping
 inventories were built by direct code reading rather than the skill's
 automated `phase-02-surface.md` sub-agent procedure. No external SAST/SCA/
 secret scanners were available in this environment (Phase 4 ran in
-degraded mode — see `.claude-audit/current/phase-04-scanners/status.json`).
+degraded mode, see `.claude-audit/current/phase-04-scanners/status.json`).
 
 **What this means for the reader:** the findings below are real and were
 verified against actual source (not sampled or guessed), but a clean
@@ -42,7 +42,7 @@ path. INFO = code smell, not a vulnerability.
 
 ## Findings fixed during this run
 
-### SEC-01 (HIGH) — API collection-scoping gap
+### SEC-01 (HIGH): API collection-scoping gap
 `app/lib/api.php:89,111`. `api_get_photos()`/`api_get_photo()` filtered on
 `photos.status='live'` but never checked `events.is_published`, unlike
 every other read path in the app (`event.php`, `search.php`). An API key
@@ -50,11 +50,11 @@ holder could read metadata for photos belonging to events the admin has
 not published yet. Fixed: both queries now require
 `events.is_published = 1`. Test: `tests/integration/ApiPhotosScopeTest.php`.
 
-### SEC-02 (HIGH) — CSRF verification discarded or absent
+### SEC-02 (HIGH): CSRF verification discarded or absent
 Two related bugs across nine admin controllers:
 - `events.php`, `migrations.php`, `photos.php`, `sessions.php` called
   `csrf_verify()` but discarded its boolean return. A wrong or missing
-  token never actually blocked the mutation — the code read as protected
+  token never actually blocked the mutation: the code read as protected
   but wasn't.
 - `admins.php`, `bulk.php`, `settings.php`, `watermarks.php`,
   `upload.php` never called `csrf_verify()` at all.
@@ -67,19 +67,19 @@ everywhere else, so a new `csrf_verify_reusable()` was added alongside the
 existing one-time-use `csrf_verify()` rather than loosening it globally.
 Test: `tests/integration/CsrfProtectionTest.php`.
 
-### SEC-03 (INFO) — dead column caused the API to fail closed
+### SEC-03 (INFO): dead column caused the API to fail closed
 `app/lib/api.php:108` (pre-fix). `api_get_photo()`'s SELECT list included
 `p.description`, a column that exists on `order_items` (a price/receipt
 snapshot) but not on `photos`. Every call threw inside the surrounding
-`try/catch` and returned `null` — not a security defect (it fails closed),
-but it means the single-photo API endpoint has never returned data for any
+`try/catch` and returned `null` (not a security defect, since it fails
+closed), but it means the single-photo API endpoint has never returned data for any
 photo, published or not, and the `is_published` gate above had never
 actually executed successfully in production. Fixed by removing the bogus
 column. Caught by the same test that verified SEC-01's fix.
 
 ## Findings deferred (MEDIUM/LOW/INFO, logged per the governing plan's fix-order rule)
 
-### SEC-04 (MEDIUM) — rate limiter TOCTOU race
+### SEC-04 (MEDIUM): rate limiter TOCTOU race
 `app/lib/rate_limit.php:16-55`. `check_rate_limit()`'s read (`SELECT
 hits`) and increment (`UPDATE hits = hits + 1`) are separate, unlocked
 statements. Concurrent requests against the same bucket can all read
@@ -89,7 +89,7 @@ buckets. Requires an attacker to fire genuinely concurrent requests, not
 sequential ones. Fix shape: `UPDATE rate_limits SET hits = hits + 1 WHERE
 bucket=? AND rl_key=? AND hits < ?` and branch on `rowCount()`.
 
-### SEC-05 (LOW) — webhook can double-queue jobs on overlapping delivery
+### SEC-05 (LOW): webhook can double-queue jobs on overlapping delivery
 `app/lib/orders.php:110-118`, `app/controllers/webhook/stripe.php:39-45`.
 `mark_order_paid()` queues receipt/zip jobs whenever its `UPDATE`
 matches a row, not whenever that row was actually still `pending`. Two
@@ -100,19 +100,19 @@ overlapping Stripe deliveries landing before the first request's
 stops it shortly after). Fix shape: make the `UPDATE` conditional on
 `WHERE id=? AND status != 'paid'` and only queue jobs when it matched.
 
-### SEC-06 (INFO) — TOTP secret stored in plaintext
-`app/lib/auth.php:44`. Standard for TOTP — the server must hold the raw
+### SEC-06 (INFO): TOTP secret stored in plaintext
+`app/lib/auth.php:44`. Standard for TOTP: the server must hold the raw
 secret to compute codes, there's no one-way-hash alternative. Flagged as
 a defense-in-depth note: a DB dump gives full TOTP forgery for that admin.
 
-### SEC-07 (INFO) — Stripe TLS verification relies on curl defaults
+### SEC-07 (INFO): Stripe TLS verification relies on curl defaults
 `app/lib/stripe.php:89-100`. `CURLOPT_SSL_VERIFYPEER`/`VERIFYHOST` are
-never set explicitly. No live exposure — PHP-curl's compiled-in defaults
-verify peer and host — but a future refactor or a copy-pasted "disable
+never set explicitly. No live exposure today (PHP-curl's compiled-in
+defaults verify peer and host), but a future refactor or a copy-pasted "disable
 SSL for testing" edit could silently regress this. Recommend setting both
 explicitly as a regression guard.
 
-### SEC-08 (LOW) — no lockfile pin for optional dependencies
+### SEC-08 (LOW): no lockfile pin for optional dependencies
 `composer.json`. `phpseclib`/`phpmailer` are `suggest`-only and `vendor/`
 is correctly gitignored, but there's no `composer.lock` pinning the
 version a self-hoster's `composer require` resolves to. Low impact:
@@ -124,7 +124,7 @@ verified version in INSTALL.md.
 - Admin auth: decoy-hash timing defense, dual rate-limit buckets checked
   before Argon2id verification, TOTP replay protection, session
   regeneration on login, session destruction on logout.
-- CSRF token generation/comparison itself (HMAC via `hash_equals`) — the
+- CSRF token generation/comparison itself (HMAC via `hash_equals`): the
   bug was in call sites not checking the result, not in the primitive.
 - Cart cookie: HMAC-signed, IDs only, prices always re-read from DB
   server-side, correctly CSRF-exempt.
@@ -135,7 +135,7 @@ verified version in INSTALL.md.
   `getimagesize()`'s embedded type), not extension-only.
 - Security headers (CSP, X-Frame-Options, X-Content-Type-Options,
   Referrer-Policy, HSTS) applied once at the top of both front
-  controllers, before routing — every dispatched response inherits them.
+  controllers, before routing: every dispatched response inherits them.
 - `display_errors` forced off in production bootstrap.
 - `config/` and `storage/` both `Require all denied` via `.htaccess`.
 - No SQL injection, command injection, or unsafe deserialization found
@@ -146,7 +146,7 @@ verified version in INSTALL.md.
 - Row/collection scoping: this is a single-admin, single-tenant
   application by explicit product design (no customer accounts). Admin
   controllers gate on `require_admin()` with no per-row ownership check,
-  which is correct here — there is no second admin's data to leak from.
+  which is correct here: there is no second admin's data to leak from.
   Multi-admin mode shares full access by design; `audit_log` records
   which admin acted, it does not partition data. Flagged for `docs/
   v2-plan.md` as a decision to revisit only if multi-tenant/agency use is
@@ -160,12 +160,12 @@ and `findings.sarif`). Gate: **pass**.
 
 ## Next steps
 
-1. Fix SEC-04 (rate-limit race) — small, well-scoped, worth doing even
+1. Fix SEC-04 (rate-limit race): small, well-scoped, worth doing even
    though it's MEDIUM, since it sits on the login/TOTP brute-force
    control.
 2. Fix SEC-05 (webhook double-queue) opportunistically alongside other
    `orders.php` work.
 3. Schedule a full-budget run of this skill (12 categories x top-8
    partitions) before the actual v2 build starts, once sub-agent capacity
-   allows — this run's reduced scope should not be treated as a
-   substitute for that.
+   allows. This run's reduced scope should not be treated as a substitute
+   for that.
