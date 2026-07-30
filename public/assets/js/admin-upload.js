@@ -39,7 +39,6 @@ function handleFiles(files) {
   if (!files.length) return;
 
   selectedFiles = files;
-  document.getElementById('sessionSelect').style.display = 'block';
   displayFiles(selectedFiles);
 }
 
@@ -67,7 +66,6 @@ function startUpload() {
     return;
   }
 
-  document.getElementById('sessionSelect').style.display = 'none';
   initBatch();
 }
 

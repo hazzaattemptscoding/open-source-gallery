@@ -83,7 +83,12 @@
   margin: 0;
 }
 
-.checklist-item {
+/* Scoped to .setup-checklist: .checklist-item is reused unscoped by the
+   setup wizard's own .checklist wrapper further down this file with a
+   different layout (top-aligned icon+title+description column, not this
+   centered icon+label row) — unscoped rules here would silently override
+   each other by source order since both target the same class name. */
+.setup-checklist .checklist-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -91,7 +96,7 @@
   font-size: 0.95rem;
 }
 
-.checklist-item .icon {
+.setup-checklist .checklist-item .icon {
   display: inline-block;
   width: 20px;
   text-align: center;
@@ -390,7 +395,6 @@
 
 .session-select-row {
   margin: 2rem 0;
-  display: none;
   display: flex;
   gap: 1rem;
   align-items: center;
@@ -658,7 +662,7 @@
   height: 8px;
   border-radius: 50%;
   background: #e0e0e0;
-  transition: all 200ms ease-out;
+  transition: background 200ms ease-out, width 200ms ease-out, border-radius 200ms ease-out;
 }
 
 .progress-dot.active {
@@ -707,7 +711,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 500;
-  transition: all 160ms ease-out;
+  transition: background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out;
   background: #fff;
 }
 
@@ -733,7 +737,7 @@
   border: 1px solid #d0d0d0;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 160ms ease-out;
+  transition: border-color 160ms ease-out, background 160ms ease-out, box-shadow 160ms ease-out;
 }
 
 .mode-option:hover {
@@ -809,7 +813,7 @@
   color: #333;
 }
 
-.checklist-item {
+.checklist .checklist-item {
   display: flex;
   gap: 12px;
   padding: 12px 0;
@@ -1132,10 +1136,6 @@
   text-transform: uppercase;
   margin-bottom: 1rem;
   color: var(--text-muted);
-}
-
-.form-group {
-  margin-bottom: 1rem;
 }
 
 .color-group {

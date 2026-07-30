@@ -47,4 +47,4 @@ require_once __DIR__ . '/../partials/layout_header.php';
   </form>
 </div>
 
-<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>
+<?php require_once __DIR__ . '/../partials/layout_footer.php'; ?>

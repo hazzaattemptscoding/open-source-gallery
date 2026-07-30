@@ -31,7 +31,7 @@ function format_bytes(int $bytes): string {
 
 function format_duration(int $seconds): string {
     if ($seconds < 60) {
-        return "${seconds}s";
+        return "{$seconds}s";
     }
     if ($seconds < 3600) {
         return (int)($seconds / 60) . 'm';

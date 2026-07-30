@@ -56,4 +56,4 @@ require_once __DIR__ . '/../partials/layout_header.php';
 </div>
 <script src="/assets/js/admin-common.js" defer></script>
 
-<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>
+<?php require_once __DIR__ . '/../partials/layout_footer.php'; ?>

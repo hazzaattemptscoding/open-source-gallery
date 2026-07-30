@@ -6,6 +6,7 @@
 <title><?= e($pageTitle ?? 'Admin') ?> — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
+<link rel="stylesheet" href="/assets/css/admin-refined.css">
 <link rel="stylesheet" href="/api/styles.css">
 <?= isset($extraStyles) ? $extraStyles : '' ?>
 </head>
@@ -97,10 +98,6 @@
       <a href="/admin/admins" class="admin-nav-link <?= $currentPage === 'admins' ? 'active' : '' ?>">
         <span class="admin-nav-link-icon"></span>
         <span>Admin users</span>
-      </a>
-      <a href="/admin/my-sessions" class="admin-nav-link <?= $currentPage === 'my-sessions' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>My Sessions</span>
       </a>
     </nav>
 

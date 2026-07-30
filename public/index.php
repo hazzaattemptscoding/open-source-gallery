@@ -19,10 +19,6 @@ if ($bootstrapError) {
 
 require __DIR__ . '/../app/lib/session.php';
 require __DIR__ . '/../app/lib/view.php';
-require __DIR__ . '/../app/lib/seeder.php';
-
-// Auto-seed test data on first run (dev-friendly)
-seed_test_data($pdo);
 
 session_start_secure();
 
@@ -256,11 +252,6 @@ switch ($path) {
     case '/admin/audit-log':
         require __DIR__ . '/../app/controllers/admin/audit_log.php';
         admin_audit_log_controller($pdo, $config);
-        break;
-
-    case '/admin/my-sessions':
-        require __DIR__ . '/../app/controllers/admin/my_sessions.php';
-        admin_my_sessions_controller($pdo, $config);
         break;
 
     case '/admin/health':

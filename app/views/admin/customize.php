@@ -72,6 +72,16 @@ require_once __DIR__ . '/partials/layout_header.php';
             <input type="color" id="border" name="border" value="<?= e($settings['border'] ?? '#eaeaea') ?>">
             <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Lines, borders, separators</small>
           </div>
+          <div class="color-input-wrapper">
+            <label for="accent">Accent</label>
+            <input type="color" id="accent" name="accent" value="<?= e($settings['accent'] ?? '#933bac') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Add to cart, checkout, focus rings, selection</small>
+          </div>
+          <div class="color-input-wrapper">
+            <label for="accent_hover">Accent (hover)</label>
+            <input type="color" id="accent_hover" name="accent_hover" value="<?= e($settings['accent_hover'] ?? '#802199') ?>">
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Accent buttons on hover/press</small>
+          </div>
         </div>
       </div>
 

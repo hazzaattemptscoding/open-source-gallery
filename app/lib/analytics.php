@@ -7,45 +7,43 @@
 declare(strict_types=1);
 
 /**
- * Get dashboard summary metrics for a date range.
+ * Get dashboard summary metrics: all-time totals alongside a trailing
+ * 30-day window, so the admin can see both "the business overall" and
+ * "what's happened lately" side by side. average_order_value is computed
+ * from the all-time totals (a single stable number reads better next to
+ * the two windowed pairs than a rolling 30-day average would).
  */
-function get_dashboard_metrics(PDO $pdo, ?string $dateStart = null, ?string $dateEnd = null): array {
-    if (!$dateStart) $dateStart = date('Y-m-d', strtotime('-30 days'));
-    if (!$dateEnd) $dateEnd = date('Y-m-d');
-
-    // Total revenue in period
+function get_dashboard_metrics(PDO $pdo): array {
     $stmt = $pdo->prepare('
-        SELECT SUM(total_pence) as total_revenue, COUNT(*) as order_count
+        SELECT SUM(total_pence) as revenue, COUNT(*) as orders
         FROM orders
-        WHERE status IN (?, ?) AND DATE(paid_at) BETWEEN ? AND ?
+        WHERE status IN (?, ?)
     ');
-    $stmt->execute(['paid', 'partial_refund', $dateStart, $dateEnd]);
-    $revenue = $stmt->fetch(PDO::FETCH_ASSOC) ?? ['total_revenue' => 0, 'order_count' => 0];
+    $stmt->execute(['paid', 'partial_refund']);
+    $allTime = $stmt->fetch(PDO::FETCH_ASSOC) ?? ['revenue' => 0, 'orders' => 0];
 
-    // Average order value
-    $aov = $revenue['order_count'] > 0 ? (int)($revenue['total_revenue'] ?? 0) / $revenue['order_count'] : 0;
-
-    // Top photo (by purchase count)
+    $thirtyDaysAgo = date('Y-m-d', strtotime('-30 days'));
     $stmt = $pdo->prepare('
-        SELECT p.id, p.public_token, COUNT(*) as purchase_count
-        FROM order_items oi
-        JOIN photos p ON oi.photo_id = p.id
-        JOIN orders o ON oi.order_id = o.id
-        WHERE DATE(o.paid_at) BETWEEN ? AND ?
-        GROUP BY p.id
-        ORDER BY purchase_count DESC
-        LIMIT 1
+        SELECT SUM(total_pence) as revenue, COUNT(*) as orders
+        FROM orders
+        WHERE status IN (?, ?) AND DATE(paid_at) >= ?
     ');
-    $stmt->execute([$dateStart, $dateEnd]);
-    $topPhoto = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->execute(['paid', 'partial_refund', $thirtyDaysAgo]);
+    $last30Days = $stmt->fetch(PDO::FETCH_ASSOC) ?? ['revenue' => 0, 'orders' => 0];
+
+    $allTimeOrders = (int)($allTime['orders'] ?? 0);
+    $allTimeRevenue = (int)($allTime['revenue'] ?? 0);
+    $avgOrderValue = $allTimeOrders > 0 ? (int)round($allTimeRevenue / $allTimeOrders) : 0;
+
+    $photosLive = (int)$pdo->query("SELECT COUNT(*) FROM photos WHERE status = 'live'")->fetchColumn();
 
     return [
-        'total_revenue_pence' => (int)($revenue['total_revenue'] ?? 0),
-        'order_count' => (int)($revenue['order_count'] ?? 0),
-        'average_order_value_pence' => (int)$aov,
-        'top_photo' => $topPhoto,
-        'date_start' => $dateStart,
-        'date_end' => $dateEnd,
+        'all_time_revenue' => $allTimeRevenue,
+        'all_time_orders' => $allTimeOrders,
+        'last_30_days_revenue' => (int)($last30Days['revenue'] ?? 0),
+        'last_30_days_orders' => (int)($last30Days['orders'] ?? 0),
+        'avg_order_value' => $avgOrderValue,
+        'photos_live' => $photosLive,
     ];
 }
 
@@ -55,11 +53,11 @@ function get_dashboard_metrics(PDO $pdo, ?string $dateStart = null, ?string $dat
 function get_revenue_trend(PDO $pdo, int $days = 30): array {
     $startDate = date('Y-m-d', strtotime("-{$days} days"));
     $stmt = $pdo->prepare('
-        SELECT DATE(paid_at) as date, SUM(total_pence) as revenue_pence, COUNT(*) as order_count
+        SELECT DATE(paid_at) as period, SUM(total_pence) as revenue_pence, COUNT(*) as order_count
         FROM orders
         WHERE status IN (?, ?) AND DATE(paid_at) >= ?
         GROUP BY DATE(paid_at)
-        ORDER BY date ASC
+        ORDER BY period ASC
     ');
     $stmt->execute(['paid', 'partial_refund', $startDate]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -115,23 +113,29 @@ function get_customer_cohorts(PDO $pdo): array {
  */
 function get_top_photos(PDO $pdo, string $metric = 'purchases', int $limit = 10): array {
     if ($metric === 'purchases') {
+        // times_sold/units_sold differ only when a line item's quantity is
+        // >1 (not currently possible for photos, but order_items.quantity
+        // exists for that case) — keeping both distinct rather than
+        // assuming they're always equal.
         $stmt = $pdo->prepare('
-            SELECT p.id, p.public_token, e.title as event_title, COUNT(*) as metric_value
+            SELECT p.id, p.public_token, p.original_filename, e.title as event_title,
+                   COUNT(*) as times_sold, SUM(oi.quantity) as units_sold, SUM(oi.line_total_pence) as revenue_pence
             FROM order_items oi
             JOIN photos p ON oi.photo_id = p.id
             JOIN events e ON p.event_id = e.id
             WHERE p.status = ?
             GROUP BY p.id
-            ORDER BY metric_value DESC
+            ORDER BY revenue_pence DESC
             LIMIT ?
         ');
         $stmt->execute(['live', $limit]);
     } elseif ($metric === 'views') {
         $stmt = $pdo->prepare('
-            SELECT id, public_token, title as event_title, views
-            FROM photos
-            WHERE status = ?
-            ORDER BY views DESC
+            SELECT p.id, p.public_token, p.original_filename, e.title as event_title, p.view_count
+            FROM photos p
+            JOIN events e ON p.event_id = e.id
+            WHERE p.status = ?
+            ORDER BY p.view_count DESC
             LIMIT ?
         ');
         $stmt->execute(['live', $limit]);
@@ -146,8 +150,12 @@ function get_top_photos(PDO $pdo, string $metric = 'purchases', int $limit = 10)
  * Get sales by event (revenue breakdown per event).
  */
 function get_sales_by_event(PDO $pdo): array {
+    // Sums oi.line_total_pence (each item's own value), not o.total_pence:
+    // an order can span multiple events, and summing the order's full total
+    // once per joined item row would attribute the whole order to every
+    // event it touches instead of each event's actual share.
     $stmt = $pdo->prepare('
-        SELECT e.id, e.title, COUNT(DISTINCT o.id) as order_count, SUM(oi.quantity) as item_count, SUM(o.total_pence) as revenue_pence
+        SELECT e.id, e.title, COUNT(DISTINCT o.id) as order_count, SUM(oi.quantity) as item_count, SUM(oi.line_total_pence) as revenue_pence
         FROM order_items oi
         JOIN photos p ON oi.photo_id = p.id
         JOIN events e ON p.event_id = e.id

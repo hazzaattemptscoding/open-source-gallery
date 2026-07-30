@@ -111,6 +111,8 @@ function get_customize_css_overrides(array $settings): string {
         'bg' => '--bg',
         'bg_alt' => '--bg-alt',
         'border' => '--border',
+        'accent' => '--accent',
+        'accent_hover' => '--accent-hover',
     ];
 
     foreach ($colorMappings as $key => $varName) {
@@ -155,7 +157,7 @@ function get_customize_css_overrides(array $settings): string {
         for ($i = 1; $i <= 8; $i++) {
             $baseValue = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4][$i - 1];
             $newValue = $baseValue * $multiplier;
-            $css .= "  --space-$i: ${newValue}rem;\n";
+            $css .= "  --space-$i: {$newValue}rem;\n";
         }
         $css .= "}\n\n";
     }

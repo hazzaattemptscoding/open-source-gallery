@@ -20,8 +20,8 @@ const UIFeedback = {
     document.body.appendChild(toast);
 
     setTimeout(() => {
-      toast.style.animation = 'slideUpIn 400ms cubic-bezier(0.23, 1, 0.32, 1) reverse';
-      setTimeout(() => toast.remove(), 400);
+      toast.style.animation = 'slideUpIn 180ms cubic-bezier(0.23, 1, 0.32, 1) reverse';
+      setTimeout(() => toast.remove(), 180);
     }, duration);
   },
 

@@ -57,7 +57,7 @@ function admin_customize_controller(PDO $pdo, array $config): void {
             $formData['site_name'] = trim($_POST['site_name'] ?? '');
 
             // Validate and sanitize colors (hex format)
-            $colorFields = ['text', 'text_muted', 'bg', 'bg_alt', 'border'];
+            $colorFields = ['text', 'text_muted', 'bg', 'bg_alt', 'border', 'accent', 'accent_hover'];
             foreach ($colorFields as $field) {
                 $value = trim($_POST[$field] ?? '');
                 if ($value && !preg_match('/^#[0-9a-fA-F]{6}$/', $value)) {

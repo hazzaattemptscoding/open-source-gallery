@@ -10,14 +10,29 @@
  */
 
 :root {
-  /* Color palette */
-  --bg: #ffffff;
-  --bg-alt: #f7f6f3;
-  --text: #111111;
-  --text-muted: #5c5a56;
-  --border: #eaeaea;
-  --error: #9f2f2d;
-  --success: #346538;
+  /* ---- Chrome: purple at low chroma. Reads as tinted ink, not "purple". ---- */
+  --bg:         oklch(0.993 0.003 315);
+  --bg-alt:     oklch(0.971 0.008 315);
+  --text:       oklch(0.205 0.021 315);
+  --text-muted: oklch(0.520 0.023 315);
+  --border:     oklch(0.918 0.009 315);
+
+  /* ---- Action: the one saturated note. Never decorative. ---- */
+  --accent:       oklch(0.520 0.185 318);
+  --accent-hover: oklch(0.455 0.190 318);
+  --accent-quiet: oklch(0.960 0.022 318);
+  --accent-text:  oklch(0.985 0.005 315);
+
+  /* ---- Semantic: hue-shifted toward the family so they belong here ---- */
+  --error:   oklch(0.505 0.170 22);
+  --success: oklch(0.510 0.105 155);
+
+  /* Derived: hover shade of --text, used on solid black/white buttons.
+     A hardcoded #333333 here would run backwards in dark mode (--text is
+     light there, so a fixed dark grey would BOTH read wrong-direction and
+     nearly disappear against a dark --bg) — mix toward --bg instead so it
+     lightens or darkens correctly in whichever theme is active. */
+  --text-hover: color-mix(in oklch, var(--text) 85%, var(--bg));
 
   /* Type scale */
   --text-xs: 0.75rem;
@@ -43,6 +58,25 @@
   /* Animation timing */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Dark viewing surface: photographs belong on dark. Elevation comes from
+   lightness (--bg-alt is lighter than --bg), never a border-plus-shadow
+   ghost card. The light-mode accent goes muddy at this background lightness,
+   so dark mode lifts its own chroma and lightness rather than reusing it. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:         oklch(0.162 0.019 312);
+    --bg-alt:     oklch(0.208 0.022 312);
+    --text:       oklch(0.955 0.008 315);
+    --text-muted: oklch(0.700 0.018 315);
+    --border:     oklch(0.288 0.020 312);
+
+    --accent:       oklch(0.680 0.175 318);
+    --accent-hover: oklch(0.740 0.170 318);
+    --accent-quiet: oklch(0.260 0.045 318);
+    --accent-text:  oklch(0.145 0.020 315);
+  }
 }
 
 * {
@@ -85,6 +119,7 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
   font-weight: 400;
   margin: 0;
+  text-wrap: balance;
 }
 
 h1 { font-size: var(--text-3xl); }
@@ -111,6 +146,7 @@ h3 {
 
 p {
   margin: 0 0 1.5rem;
+  text-wrap: pretty;
 }
 
 a {
@@ -122,12 +158,12 @@ a {
 }
 
 a:hover {
-  color: #333333;
+  color: var(--text-hover);
   text-decoration-thickness: 2px;
 }
 
 a:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -166,7 +202,7 @@ textarea::placeholder {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -208,8 +244,8 @@ button, .button {
 
 button:hover:not(:disabled),
 .button:hover:not(:disabled) {
-  background: #333333;
-  border-color: #333333;
+  background: var(--text-hover);
+  border-color: var(--text-hover);
 }
 
 button:active:not(:disabled),
@@ -220,7 +256,7 @@ button:active:not(:disabled),
 
 button:focus-visible,
 .button:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -409,8 +445,8 @@ button:disabled,
 }
 
 .cart-badge {
-  color: var(--bg);
-  background: var(--text);
+  color: var(--accent-text);
+  background: var(--accent);
   padding: 0.75rem 1.5rem;
   text-decoration: none;
   font-size: 0.85rem;
@@ -421,8 +457,7 @@ button:disabled,
 }
 
 .cart-badge:hover {
-  background: #333333;
-  transform: translateY(-1px);
+  background: var(--accent-hover);
 }
 
 .cart-badge.is-bumped {
@@ -433,13 +468,6 @@ button:disabled,
   0% { transform: scale(1); }
   40% { transform: scale(1.08); }
   100% { transform: scale(1); }
-}
-
-.empty-state {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 4rem 2rem;
-  font-size: 0.95rem;
 }
 
 /* Event Cards */
@@ -578,7 +606,7 @@ button:disabled,
 }
 
 .hero-search-input:focus {
-  outline: 1px solid var(--text);
+  outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
 
@@ -656,54 +684,24 @@ body.lightbox-open {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) inset;
 }
 
+/* The session tabs are the gallery's real active filter — which heat/session
+   you're viewing. That's a job worth the accent. */
 .session-nav a.active {
-  color: var(--bg);
-  background: var(--text);
-  border-color: var(--text);
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12) inset;
 }
 
 .session-nav a:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
-/* Filter bar */
-
-.filter-bar {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: var(--bg-alt);
-  border-bottom: 1px solid var(--border);
-}
-
-.filter-bar button {
-  width: auto;
-  margin: 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-  border-radius: 3px;
-}
-
-.clear-filters {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  cursor: pointer;
-  border: none;
-  background: none;
-  padding: 0;
-  margin: 0;
-  text-decoration: underline;
-  width: auto;
-  transition: color 150ms ease-out;
-}
-
-.clear-filters:hover {
-  color: var(--text);
-}
+/* Filter bar: full definition (padding, select, button, .clear-filters) lives
+   in the "Phase 1: Discovery & Engagement" section below — kept in one place
+   rather than split across two blocks that used to silently override
+   each other's padding/gap/radius/font-size. */
 
 /* Search results page */
 
@@ -731,7 +729,7 @@ body.lightbox-open {
 }
 
 .search-form input:focus {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
 
@@ -747,8 +745,8 @@ body.lightbox-open {
 }
 
 .search-form button:hover {
-  background: #333333;
-  border-color: #333333;
+  background: var(--text-hover);
+  border-color: var(--text-hover);
 }
 
 .search-form button:active {
@@ -757,7 +755,7 @@ body.lightbox-open {
 }
 
 .search-form button:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -808,7 +806,7 @@ body.lightbox-open {
 .filter-list input[type="checkbox"] {
   margin-right: var(--space-2);
   cursor: pointer;
-  accent-color: var(--text);
+  accent-color: var(--accent);
 }
 
 .filter-list .count {
@@ -934,6 +932,16 @@ body.lightbox-open {
   transition: box-shadow 200ms ease-out, transform 200ms ease-out;
 }
 
+/* The highest-value interaction in the product — someone deciding to buy —
+   must read at a glance across a dense grid. Ring the whole tile, not just
+   the button, and never filter the photo itself: the image is the content,
+   not something to tint. */
+.photo-thumb:has(.add-to-cart.added) {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--accent);
+}
+
 .photo-thumb img {
   width: 100%;
   height: 100%;
@@ -1051,8 +1059,7 @@ body.lightbox-open {
 .lightbox-close:hover,
 .lightbox-prev:hover,
 .lightbox-next:hover {
-  background: #333333;
-  transform: scale(1.05);
+  background: var(--text-hover);
 }
 
 .lightbox-close:active,
@@ -1201,9 +1208,18 @@ body.lightbox-open {
   border-top: 1px solid var(--border);
 }
 
+/* The one full-commitment purchase action on the page — the accent's
+   clearest "Primary action" job. */
 .checkout-button {
   width: 100%;
   margin-top: 2rem;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkout-button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 /* Detail rows */
@@ -1246,8 +1262,7 @@ body.lightbox-open {
 }
 
 .download-link:hover {
-  background: #333333;
-  transform: translateY(-1px);
+  background: var(--text-hover);
 }
 
 /* Tabs */
@@ -1406,7 +1421,7 @@ body.lightbox-open {
 }
 
 .error-actions .primary:hover {
-  background: #333333;
+  background: var(--text-hover);
 }
 
 /* ===== Phase 1: Discovery & Engagement ===== */
@@ -1435,6 +1450,8 @@ body.lightbox-open {
 }
 
 .filter-bar button {
+  width: auto;
+  margin: 0;
   padding: var(--space-2) var(--space-4);
   background: var(--text);
   color: var(--bg);
@@ -1442,20 +1459,39 @@ body.lightbox-open {
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 160ms ease-out;
+  font-size: var(--text-sm);
+  transition: background 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              filter 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .filter-bar button:hover {
-  background: #333333;
+  background: var(--text-hover);
 }
 
-.filter-bar .clear-filters {
-  background: var(--border);
+.filter-bar button:active {
+  transform: scale(0.97);
+  filter: brightness(0.95);
+}
+
+/* .clear-filters is also used outside .filter-bar (empty-state fallback in
+   _photo_grid_items.php), so it stays a single unscoped rule rather than
+   forking into a second visual style per ancestor. */
+.clear-filters {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: underline;
+  width: auto;
+  transition: color 150ms ease-out;
+}
+
+.clear-filters:hover {
   color: var(--text);
-}
-
-.filter-bar .clear-filters:hover {
-  background: #d5d5d5;
 }
 
 .filter-checkbox {
@@ -1512,7 +1548,6 @@ body.lightbox-open {
 .heart-button:hover,
 .share-button:hover {
   background: rgba(255, 255, 255, 1);
-  transform: scale(1.05);
 }
 
 .heart-button:active,
@@ -1544,11 +1579,6 @@ body.lightbox-open {
   justify-content: center;
   z-index: 2000;
   animation: fadeIn 200ms ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .share-modal {
@@ -1622,7 +1652,6 @@ body.lightbox-open {
 .share-option:hover {
   background: var(--bg);
   border-color: var(--text);
-  transform: translateY(-2px);
 }
 
 .share-option svg {
@@ -1673,11 +1702,10 @@ body.lightbox-open {
   transition: background 160ms ease-out, transform 160ms ease-out, border-color 160ms ease-out;
 }
 
-.wishlist-badge:hover {
-  transform: scale(1.05);
-}
-
-/* Lightbox enhancements */
+/* Lightbox enhancements
+   .lightbox is the server-rendered shell in event.php, toggled by event.js
+   adding/removing .is-open — it must stay hidden until then, or it covers
+   the whole page from first paint (it did: display was unconditional here). */
 .lightbox {
   position: fixed;
   top: 0;
@@ -1685,10 +1713,14 @@ body.lightbox-open {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.95);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 3000;
+}
+
+.lightbox.is-open {
+  display: flex;
   animation: lightboxEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -1789,11 +1821,17 @@ body.lightbox-open {
   line-height: 1.4;
 }
 
-/* Phase 4: Empty States */
+/* Empty states: the plain-text usages (home.php, orders.php,
+   _photo_grid_items.php's filtered-to-nothing case) and the icon/title/
+   message/action card (partials/empty-state.php, used on cart.php and
+   event.php) share this one definition rather than two that used to
+   silently fight over which color/font-size/padding won. */
 .empty-state {
   grid-column: 1 / -1;
   padding: var(--space-8);
   text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1827,22 +1865,31 @@ body.lightbox-open {
   margin: 0;
 }
 
-/* Phase 4: Loading Skeletons */
+/* Phase 4: Loading Skeletons
+   A gallery page can show 10-20+ of these at once. Animating
+   background-position (the old approach) repaints every tile on every
+   frame; a translateX sweep on a pseudo-element is GPU-composited instead,
+   which is what actually matters when this many run simultaneously. */
 @keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
   100% {
-    background-position: 1000px 0;
+    transform: translateX(100%);
   }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-alt) 0%, #f5f3f0 40%, #f0ede8 50%, #f5f3f0 60%, var(--bg-alt) 100%);
-  background-size: 1200px 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  will-change: transform;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-alt);
   border-radius: 6px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 .skeleton-photo {
@@ -1999,7 +2046,7 @@ body.lightbox-open {
 
 /* Focus styles for keyboard navigation */
 *:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -2008,7 +2055,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -2025,8 +2072,39 @@ textarea:focus-visible {
   }
 
   .add-to-cart:hover {
-    background: var(--text);
-    color: var(--bg);
+    background: var(--accent);
+    color: var(--accent-text);
+    transform: scale(1.05);
+  }
+
+  /* Transform-only hover lift/scale for elements that stay tappable on
+     touch (cart badge, download link, lightbox controls, heart/share,
+     share options, wishlist badge) — gated so a tap doesn't leave the
+     element visibly stuck mid-hover until the user taps elsewhere. */
+  .cart-badge:hover {
+    transform: translateY(-1px);
+  }
+
+  .lightbox-close:hover,
+  .lightbox-prev:hover,
+  .lightbox-next:hover {
+    transform: scale(1.05);
+  }
+
+  .download-link:hover {
+    transform: translateY(-1px);
+  }
+
+  .heart-button:hover,
+  .share-button:hover {
+    transform: scale(1.05);
+  }
+
+  .share-option:hover {
+    transform: translateY(-2px);
+  }
+
+  .wishlist-badge:hover {
     transform: scale(1.05);
   }
 }
@@ -2080,8 +2158,8 @@ textarea:focus-visible {
     bottom: var(--space-4);
     right: var(--space-4);
     z-index: 100;
-    background: var(--text);
-    color: var(--bg);
+    background: var(--accent);
+    color: var(--accent-text);
     padding: var(--space-3) var(--space-4);
     border-radius: 8px;
     text-decoration: none;
