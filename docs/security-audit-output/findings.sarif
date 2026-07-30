@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "security-audit",
+          "version": "2.5.0",
+          "informationUri": "https://github.com/velimattiv/claude-security-audit",
+          "rules": [
+            {"id": "SEC-01", "name": "collection-scope-gap", "shortDescription": {"text": "REST API photo endpoints missing events.is_published check"}},
+            {"id": "SEC-02", "name": "csrf-verify-ignored-or-missing", "shortDescription": {"text": "CSRF verification result discarded or check absent"}},
+            {"id": "SEC-03", "name": "fail-closed-on-bad-column", "shortDescription": {"text": "Query references nonexistent column, silently fails closed"}},
+            {"id": "SEC-04", "name": "rate-limit-toctou", "shortDescription": {"text": "Check-then-increment race in rate limiter"}},
+            {"id": "SEC-05", "name": "webhook-duplicate-job-race", "shortDescription": {"text": "Unconditional UPDATE allows duplicate job queuing on overlapping webhook delivery"}},
+            {"id": "SEC-06", "name": "plaintext-totp-secret", "shortDescription": {"text": "TOTP secret stored unencrypted at rest"}},
+            {"id": "SEC-07", "name": "implicit-tls-verification", "shortDescription": {"text": "TLS verification relies on library defaults, not explicit flags"}},
+            {"id": "SEC-08", "name": "unpinned-optional-dependency", "shortDescription": {"text": "No lockfile pin for suggest-only Composer dependencies"}}
+          ]
+        }
+      },
+      "results": [
+        {"ruleId": "SEC-01", "level": "error", "message": {"text": "api_get_photos()/api_get_photo() did not check events.is_published; fixed in commit ada7753."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/api.php"}, "region": {"startLine": 89}}}], "properties": {"severity": "HIGH", "status": "fixed"}},
+        {"ruleId": "SEC-02", "level": "error", "message": {"text": "CSRF verify() result discarded or check missing across 9 admin controllers; fixed in commit ada7753."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/controllers/admin/events.php"}}}], "properties": {"severity": "HIGH", "status": "fixed"}},
+        {"ruleId": "SEC-03", "level": "note", "message": {"text": "api_get_photo() selected nonexistent p.description column, silently failing closed on every call; fixed in commit ada7753."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/api.php"}, "region": {"startLine": 108}}}], "properties": {"severity": "INFO", "status": "fixed"}},
+        {"ruleId": "SEC-04", "level": "warning", "message": {"text": "check_rate_limit() has a TOCTOU race allowing concurrent requests to exceed the configured cap."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/rate_limit.php"}, "region": {"startLine": 16}}}], "properties": {"severity": "MEDIUM", "status": "deferred"}},
+        {"ruleId": "SEC-05", "level": "note", "message": {"text": "mark_order_paid() can queue duplicate receipt/zip jobs on overlapping webhook delivery."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/orders.php"}, "region": {"startLine": 110}}}], "properties": {"severity": "LOW", "status": "deferred"}},
+        {"ruleId": "SEC-06", "level": "note", "message": {"text": "TOTP secret stored in plaintext at rest; inherent to TOTP, not a defect."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/auth.php"}, "region": {"startLine": 44}}}], "properties": {"severity": "INFO", "status": "accepted"}},
+        {"ruleId": "SEC-07", "level": "note", "message": {"text": "Outbound Stripe calls rely on curl TLS-verification defaults instead of explicit flags."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/stripe.php"}, "region": {"startLine": 89}}}], "properties": {"severity": "INFO", "status": "deferred"}},
+        {"ruleId": "SEC-08", "level": "note", "message": {"text": "composer.lock gitignored with no pin for suggest-only optional dependencies."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "composer.json"}}}], "properties": {"severity": "LOW", "status": "deferred"}}
+      ]
+    }
+  ]
+}

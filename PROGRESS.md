@@ -435,10 +435,73 @@ and 7 silently-skipped tests before that.
   `-- PowerMedia Gallery — initia….txt`, duplicating the initial migration)
   — flagged for the maintainer to delete, not removed unasked.
 
+## Security audit (security-audit skill v2.5.0, full mode, scope reduced)
+
+Full report: `docs/security-audit-output/security-audit-report.md`.
+SARIF/SBOM/baseline under the same directory; machine blackboard under
+`.claude-audit/current/` (gitignored).
+
+**Scope note, stated honestly:** the skill's default full mode fans out
+12 deep-dive categories across the top 8 risk-ranked partitions (up to 96
+sub-agent invocations). That budget wasn't available this session. Two
+targeted deep-dive agents covered the highest-risk code instead: (1)
+auth/crypto/secret_sprawl/injection against `app/lib/` and the Stripe
+webhook, (2) idor/collection_scope/deployment/supply_chain against public
+and admin controllers, bootstrap, and upload validation. No external
+scanners were installed (semgrep/osv-scanner/gitleaks/trufflehog/trivy/
+hadolint all absent) — Phase 4 ran degraded. Treat this as a thorough
+manual review of the money path and admin surface, not the full
+mechanical sweep; a full-budget run is listed as a to-do in
+`docs/v2-plan.md`.
+
+**Fixed this pass (HIGH):**
+- REST API (`app/lib/api.php`) never checked `events.is_published`,
+  letting an API key holder read metadata for unpublished-event photos.
+  Fixed, tested (`tests/integration/ApiPhotosScopeTest.php`).
+- CSRF verification result discarded (or the check missing entirely)
+  across 9 admin controllers (events, migrations, photos, sessions,
+  admins, bulk, settings, watermarks, upload) — a wrong or missing token
+  never actually blocked the mutation on 4 of them; the other 5 never
+  checked at all. Fixed all 9, added `csrf_verify_reusable()` for the
+  chunked-upload flow's multi-request token. Tested
+  (`tests/integration/CsrfProtectionTest.php`).
+- Found while fixing the above: `api_get_photo()` selected a column
+  (`p.description`) that doesn't exist on `photos` (it's an
+  `order_items` snapshot column). Every call threw inside the catch-all
+  and returned null — the single-photo API endpoint has never worked,
+  for any photo, published or not. Fixed.
+
+**Deferred (MEDIUM/LOW/INFO, per this pass's fix-order rule — fix
+CRITICAL/HIGH now, log the rest):**
+- MEDIUM — `check_rate_limit()` (`app/lib/rate_limit.php`) has a
+  check-then-increment race: concurrent requests against the same bucket
+  can all pass the cap check before any increment commits, weakening the
+  login/TOTP/checkout brute-force limits under concurrent attack traffic.
+- LOW — `mark_order_paid()` can queue a duplicate receipt/zip job if
+  Stripe delivers overlapping webhook requests before the idempotency
+  insert commits. Self-limiting, not attacker-triggerable.
+- LOW — no `composer.lock` pin for the suggest-only optional dependencies
+  (phpseclib, phpmailer).
+- INFO — TOTP secret stored in plaintext at rest (inherent to TOTP).
+- INFO — Stripe outbound calls rely on curl's TLS-verification defaults
+  rather than explicit `CURLOPT_SSL_VERIFYPEER`/`VERIFYHOST` flags.
+
+**What was checked and found sound:** admin auth (decoy-hash timing
+defense, dual rate-limit buckets, TOTP replay protection, session
+regeneration on login), the CSRF primitive itself (`hash_equals`-based,
+the bug was in call sites not the primitive), cart cookie signing,
+download token hashing, transactional order creation, real MIME-sniffing
+upload validation, security headers applied on every response path,
+`display_errors` off in production, `config/`/`storage/` blocked by
+`.htaccess`. No SQL/command injection or unsafe deserialization found
+anywhere. Collection scoping on admin routes is `require_admin()`-only
+with no per-row ownership check — correct for this single-admin,
+single-tenant app by explicit product design; flagged for `docs/
+v2-plan.md` as a decision to revisit only if multi-tenant use is ever in
+scope.
+
 ### Still pending in this pass
 
-- Run the `security-audit` skill in full mode (mandatory last step, not
-  yet run as of this update).
 - Write `docs/v2-plan.md` (Part 2 of this task).
 - Manual end-to-end Stripe test-mode checkout to confirm a receipt email
   actually arrives — the one claim that was completely false before this
