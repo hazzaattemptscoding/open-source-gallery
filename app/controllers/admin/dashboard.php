@@ -19,6 +19,12 @@ function admin_dashboard_controller(PDO $pdo, array $config): void
     $stmt->execute(['id' => current_admin_id()]);
     $admin = $stmt->fetch();
 
+    if (!$admin) {
+        http_response_code(401);
+        echo 'Session invalid. <a href="/admin/login">Log in again</a>.';
+        return;
+    }
+
     $setupComplete = is_setup_complete($pdo);
     $setupChecklist = !$setupComplete ? get_setup_checklist($pdo) : [];
 
