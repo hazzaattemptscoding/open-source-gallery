@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cache.php';
+require_once __DIR__ . '/../../lib/validation.php';
 
 function admin_events_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -91,8 +92,8 @@ function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     if (!$error && empty($title)) {
         $error = 'Title is required.';
     }
-    if (!$error && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $eventDate)) {
-        $error = 'Invalid date format.';
+    if (!$error && !validate_iso_date($eventDate)) {
+        $error = 'Invalid event date.';
     }
     if (!$error && $priceSingle < 0) {
         $error = 'Single photo price cannot be negative.';
@@ -150,8 +151,8 @@ function update_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     if (!$error && empty($title)) {
         $error = 'Title is required.';
     }
-    if (!$error && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $eventDate)) {
-        $error = 'Invalid date format.';
+    if (!$error && !validate_iso_date($eventDate)) {
+        $error = 'Invalid event date.';
     }
 
     if ($error) {
