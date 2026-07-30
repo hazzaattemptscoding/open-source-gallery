@@ -38,19 +38,21 @@ function admin_upload_page_controller(PDO $pdo, array $config): void {
     $recentBatch = null;
     $recentFiles = [];
     try {
+        // upload_batches has no admin attribution (scoped by session_id only,
+        // see migrations/001_initial_schema.sql), so "recent" here means the
+        // most recent batch system-wide, not per-admin.
         $stmt = $pdo->prepare('
-            SELECT id, admin_id, created_at, completed_at
+            SELECT id, session_id, created_at
             FROM upload_batches
-            WHERE admin_id = ?
             ORDER BY created_at DESC
             LIMIT 1
         ');
-        $stmt->execute([$_SESSION['admin_id']]);
+        $stmt->execute();
         $recentBatch = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($recentBatch) {
             $stmt = $pdo->prepare('
-                SELECT id, original_filename, status, photo_id
+                SELECT id, client_name AS original_filename, status, photo_id
                 FROM upload_files
                 WHERE batch_id = ?
                 ORDER BY id

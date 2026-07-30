@@ -109,6 +109,7 @@ function email_template_abandoned_cart(array $vars): string {
     $cartUrl = e($vars['cart_url'] ?? '');
     $itemCount = (int)($vars['item_count'] ?? 0);
     $expiresIn = e($vars['expires_in'] ?? '7 days');
+    $itemNoun = $itemCount === 1 ? 'photo' : 'photos';
 
     return <<<HTML
 <!DOCTYPE html>
@@ -120,7 +121,7 @@ function email_template_abandoned_cart(array $vars): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111; line-height: 1.6; margin: 0; padding: 0; background: #f7f6f3;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h1 style="margin: 0 0 16px; font-size: 28px; font-family: 'Newsreader', Georgia, serif; font-weight: 700; letter-spacing: -0.02em;">You left {$itemCount} {$itemCount === 1 ? 'photo' : 'photos'} behind</h1>
+        <h1 style="margin: 0 0 16px; font-size: 28px; font-family: 'Newsreader', Georgia, serif; font-weight: 700; letter-spacing: -0.02em;">You left {$itemCount} {$itemNoun} behind</h1>
         <p style="margin: 0 0 24px; color: #666;">Your cart is waiting. Complete your purchase before your items expire.</p>
 
         <div style="background: #f7f6f3; padding: 24px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
@@ -145,6 +146,7 @@ function email_template_download_ready(array $vars): string {
     $orderToken = e($vars['order_token'] ?? '');
     $downloadLink = e($vars['download_link'] ?? '');
     $itemsReady = (int)($vars['items_ready'] ?? 1);
+    $itemsReadyVerb = $itemsReady === 1 ? 'file is' : 'files are';
 
     return <<<HTML
 <!DOCTYPE html>
@@ -157,7 +159,7 @@ function email_template_download_ready(array $vars): string {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #111; line-height: 1.6; margin: 0; padding: 0; background: #f7f6f3;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
         <h1 style="margin: 0 0 16px; font-size: 28px; font-family: 'Newsreader', Georgia, serif; font-weight: 700; letter-spacing: -0.02em;">Ready to Download</h1>
-        <p style="margin: 0 0 24px; color: #666;">{$itemsReady} {$itemsReady === 1 ? 'file is' : 'files are'} ready for download from your order #{$orderToken}.</p>
+        <p style="margin: 0 0 24px; color: #666;">{$itemsReady} {$itemsReadyVerb} ready for download from your order #{$orderToken}.</p>
 
         <div style="background: #f7f6f3; padding: 24px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
             <a href="{$downloadLink}" style="display: inline-block; padding: 12px 32px; background: #111; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background 160ms ease-out;">Download Now</a>

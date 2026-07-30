@@ -258,11 +258,6 @@ switch ($path) {
         admin_audit_log_controller($pdo, $config);
         break;
 
-    case '/admin/my-sessions':
-        require __DIR__ . '/../app/controllers/admin/my_sessions.php';
-        admin_my_sessions_controller($pdo, $config);
-        break;
-
     case '/admin/health':
         require __DIR__ . '/../app/controllers/admin/health.php';
         admin_health_check_controller($pdo, $config);

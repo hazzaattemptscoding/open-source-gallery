@@ -45,7 +45,7 @@ class AdminAuthTest extends TestCase {
             'password_hash' => password_hash('CorrectPassword123!', PASSWORD_ARGON2ID),
         ]);
 
-        $result = \admin_attempt_login($this->pdo, 'admin@example.com', 'WrongPassword123!', null, '127.0.0.1');
+        $result = \admin_attempt_login($this->pdo, $this->config, 'admin@example.com', 'WrongPassword123!', null, '127.0.0.1');
 
         $this->assertFalse($result['ok']);
         $this->assertEquals('invalid_credentials', $result['reason']);
@@ -57,7 +57,7 @@ class AdminAuthTest extends TestCase {
     public function testAdminLoginUnknownEmail(): void {
         require_once APP_ROOT . '/app/lib/auth.php';
 
-        $result = \admin_attempt_login($this->pdo, 'unknown@example.com', 'SomePassword123!', null, '127.0.0.1');
+        $result = \admin_attempt_login($this->pdo, $this->config, 'unknown@example.com', 'SomePassword123!', null, '127.0.0.1');
 
         $this->assertFalse($result['ok']);
         $this->assertEquals('invalid_credentials', $result['reason']);
@@ -84,7 +84,7 @@ class AdminAuthTest extends TestCase {
             'totp_secret' => \totp_generate_secret(),
         ]);
 
-        $result = \admin_attempt_login($this->pdo, 'admin@example.com', 'SecurePassword123!', '000000', '127.0.0.1');
+        $result = \admin_attempt_login($this->pdo, $this->config, 'admin@example.com', 'SecurePassword123!', '000000', '127.0.0.1');
         $this->assertEquals('invalid_totp', $result['reason']);
 
         $stmt = $this->pdo->prepare("SELECT hits FROM rate_limits WHERE bucket = 'totp' AND rl_key = ?");
@@ -111,7 +111,7 @@ class AdminAuthTest extends TestCase {
         ]);
 
         for ($i = 0; $i < 5; $i++) {
-            \admin_attempt_login($this->pdo, 'admin@example.com', 'SecurePassword123!', '000000', '127.0.0.1');
+            \admin_attempt_login($this->pdo, $this->config, 'admin@example.com', 'SecurePassword123!', '000000', '127.0.0.1');
         }
 
         $stmt = $this->pdo->prepare("SELECT hits FROM rate_limits WHERE bucket = 'totp' AND rl_key = ?");

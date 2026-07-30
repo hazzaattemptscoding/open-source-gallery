@@ -77,7 +77,6 @@ require_once __DIR__ . '/partials/layout_header.php';
   <h2>Security</h2>
   <ul class="list-plain">
     <li><a href="/admin/admins">→ Admin users</a>: Create and manage admin accounts with roles</li>
-    <li><a href="/admin/my-sessions">→ My Sessions</a>: View and revoke your active sessions</li>
   </ul>
 </div>
 

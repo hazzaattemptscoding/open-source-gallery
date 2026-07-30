@@ -98,10 +98,6 @@
         <span class="admin-nav-link-icon"></span>
         <span>Admin users</span>
       </a>
-      <a href="/admin/my-sessions" class="admin-nav-link <?= $currentPage === 'my-sessions' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>My Sessions</span>
-      </a>
     </nav>
 
     <!-- Logout -->

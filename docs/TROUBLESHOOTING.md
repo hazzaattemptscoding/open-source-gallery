@@ -341,7 +341,6 @@ If this shows errors, derivatives have a problem. Check error output.
 3. Rate limit: 5 login attempts per IP per hour (enforced)
 
 **Optional:**
-- Revoke sessions: `/admin/my-sessions` → Revoke any you don't recognize
 - Change password if you're concerned
 
 ### "What if my account is compromised?"
@@ -349,10 +348,9 @@ If this shows errors, derivatives have a problem. Check error output.
 
 **Immediate actions:**
 1. [ ] Change your password immediately
-2. [ ] Revoke all sessions: `/admin/my-sessions` → Revoke all
-3. [ ] Check audit log: see what was accessed
-4. [ ] Contact Stripe: report unauthorized charges if any
-5. [ ] Check email config: make sure it still uses your email
+2. [ ] Check audit log: see what was accessed
+3. [ ] Contact Stripe: report unauthorized charges if any
+4. [ ] Check email config: make sure it still uses your email
 
 **Investigation:**
 - Review `/admin/audit-log` for the past week

@@ -44,10 +44,7 @@
 $hasKartFilter = !empty($kartOptions);
 $hasDriverFilter = !empty($driverOptions);
 $hasClassFilter = !empty($classOptions);
-$hasClientFilter = !empty($clientOptions);
-$hasLocationFilter = !empty($locationOptions);
-$hasStyleFilter = !empty($styleOptions);
-$hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasClientFilter || $hasLocationFilter || $hasStyleFilter;
+$hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
 ?>
 
 <?php if ($hasAnyFilter): ?>
@@ -82,40 +79,8 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasCli
     </select>
   <?php endif; ?>
 
-  <?php if ($hasClientFilter): ?>
-    <select name="client" id="filterClient">
-      <option value="">All clients</option>
-      <?php foreach ($clientOptions as $client): ?>
-        <option value="<?= e($client) ?>" <?= $filters['client'] === $client ? 'selected' : '' ?>><?= e($client) ?></option>
-      <?php endforeach; ?>
-    </select>
-  <?php endif; ?>
-
-  <?php if ($hasLocationFilter): ?>
-    <select name="location" id="filterLocation">
-      <option value="">All locations</option>
-      <?php foreach ($locationOptions as $location): ?>
-        <option value="<?= e($location) ?>" <?= $filters['location'] === $location ? 'selected' : '' ?>><?= e($location) ?></option>
-      <?php endforeach; ?>
-    </select>
-  <?php endif; ?>
-
-  <?php if ($hasStyleFilter): ?>
-    <select name="style" id="filterStyle">
-      <option value="">All styles</option>
-      <?php foreach ($styleOptions as $style): ?>
-        <option value="<?= e($style) ?>" <?= $filters['style'] === $style ? 'selected' : '' ?>><?= e($style) ?></option>
-      <?php endforeach; ?>
-    </select>
-  <?php endif; ?>
-
-  <label class="filter-checkbox">
-    <input type="checkbox" name="featured" value="1" <?= $filters['featured'] ? 'checked' : '' ?>>
-    Featured only
-  </label>
-
   <button type="submit">Filter</button>
-  <?php if ($filters['kart'] || $filters['driver'] || $filters['class'] || $filters['client'] || $filters['location'] || $filters['style'] || $filters['featured']): ?>
+  <?php if ($filters['kart'] || $filters['driver'] || $filters['class']): ?>
     <button type="button" class="clear-filters" data-clear-href="<?= e($basePath) ?>">Clear</button>
   <?php endif; ?>
 </form>
