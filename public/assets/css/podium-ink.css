@@ -1426,3 +1426,413 @@ body.lightbox-open {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ===== Phase 1: Discovery & Engagement ===== */
+
+/* Filter bar enhancements */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.filter-bar select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.filter-bar button {
+  padding: var(--space-2) var(--space-4);
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 160ms ease-out;
+}
+
+.filter-bar button:hover {
+  background: #333333;
+}
+
+.filter-bar .clear-filters {
+  background: var(--border);
+  color: var(--text);
+}
+
+.filter-bar .clear-filters:hover {
+  background: #d5d5d5;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  user-select: none;
+}
+
+.filter-checkbox input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* Photo grid with heart + share buttons */
+.photo-card-actions {
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.photo-grid-item {
+  position: relative;
+}
+
+.photo-grid-item:hover .photo-card-actions {
+  opacity: 1;
+}
+
+/* Heart button styling */
+.heart-button,
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 160ms ease-out;
+  backdrop-filter: blur(8px);
+}
+
+.heart-button:hover,
+.share-button:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
+}
+
+.heart-button:active,
+.share-button:active {
+  transform: scale(0.95);
+}
+
+.heart-button.active {
+  color: #e74c3c;
+  fill: #e74c3c;
+}
+
+.heart-button.active:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--text);
+  color: var(--bg);
+  padding: var(--space-3) var(--space-5);
+  border-radius: 6px;
+  font-size: var(--text-sm);
+  z-index: 1000;
+  pointer-events: none;
+  transition: transform 300ms var(--ease-out);
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Share modal */
+.share-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.share-modal {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: var(--space-6);
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  animation: slideUp 300ms var(--ease-out);
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.share-modal h3 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-family: 'Newsreader', serif;
+  font-weight: 600;
+}
+
+.share-modal-close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  background: none;
+  border: none;
+  font-size: var(--text-2xl);
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 160ms ease-out;
+}
+
+.share-modal-close:hover {
+  color: var(--text);
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  transition: all 160ms ease-out;
+}
+
+.share-option:hover {
+  background: var(--bg);
+  border-color: var(--text);
+  transform: translateY(-2px);
+}
+
+.share-option svg {
+  width: 24px;
+  height: 24px;
+}
+
+.share-preview {
+  background: var(--bg-alt);
+  padding: var(--space-3);
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.share-preview strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.share-preview code {
+  display: block;
+  word-break: break-all;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--text);
+  background: var(--bg);
+  padding: var(--space-2);
+  border-radius: 4px;
+  margin-top: var(--space-2);
+}
+
+/* Wishlist badge */
+.wishlist-badge {
+  display: none;
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  background: var(--text);
+  color: var(--bg);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 6px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  z-index: 999;
+  cursor: pointer;
+  transition: all 160ms ease-out;
+}
+
+.wishlist-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Lightbox enhancements */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  animation: fadeIn 200ms ease-out;
+}
+
+.lightbox-content {
+  position: relative;
+  width: 90%;
+  max-width: 90vh;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 80%;
+  object-fit: contain;
+}
+
+.lightbox-metadata {
+  margin-top: var(--space-4);
+  color: var(--bg);
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.lightbox-metadata strong {
+  display: block;
+  font-size: var(--text-base);
+  margin-bottom: var(--space-2);
+}
+
+.lightbox-controls {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.lightbox-controls button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 160ms ease-out;
+}
+
+.lightbox-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: none;
+  border: none;
+  font-size: var(--text-2xl);
+  color: var(--bg);
+  cursor: pointer;
+  transition: color 160ms ease-out;
+}
+
+.lightbox-close:hover {
+  color: #cccccc;
+}
+
+/* Keyboard hint */
+.keyboard-hint {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: var(--space-3);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  max-width: 250px;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .filter-bar {
+    padding: var(--space-3);
+  }
+
+  .photo-card-actions {
+    opacity: 1;
+  }
+
+  .share-modal {
+    width: 95%;
+  }
+
+  .lightbox-content {
+    width: 95%;
+    height: 95vh;
+  }
+
+  .keyboard-hint {
+    display: none;
+  }
+}
