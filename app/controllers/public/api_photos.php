@@ -14,7 +14,7 @@ require_once __DIR__ . '/event.php';
  */
 function public_api_photos_controller(PDO $pdo, array $config): void {
     $clientIp = get_client_ip();
-    if (!check_rate_limit($pdo, 'api_photos', $clientIp, 60, 50)) {
+    if (!check_rate_limit($pdo, 'api_photos', 'ip:' . $clientIp, 60, 50)) {
         http_response_code(429);
         echo 'rate limit exceeded';
         return;
@@ -76,7 +76,7 @@ function public_api_photo_view_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
 
     $clientIp = get_client_ip();
-    if (!check_rate_limit($pdo, 'api_photo_view', $clientIp, 1, 1)) {
+    if (!check_rate_limit($pdo, 'api_photo_view', 'ip:' . $clientIp, 1, 1)) {
         http_response_code(429);
         echo json_encode(['error' => 'rate limit exceeded']);
         return;
@@ -104,7 +104,7 @@ function public_api_photo_view_controller(PDO $pdo, array $config): void {
     // This keeps the API response fast even under high view traffic.
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, run_after)
-        VALUES (?, ?, ?, NOW())
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     ');
     $stmt->execute([
         'view_count',

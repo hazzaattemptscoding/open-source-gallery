@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/bulk.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_bulk_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -20,12 +21,18 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
         exit;
     }
 
+    $csrfToken = csrf_token();
     $action = $_GET['action'] ?? 'select';
     $errors = [];
     $success = $_GET['success'] ?? false;
     $limits = get_bulk_limits($pdo);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'CSRF verification failed.';
+            return;
+        }
         $action = $_POST['action'] ?? 'select';
         $photoIds = array_map('intval', explode(',', $_POST['photo_ids'] ?? ''));
         $photoIds = array_filter($photoIds);
@@ -41,34 +48,39 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
                             'driver' => $_POST['driver'] ?? '',
                             'class' => $_POST['class'] ?? '',
                         ]);
-                        audit_log($pdo, 'bulk_tag', "Bulk tagged $updated photos");
+                        audit_log($pdo, 'admin', 'bulk_tag', 'photos', null, ['count' => $updated], client_ip());
                         header('Location: /admin/bulk?action=select&success=1');
                         exit;
                     }
                     break;
 
                 case 'price':
-                    if ($limits['can_bulk_price']) {
-                        $pricePence = (int)($_POST['price_pence'] ?? 0);
-                        $updated = bulk_update_prices($pdo, $photoIds, $pricePence);
-                        audit_log($pdo, 'bulk_price', "Bulk updated prices for $updated photos");
-                        header('Location: /admin/bulk?action=select&success=1');
-                        exit;
+                    $pricePence = (int)($_POST['price_pence'] ?? -1);
+                    if ($pricePence < 0) {
+                        $errors[] = 'Price must be a non-negative number of pence';
+                        break;
                     }
-                    break;
-
-                case 'status':
-                    $status = $_POST['status'] ?? 'draft';
-                    $updated = bulk_change_status($pdo, $photoIds, $status);
-                    audit_log($pdo, 'bulk_status', "Changed status to $status for $updated photos");
+                    $updated = bulk_update_prices($pdo, $photoIds, $pricePence);
+                    audit_log($pdo, 'admin', 'bulk_price', 'photos', null, ['price_pence' => $pricePence, 'count' => $updated], client_ip());
                     header('Location: /admin/bulk?action=select&success=1');
                     exit;
+
+                case 'status':
+                    $status = $_POST['status'] ?? 'hidden';
+                    $updated = bulk_change_status($pdo, $photoIds, $status);
+                    if ($updated > 0) {
+                        audit_log($pdo, 'admin', 'bulk_status', 'photos', null, ['status' => $status, 'count' => $updated], client_ip());
+                        header('Location: /admin/bulk?action=select&success=1');
+                        exit;
+                    } else {
+                        $errors[] = "Invalid status: $status. Valid values: processing, live, hidden, failed";
+                    }
                     break;
 
                 case 'delete':
                     if ($limits['can_delete']) {
                         $deleted = bulk_delete_photos($pdo, $photoIds);
-                        audit_log($pdo, 'bulk_delete', "Bulk deleted $deleted photos");
+                        audit_log($pdo, 'admin', 'bulk_delete', 'photos', null, ['count' => $deleted], client_ip());
                         header('Location: /admin/bulk?action=select&success=1');
                         exit;
                     }
@@ -79,6 +91,7 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
 
     render(__DIR__ . '/../../views/admin/bulk.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
+        'csrfToken' => csrf_token(),
         'action' => $action,
         'limits' => $limits,
         'errors' => $errors,

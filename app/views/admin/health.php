@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>System Health — Admin</title>
+<title>System Health: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 <style>
 .health-card {
     border: 1px solid var(--border);
@@ -82,11 +83,11 @@
     font-size: 0.85rem;
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
-
 <header class="site-header">
-  <a href="/admin" class="site-title">System Health</a>
+  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
   <form method="post" action="/admin/logout" class="logout-form">
     <button type="submit">Log out</button>
   </form>

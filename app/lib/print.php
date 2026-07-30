@@ -54,7 +54,7 @@ function submit_print_order(
         // Create print order record
         $stmt = $pdo->prepare(<<<'SQL'
             INSERT INTO print_orders (order_id, provider_id, status, submitted_at)
-            VALUES (?, ?, 'submitted', NOW())
+            VALUES (?, ?, 'submitted', CURRENT_TIMESTAMP)
         SQL);
         $stmt->execute([$orderId, $providerId]);
         $printOrderId = (int)$pdo->lastInsertId();

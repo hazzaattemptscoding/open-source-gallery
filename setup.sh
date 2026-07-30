@@ -2,7 +2,7 @@
 set -e
 
 echo "================================"
-echo "PowerMedia Gallery Setup"
+echo "Gallery Setup"
 echo "================================"
 echo ""
 
@@ -69,7 +69,7 @@ return [
         'charset' => 'utf8mb4',
     ],
     'site' => [
-        'name'          => 'PowerMedia Gallery',
+        'name'          => 'Your Gallery Name',
         'base_url'      => 'http://localhost:8888',
         'support_email' => 'you@example.com',
     ],

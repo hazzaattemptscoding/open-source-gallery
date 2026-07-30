@@ -7,7 +7,10 @@
 require_once __DIR__ . '/../../lib/seo.php';
 ?>
 <?php if (empty($photos)): ?>
-  <p class="empty-state">No photos match these filters.</p>
+  <div class="empty-state" style="grid-column: 1 / -1;">
+    <p>No photos match these filters.</p>
+    <button type="button" class="clear-filters" data-reset-filters>Clear filters</button>
+  </div>
 <?php else: ?>
   <?php foreach ($photos as $index => $photo): ?>
     <div class="photo-thumb"

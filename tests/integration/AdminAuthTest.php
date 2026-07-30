@@ -64,6 +64,62 @@ class AdminAuthTest extends TestCase {
     }
 
     /**
+     * TOTP brute-forcing had no dedicated rate-limit bucket: only the
+     * initial password step was throttled, so a fixed password + repeated
+     * wrong TOTP guesses hit no distinct limit, contradicting
+     * docs/architecture.md's explicit claim of a separate "TOTP attempts"
+     * bucket. Asserting on rate_limits directly (rather than just "does
+     * the 6th call eventually fail") matters here: the existing login
+     * bucket also gets touched on every call regardless of the TOTP
+     * outcome, so a black-box "eventually blocked" test would pass even
+     * without a real totp bucket, for the wrong reason.
+     */
+    public function testWrongTotpCodeRecordsAttemptInADedicatedBucket(): void {
+        require_once APP_ROOT . '/app/lib/auth.php';
+
+        $this->createAdminUser([
+            'email' => 'admin@example.com',
+            'password_hash' => password_hash('SecurePassword123!', PASSWORD_ARGON2ID),
+            'totp_enabled' => 1,
+            'totp_secret' => \totp_generate_secret(),
+        ]);
+
+        $result = \admin_attempt_login($this->pdo, 'admin@example.com', 'SecurePassword123!', '000000', '127.0.0.1');
+        $this->assertEquals('invalid_totp', $result['reason']);
+
+        $stmt = $this->pdo->prepare("SELECT hits FROM rate_limits WHERE bucket = 'totp' AND rl_key = ?");
+        $stmt->execute(['acct:admin@example.com']);
+        $hits = $stmt->fetchColumn();
+
+        $this->assertNotFalse($hits, 'a wrong TOTP code should record a hit in a dedicated totp bucket');
+        $this->assertSame(1, (int)$hits);
+    }
+
+    /**
+     * Six wrong TOTP codes in a row (default cap per admin_attempt_login())
+     * must eventually return 'rate_limited' from the totp bucket itself,
+     * not merely from the shared login bucket incidentally also filling up.
+     */
+    public function testTotpBucketRateLimitsAfterRepeatedWrongCodes(): void {
+        require_once APP_ROOT . '/app/lib/auth.php';
+
+        $this->createAdminUser([
+            'email' => 'admin@example.com',
+            'password_hash' => password_hash('SecurePassword123!', PASSWORD_ARGON2ID),
+            'totp_enabled' => 1,
+            'totp_secret' => \totp_generate_secret(),
+        ]);
+
+        for ($i = 0; $i < 5; $i++) {
+            \admin_attempt_login($this->pdo, 'admin@example.com', 'SecurePassword123!', '000000', '127.0.0.1');
+        }
+
+        $stmt = $this->pdo->prepare("SELECT hits FROM rate_limits WHERE bucket = 'totp' AND rl_key = ?");
+        $stmt->execute(['acct:admin@example.com']);
+        $this->assertSame(5, (int)$stmt->fetchColumn(), 'the totp bucket itself should have accumulated 5 hits, independent of the login bucket');
+    }
+
+    /**
      * Test create event with valid data.
      */
     public function testCreateEventSuccess(): void {

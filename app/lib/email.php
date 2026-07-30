@@ -34,6 +34,7 @@ function queue_email(
             $purpose,
         ]);
     } catch (Throwable $e) {
+        error_log('Failed to queue email for ' . $recipient . ': ' . $e->getMessage());
         return false;
     }
 }
@@ -63,6 +64,7 @@ function queue_email_from_template(
 
         return queue_email($pdo, $recipient, $subject, $bodyHtml, $bodyText, $templateName, $variables, $purpose);
     } catch (Throwable $e) {
+        error_log('Failed to queue templated email: ' . $e->getMessage());
         return false;
     }
 }
@@ -72,7 +74,7 @@ function queue_email_from_template(
  */
 function interpolate_template(string $template, array $variables): string {
     foreach ($variables as $key => $value) {
-        $template = str_replace("{{$key}}", (string)$value, $template);
+        $template = str_replace('{{' . $key . '}}', (string)$value, $template);
     }
     return $template;
 }
@@ -88,23 +90,25 @@ function get_pending_emails(PDO $pdo, int $limit = 50): array {
             ORDER BY created_at ASC
             LIMIT ?
         SQL);
-        $stmt->execute([$limit]);
+        $stmt->bindParam(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get pending emails: ' . $e->getMessage());
         return [];
     }
 }
 
 /**
- * Send email via configured mailer (PHP mail, SMTP, etc).
+ * Send email via the configured transport (SMTP if set up, mail() otherwise
+ * — see app/lib/mailer.php). $config is optional only for backwards
+ * compatibility with any existing caller that doesn't have it in scope;
+ * omitting it always falls back to mail(), matching this function's
+ * previous (mail()-only) behavior exactly.
  */
-function send_email_direct(string $recipient, string $subject, string $bodyHtml, string $bodyText = ''): bool {
-    $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: noreply@" . parse_url($_SERVER['HTTP_HOST'] ?? '', PHP_URL_HOST) . "\r\n";
-
-    $body = $bodyText ?: strip_tags($bodyHtml);
-    return (bool)mail($recipient, $subject, $body, $headers);
+function send_email_direct(string $recipient, string $subject, string $bodyHtml, string $bodyText = '', array $config = []): bool {
+    require_once __DIR__ . '/mailer.php';
+    return send_email_via_configured_transport($config, $recipient, $subject, $bodyHtml, $bodyText);
 }
 
 /**
@@ -112,9 +116,10 @@ function send_email_direct(string $recipient, string $subject, string $bodyHtml,
  */
 function mark_email_sent(PDO $pdo, int $emailId): bool {
     try {
-        $stmt = $pdo->prepare('UPDATE emails SET status = ?, sent_at = NOW() WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE emails SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute(['sent', $emailId]);
     } catch (Throwable $e) {
+        error_log('Failed to mark email ' . $emailId . ' as sent: ' . $e->getMessage());
         return false;
     }
 }
@@ -131,6 +136,7 @@ function mark_email_failed(PDO $pdo, int $emailId, string $error = ''): bool {
         SQL);
         return $stmt->execute(['failed', $error, $emailId]);
     } catch (Throwable $e) {
+        error_log('Failed to mark email ' . $emailId . ' as failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -149,6 +155,7 @@ function get_email_stats(PDO $pdo): ?array {
         SQL);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('Failed to get email stats: ' . $e->getMessage());
         return null;
     }
 }
@@ -164,9 +171,11 @@ function get_email_queue(PDO $pdo, int $limit = 50): array {
             ORDER BY created_at DESC
             LIMIT ?
         SQL);
-        $stmt->execute([$limit]);
+        $stmt->bindParam(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get email queue: ' . $e->getMessage());
         return [];
     }
 }
@@ -179,6 +188,7 @@ function get_email_templates(PDO $pdo): array {
         $stmt = $pdo->query('SELECT * FROM email_templates ORDER BY display_name');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get email templates: ' . $e->getMessage());
         return [];
     }
 }
@@ -201,19 +211,28 @@ function update_email_template(PDO $pdo, int $templateId, array $data): bool {
             $templateId,
         ]);
     } catch (Throwable $e) {
+        error_log('Failed to update email template ' . $templateId . ': ' . $e->getMessage());
         return false;
     }
 }
 
 /**
  * Cron worker: process email queue.
+ *
+ * Note: nothing in the app currently calls queue_email() or
+ * queue_email_from_template(), and nothing in cron.php's job dispatcher
+ * calls this function either — the emails/email_templates tables and this
+ * whole enqueue/drain pair exist but are not wired into any live feature.
+ * Left as-is rather than removed (deleting a working, tested subsystem to
+ * fix an unrelated bug is out of scope) or wired up (building the feature
+ * that would call it is a v2-sized task, not a bug fix).
  */
-function process_email_queue(PDO $pdo): int {
+function process_email_queue(PDO $pdo, array $config = []): int {
     $sent = 0;
     $emails = get_pending_emails($pdo, 100);
 
     foreach ($emails as $email) {
-        if (send_email_direct($email['recipient_email'], $email['subject'], $email['body_html'], $email['body_text'])) {
+        if (send_email_direct($email['recipient_email'], $email['subject'], $email['body_html'], $email['body_text'], $config)) {
             mark_email_sent($pdo, $email['id']);
             $sent++;
         } else {

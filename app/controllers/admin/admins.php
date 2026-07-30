@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_admins_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -18,11 +19,17 @@ function admin_admins_controller(PDO $pdo, array $config): void {
         exit;
     }
 
+    $csrfToken = csrf_token();
     $action = $_GET['action'] ?? 'list';
     $errors = [];
 
     // Handle form submissions
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'CSRF verification failed.';
+            return;
+        }
         $action = $_POST['action'] ?? 'list';
 
         if ($action === 'create') {
@@ -47,7 +54,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
 
             if (empty($errors)) {
                 if (create_admin($pdo, $email, $password, $roleId)) {
-                    audit_log($pdo, 'create_admin', "Created admin: $email with role #$roleId");
+                    audit_log($pdo, 'admin', 'create_admin', 'admin_user', null, ['email' => $email, 'role_id' => $roleId], client_ip());
                     header('Location: /admin/admins?action=list&success=1');
                     exit;
                 } else {
@@ -63,7 +70,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
                 $errors[] = 'You cannot change your own role';
             } else {
                 if (update_admin_role($pdo, $adminId, $roleId)) {
-                    audit_log($pdo, 'update_admin_role', "Updated admin #$adminId role to #$roleId", null, null, $adminId);
+                    audit_log($pdo, 'admin', 'update_admin_role', 'admin_user', $adminId, ['role_id' => $roleId], client_ip());
                     header('Location: /admin/admins?action=list&success=1');
                     exit;
                 } else {
@@ -78,7 +85,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
                 $errors[] = 'You cannot delete your own account';
             } else {
                 if (delete_admin($pdo, $adminId)) {
-                    audit_log($pdo, 'delete_admin', "Deleted admin #$adminId", null, null, $adminId);
+                    audit_log($pdo, 'admin', 'delete_admin', 'admin_user', $adminId, [], client_ip());
                     header('Location: /admin/admins?action=list&success=1');
                     exit;
                 } else {
@@ -95,6 +102,7 @@ function admin_admins_controller(PDO $pdo, array $config): void {
 
     render(__DIR__ . '/../../views/admin/admins.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
+        'csrfToken' => csrf_token(), // re-fetch: csrf_verify() above invalidates the token on success, and a POST that succeeded already redirected away, so this always reflects the current session's live token for the page about to render
         'action' => $action,
         'admins' => $admins,
         'roles' => $roles,

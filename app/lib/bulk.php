@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/cache.php';
+require_once __DIR__ . '/db_compat.php';
 
 /**
  * Bulk tag photos.
@@ -15,9 +16,8 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
         return 0;
     }
 
-    // Build multi-row INSERT: one query instead of N.
+    $inserted = 0;
     $placeholders = implode(',', array_map(fn($id) => '(?, ?, ?, ?)', $photoIds));
-
     $params = [];
     foreach ($photoIds as $photoId) {
         $params[] = (int)$photoId;
@@ -26,27 +26,53 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
         $params[] = $tags['class'] ?? null;
     }
 
-    $stmt = $pdo->prepare(<<<SQL
-        INSERT INTO photo_tags (photo_id, kart_number, driver_name, class)
-        VALUES $placeholders
-        ON DUPLICATE KEY UPDATE updated_at = NOW()
-    SQL);
+    if (db_supports_on_duplicate_key($pdo)) {
+        $stmt = $pdo->prepare(<<<SQL
+            INSERT INTO photo_tags (photo_id, kart_number, driver_name, class)
+            VALUES $placeholders
+            ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
+        SQL);
+        $stmt->execute($params);
+        $inserted = $stmt->rowCount();
+    } else {
+        foreach ($photoIds as $photoId) {
+            try {
+                $stmt = $pdo->prepare('INSERT INTO photo_tags (photo_id, kart_number, driver_name, class) VALUES (?, ?, ?, ?)');
+                $stmt->execute([
+                    (int)$photoId,
+                    $tags['kart'] ?? null,
+                    $tags['driver'] ?? null,
+                    $tags['class'] ?? null,
+                ]);
+                $inserted += $stmt->rowCount();
+            } catch (PDOException $e) {
+                if (strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+                    continue;
+                }
+                throw $e;
+            }
+        }
+    }
 
-    return $stmt->execute($params) ? $stmt->rowCount() : 0;
+    return $inserted;
 }
 
 /**
- * Bulk update photo prices.
+ * Bulk set a per-photo price override. NULL means "inherit the event's
+ * price_single_pence" (see migrations/009_add_photo_price_override.sql);
+ * this function only ever sets an explicit override, never clears one back
+ * to NULL — clearing is a distinct admin action, not a bulk-price value.
  */
 function bulk_update_prices(PDO $pdo, array $photoIds, int $pricePence): int {
-    if (empty($photoIds) || $pricePence < 0) {
+    if (empty($photoIds)) {
         return 0;
     }
 
     $placeholders = implode(',', array_fill(0, count($photoIds), '?'));
     $stmt = $pdo->prepare("UPDATE photos SET price_pence = ? WHERE id IN ($placeholders)");
-    $params = array_merge([$pricePence], array_map('intval', $photoIds));
-    return $stmt->execute($params) ? $stmt->rowCount() : 0;
+    $stmt->execute(array_merge([$pricePence], array_map('intval', $photoIds)));
+
+    return $stmt->rowCount();
 }
 
 /**
@@ -71,9 +97,12 @@ function bulk_delete_photos(PDO $pdo, array $photoIds): int {
 
 /**
  * Bulk change photo status.
+ * Valid statuses: processing (uploading), live (published), hidden (unpublished), failed (upload failed).
  */
 function bulk_change_status(PDO $pdo, array $photoIds, string $status): int {
-    if (empty($photoIds) || !in_array($status, ['draft', 'live', 'archived'])) {
+    // Valid statuses match schema: processing, live, hidden, failed
+    $validStatuses = ['processing', 'live', 'hidden', 'failed'];
+    if (empty($photoIds) || !in_array($status, $validStatuses)) {
         return 0;
     }
 

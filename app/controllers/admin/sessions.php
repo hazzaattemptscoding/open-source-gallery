@@ -101,7 +101,11 @@ function show_session_form(PDO $pdo, string $siteName, string $csrfToken, ?int $
 }
 
 function create_session(PDO $pdo, int $adminId, string $ip, string $siteName, string $csrfToken): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
     $isNew = true;
 
     $eventId = isset($_POST['event_id']) ? (int)$_POST['event_id'] : 0;
@@ -139,7 +143,11 @@ function create_session(PDO $pdo, int $adminId, string $ip, string $siteName, st
 }
 
 function update_session(PDO $pdo, int $adminId, string $ip, string $siteName, string $csrfToken, int $sessionId): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
     $isNew = false;
 
     $stmt = $pdo->prepare('SELECT event_id, slug FROM sessions WHERE id = ?');
@@ -182,7 +190,11 @@ function update_session(PDO $pdo, int $adminId, string $ip, string $siteName, st
 }
 
 function delete_session(PDO $pdo, int $adminId, string $ip, int $sessionId): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
 
     $stmt = $pdo->prepare('SELECT event_id FROM sessions WHERE id = ?');
     $stmt->execute([$sessionId]);

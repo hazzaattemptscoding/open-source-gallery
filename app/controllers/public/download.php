@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../lib/audit.php';
  */
 function public_download_controller(PDO $pdo, array $config, string $rawToken): void {
     $ip = get_client_ip();
-    if (!check_rate_limit($pdo, 'download', $ip, 3600, 30)) {
+    if (!check_rate_limit($pdo, 'download', 'ip:' . $ip, 3600, 30)) {
         http_response_code(429);
         echo 'Too many download attempts. Try again later.';
         return;
@@ -47,12 +47,6 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
-    if ((int)$downloadLink['download_count'] >= (int)$downloadLink['max_downloads']) {
-        http_response_code(410);
-        echo 'Download limit exceeded';
-        return;
-    }
-
     $orderId = (int)$downloadLink['order_id'];
     $items = get_order_items($pdo, $orderId);
 
@@ -65,29 +59,28 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     $files = [];
 
     foreach ($items as $item) {
-        $photoId = (int)($item['photo_id'] ?? 0);
-        if (!$photoId) {
-            continue;
-        }
+        $photoIds = resolve_order_item_photo_ids($pdo, $item);
 
-        $stmt = $pdo->prepare('
-            SELECT id, event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?
-        ');
-        $stmt->execute([$photoId]);
-        $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+        foreach ($photoIds as $pid) {
+            $stmt = $pdo->prepare('
+                SELECT id, event_id, public_token, original_filename, file_extension FROM photos WHERE id = ?
+            ');
+            $stmt->execute([$pid]);
+            $photo = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($photo) {
-            $eventId = (int)$photo['event_id'];
-            $token = (string)$photo['public_token'];
-            $ext = (string)($photo['file_extension'] ?? 'jpg');
-            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
+            if ($photo) {
+                $eventIdFromPhoto = (int)$photo['event_id'];
+                $token = (string)$photo['public_token'];
+                $ext = (string)($photo['file_extension'] ?? 'jpg');
+                $filePath = __DIR__ . "/../../../storage/hires/{$eventIdFromPhoto}/{$token}.{$ext}";
 
-            if (file_exists($filePath)) {
-                $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
-                $files[] = [
-                    'path' => $filePath,
-                    'name' => $filename,
-                ];
+                if (file_exists($filePath)) {
+                    $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
+                    $files[] = [
+                        'path' => $filePath,
+                        'name' => $filename,
+                    ];
+                }
             }
         }
     }
@@ -98,9 +91,15 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
         return;
     }
 
-    // Record download
-    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = NOW() WHERE id = ?');
+    // Atomically increment download count, but only if under the cap
+    $stmt = $pdo->prepare('UPDATE download_links SET download_count = download_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE id = ? AND download_count < max_downloads');
     $stmt->execute([$downloadLink['id']]);
+
+    if ($stmt->rowCount() === 0) {
+        http_response_code(410);
+        echo 'Download limit exceeded';
+        return;
+    }
 
     audit_log($pdo, 'public', 'download', 'order', $orderId, [
         'file_count' => count($files),
@@ -126,8 +125,17 @@ function stream_file(string $filePath): void {
     $filename = basename($filePath);
     $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
 
+    $disposition = 'attachment; ';
+    if (preg_match('/^[\x20-\x7E]+$/', $filename)) {
+        $disposition .= 'filename="' . str_replace('"', '\"', $filename) . '"';
+    } else {
+        $dispositionFilename = rawurlencode($filename);
+        $fallbackFilename = preg_replace('/[^\x20-\x7E]/', '_', $filename);
+        $disposition .= 'filename="' . str_replace('"', '\"', $fallbackFilename) . '"; filename*=UTF-8\'\'' . $dispositionFilename;
+    }
+
     header('Content-Type: ' . $mimeType);
-    header('Content-Disposition: attachment; filename="' . addslashes($filename) . '"');
+    header('Content-Disposition: ' . $disposition);
     header('Content-Length: ' . filesize($filePath));
 
     readfile($filePath);
@@ -138,7 +146,7 @@ function stream_zip(array $files, int $orderId = 0): void {
 
     // Check for pre-built ZIP from cron job
     if ($orderId > 0) {
-        $prebuiltZip = __DIR__ . "/../../storage/zips/{$orderId}.zip";
+        $prebuiltZip = __DIR__ . "/../../../storage/zips/{$orderId}.zip";
         if (file_exists($prebuiltZip) && is_readable($prebuiltZip)) {
             $zipPath = $prebuiltZip;
         }
@@ -161,8 +169,17 @@ function stream_zip(array $files, int $orderId = 0): void {
             return;
         }
 
+        $nameCount = [];
         foreach ($files as $file) {
-            $zip->addFile($file['path'], $file['name']);
+            $name = $file['name'];
+            $nameCount[$name] = ($nameCount[$name] ?? 0) + 1;
+
+            if ($nameCount[$name] > 1) {
+                $pathInfo = pathinfo($name);
+                $name = $pathInfo['filename'] . '_' . $nameCount[$name] . '.' . ($pathInfo['extension'] ?? '');
+            }
+
+            $zip->addFile($file['path'], $name);
         }
 
         $zip->close();

@@ -22,8 +22,35 @@ function csrf_token(): string
     return $_SESSION['csrf_token'];
 }
 
-/** Check a submitted token against the session's token. */
+/**
+ * Check a submitted token against the session's token. On success, invalidates
+ * the token to prevent replay attacks (one-time use only).
+ */
 function csrf_verify(?string $submitted): bool
+{
+    if (empty($_SESSION['csrf_token']) || $submitted === null) {
+        return false;
+    }
+
+    if (!hash_equals($_SESSION['csrf_token'], $submitted)) {
+        return false;
+    }
+
+    // Token verified successfully. Invalidate it immediately to prevent replay.
+    unset($_SESSION['csrf_token']);
+
+    return true;
+}
+
+/**
+ * Same check as csrf_verify() but does not invalidate the token — for a
+ * multi-request flow under one page load (chunked upload: init, N chunks,
+ * then finalize) where the page embeds one token and every request needs
+ * to keep verifying against it. One-time-use semantics would break the
+ * second request in the sequence. Still constant-time (hash_equals);
+ * still requires a live session token.
+ */
+function csrf_verify_reusable(?string $submitted): bool
 {
     if (empty($_SESSION['csrf_token']) || $submitted === null) {
         return false;

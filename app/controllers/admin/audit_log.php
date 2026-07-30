@@ -18,7 +18,7 @@ function admin_audit_log_controller(PDO $pdo, array $config): void {
 
     $filters = [
         'action' => $_GET['action'] ?? '',
-        'admin_id' => $_GET['admin_id'] ?? '',
+        'actor' => $_GET['actor'] ?? '',
         'dateFrom' => $_GET['dateFrom'] ?? '',
         'dateTo' => $_GET['dateTo'] ?? '',
     ];
@@ -31,9 +31,9 @@ function admin_audit_log_controller(PDO $pdo, array $config): void {
         $params[] = '%' . $filters['action'] . '%';
     }
 
-    if (!empty($filters['admin_id'])) {
-        $whereConditions[] = 'admin_id = ?';
-        $params[] = (int)$filters['admin_id'];
+    if (!empty($filters['actor'])) {
+        $whereConditions[] = 'actor = ?';
+        $params[] = $filters['actor'];
     }
 
     if (!empty($filters['dateFrom'])) {
@@ -55,10 +55,9 @@ function admin_audit_log_controller(PDO $pdo, array $config): void {
 
     $query = <<<SQL
         SELECT
-            al.id, al.action, al.admin_id, aa.email as admin_email,
-            al.details, al.ip_address, al.created_at
+            al.id, al.actor, al.action, al.entity_type, al.entity_id,
+            al.meta, al.ip, al.created_at
         FROM audit_log al
-        LEFT JOIN admin_users aa ON aa.id = al.admin_id
         {$whereClause}
         ORDER BY al.created_at DESC
         LIMIT {$perPage} OFFSET {$offset}

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/db_compat.php';
 
 /**
  * Fulfillment job lifecycle for NAS storage mode.
@@ -24,7 +25,7 @@ function create_fulfillment_job(PDO $pdo, int $orderId, string $macsAddress = ''
 
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, run_after)
-        VALUES (?, ?, ?, NOW())
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     ');
 
     return $stmt->execute([
@@ -42,7 +43,7 @@ function create_fulfillment_job(PDO $pdo, int $orderId, string $macsAddress = ''
  * Called by the poller after sending magic packet to NAS.
  */
 function mark_wol_sent(PDO $pdo, int $jobId): bool {
-    $stmt = $pdo->prepare('UPDATE jobs SET wol_sent_at = NOW() WHERE id = ? AND type = ?');
+    $stmt = $pdo->prepare('UPDATE jobs SET wol_sent_at = CURRENT_TIMESTAMP WHERE id = ? AND type = ?');
     return $stmt->execute([$jobId, 'fulfillment']);
 }
 
@@ -51,7 +52,7 @@ function mark_wol_sent(PDO $pdo, int $jobId): bool {
  * Called by cron after detecting files pushed via SFTP.
  */
 function mark_fulfilled(PDO $pdo, int $jobId): bool {
-    $stmt = $pdo->prepare('UPDATE jobs SET status = ?, fulfilled_at = NOW() WHERE id = ? AND type = ?');
+    $stmt = $pdo->prepare('UPDATE jobs SET status = ?, fulfilled_at = CURRENT_TIMESTAMP WHERE id = ? AND type = ?');
     return $stmt->execute(['fulfilled', $jobId, 'fulfillment']);
 }
 
@@ -59,22 +60,38 @@ function mark_fulfilled(PDO $pdo, int $jobId): bool {
  * Check for stalled fulfillment jobs (pending >15 min without WoL sent, or
  * WoL sent >15 min without fulfillment). Send alert email to admin.
  */
+/**
+ * NOTE (found while fixing this function's MySQL-only date syntax, not
+ * itself fixed in this pass — flagged in PROGRESS.md): the jobs table
+ * (migrations/001_initial_schema.sql) has no wol_sent_at, alert_sent_at,
+ * or fulfilled_at columns, and its status ENUM is only
+ * pending|running|done|failed. This function's WHERE clause and the
+ * 'processing' status value it queries for don't match that schema at
+ * all -- every call fails outright. Remote-NAS storage mode is opt-in and
+ * off by default (see the file-level doc comment above), so this doesn't
+ * touch the default local-storage path, but the feature itself needs a
+ * schema migration (the three missing columns) and a status-value
+ * reconciliation across this whole file before it can work. Out of scope
+ * for a date-syntax portability fix; left broken rather than partially
+ * patched into a new, differently-broken state.
+ */
 function check_stalled_fulfillment_jobs(PDO $pdo, array $config): void {
     $adminEmail = $config['site']['support_email'] ?? '';
     if (!$adminEmail) {
         return;
     }
 
-    $stmt = $pdo->prepare('
-        SELECT id, payload, DATE_ADD(created_at, INTERVAL 15 MINUTE) as stall_time
+    $stallThreshold = db_date_sub_sql($pdo, 'CURRENT_TIMESTAMP', 15, 'minute');
+    $stmt = $pdo->prepare("
+        SELECT id, payload, " . db_date_add_sql($pdo, 'created_at', 15, 'minute') . " as stall_time
         FROM jobs
         WHERE type = ? AND status IN (?, ?)
         AND (
-            (wol_sent_at IS NULL AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE))
-            OR (wol_sent_at IS NOT NULL AND fulfilled_at IS NULL AND wol_sent_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE))
+            (wol_sent_at IS NULL AND created_at < {$stallThreshold})
+            OR (wol_sent_at IS NOT NULL AND fulfilled_at IS NULL AND wol_sent_at < {$stallThreshold})
         )
         AND alert_sent_at IS NULL
-    ');
+    ");
     $stmt->execute(['fulfillment', 'pending', 'processing']);
     $stalledJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -84,7 +101,7 @@ function check_stalled_fulfillment_jobs(PDO $pdo, array $config): void {
 
         send_fulfillment_alert_email($adminEmail, $config, $orderId, $job['id']);
 
-        $updateStmt = $pdo->prepare('UPDATE jobs SET alert_sent_at = NOW() WHERE id = ?');
+        $updateStmt = $pdo->prepare('UPDATE jobs SET alert_sent_at = CURRENT_TIMESTAMP WHERE id = ?');
         $updateStmt->execute([$job['id']]);
     }
 }
@@ -163,5 +180,10 @@ and the system will package and email them to the customer.
 Site: {$siteName}
 EOF;
 
-    send_email($adminEmail, $subject, $body);
+    // send_email() (bare 3-arg name) was never defined anywhere in the
+    // codebase — this call would throw "undefined function" the first
+    // time a fulfillment job actually stalled. send_email_via_configured_
+    // transport() (app/lib/mailer.php) is the real send entrypoint.
+    $bodyHtml = '<pre>' . htmlspecialchars($body, ENT_QUOTES, 'UTF-8') . '</pre>';
+    send_email_via_configured_transport($config, $adminEmail, $subject, $bodyHtml, $body);
 }

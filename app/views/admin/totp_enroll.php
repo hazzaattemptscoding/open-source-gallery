@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Set up two-factor authentication: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <div class="auth-page">

@@ -82,9 +82,16 @@ function cache_file_path(string $key): string {
 
 function cache_file_write(string $key, mixed $value, int $expiresAt): void {
     if (!is_dir(CACHE_DIR) && !@mkdir(CACHE_DIR, 0775, true) && !is_dir(CACHE_DIR)) {
-        return; // Caching is a performance optimization, not a correctness requirement.
+        // Caching is a performance optimization, not a correctness
+        // requirement, so this stays non-fatal — but a cache directory
+        // that can never be created is worth an operator's attention;
+        // silently degrading forever looks identical to "working as
+        // intended" from the outside.
+        error_log("cache_file_write: could not create cache directory " . CACHE_DIR);
+        return;
     }
     if (!is_writable(CACHE_DIR)) {
+        error_log("cache_file_write: cache directory " . CACHE_DIR . " is not writable");
         return;
     }
 
@@ -96,9 +103,11 @@ function cache_file_write(string $key, mixed $value, int $expiresAt): void {
     // partially-written cache file.
     $tmpPath = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
     if (file_put_contents($tmpPath, $payload) === false) {
+        error_log("cache_file_write: failed to write temp file $tmpPath");
         return;
     }
     if (!rename($tmpPath, $path)) {
+        error_log("cache_file_write: failed to rename $tmpPath to $path");
         @unlink($tmpPath);
     }
 }
@@ -112,6 +121,7 @@ function cache_file_read(string $key): ?array {
 
     $raw = @file_get_contents($path);
     if ($raw === false) {
+        error_log("cache_file_read: failed to read existing cache file $path");
         return null;
     }
 
@@ -120,6 +130,11 @@ function cache_file_read(string $key): ?array {
     // nothing and closes off PHP object-injection via a tampered cache file.
     $data = @unserialize($raw, ['allowed_classes' => false]);
     if (!is_array($data) || !array_key_exists('expires', $data) || !array_key_exists('value', $data)) {
+        // A cache miss returns null with no log line (normal, expected);
+        // a file that exists but doesn't unserialize into the expected
+        // shape means corruption or tampering, worth knowing about even
+        // though the safe response (treat as a miss) is the same either way.
+        error_log("cache_file_read: cache file $path exists but is not a valid cache payload");
         return null;
     }
 

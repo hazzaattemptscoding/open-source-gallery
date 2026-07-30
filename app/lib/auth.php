@@ -58,6 +58,16 @@ function admin_attempt_login(PDO $pdo, string $email, string $password, ?string 
             return ['ok' => false, 'reason' => 'totp_required'];
         }
 
+        // Distinct from the password-step 'login' bucket above: a correct
+        // password paired with a brute-forced TOTP code would otherwise hit
+        // no dedicated limit at all, since the password step already
+        // passed. docs/architecture.md's security requirements table
+        // explicitly lists "TOTP attempts" as its own rate-limited bucket.
+        if (!check_rate_limit($pdo, 'totp', 'acct:' . $email, 900, 5)) {
+            audit_log($pdo, 'admin', 'login_rate_limited_totp', 'admin_users', (int) $admin['id'], null, $ip);
+            return ['ok' => false, 'reason' => 'rate_limited'];
+        }
+
         $matchedStep = totp_verify($admin['totp_secret'], $totpCode, $admin['totp_last_step']);
         if ($matchedStep === null) {
             audit_log($pdo, 'admin', 'login_fail_totp', 'admin_users', (int) $admin['id'], null, $ip);

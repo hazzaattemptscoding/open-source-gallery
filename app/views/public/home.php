@@ -7,13 +7,32 @@
 require_once __DIR__ . '/../../lib/seo.php';
 echo generate_meta_tags($GLOBALS['config'], $siteName, 'Professional sports photography gallery and sales platform', $GLOBALS['config']['site']['url'] ?? 'https://example.com');
 ?>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/api/styles.css">
 <?= generate_organization_schema($GLOBALS['config']) ?? '' ?>
 </head>
 <body>
 <header class="site-header">
   <a href="/" class="site-title"><?= e($siteName) ?></a>
 </header>
+
+<?php if (!empty($events)): ?>
+<section class="hero">
+  <?php if ($events[0]['cover_token']): ?>
+    <img src="/media/d/<?= e($events[0]['cover_token']) ?>-1200.jpg" alt="<?= e($events[0]['title']) ?>" class="hero-image">
+  <?php endif; ?>
+  <div class="hero-overlay">
+    <div class="hero-meta">
+      <div class="hero-eyebrow">Latest event</div>
+      <h2 class="hero-title"><?= e($events[0]['title']) ?></h2>
+      <p class="hero-details">
+        <?= e(date('j M Y', strtotime($events[0]['event_date']))) ?>
+        <?php if ($events[0]['venue']): ?> · <?= e($events[0]['venue']) ?><?php endif; ?>
+      </p>
+      <a href="/e/<?= e($events[0]['slug']) ?>" class="button hero-cta">View gallery</a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <main class="event-list-page">
   <?php if (empty($events)): ?>

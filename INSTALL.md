@@ -2,7 +2,45 @@
 
 Self-hosted photo gallery and sales platform for sports photographers.
 
-## Universal Installer (Works Everywhere) ⭐ Recommended
+## Auto-Installers (Recommended) ⭐ Fastest & Easiest
+
+**One command handles everything: installs PHP, MySQL, runs setup wizard, starts server.**
+
+### macOS
+```bash
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+bash install-mac.sh
+```
+
+### Linux
+```bash
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+bash install-linux.sh
+```
+
+### Windows (PowerShell)
+```powershell
+git clone https://github.com/hazzaattemptscoding/open-source-gallery.git
+cd open-source-gallery
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+.\install-windows.ps1
+```
+
+**What happens:**
+- Auto-detects PHP, MySQL, Git (installs if missing)
+- Runs the interactive PHP setup wizard
+- Creates database automatically
+- Starts development server on http://localhost:8080
+- Opens browser to admin setup page
+- You create your admin account and start uploading
+
+See [QUICK-START.md](QUICK-START.md) for troubleshooting and detailed steps.
+
+---
+
+## Universal Installer (Works Everywhere)
 
 **Works on Windows, Mac, Linux, shared hosting, VPS:**
 
@@ -36,7 +74,7 @@ If you have Docker installed, this is all you need:
 docker-compose up
 ```
 
-Wait for "PowerMedia Gallery - Initializing..." message to complete (~30-60 seconds). Then:
+Wait for "Gallery - Initializing..." message to complete (~30-60 seconds). Then:
 
 1. Open http://localhost:8080
 2. Go to http://localhost:8080/admin/setup

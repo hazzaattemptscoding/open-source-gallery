@@ -1,6 +1,5 @@
 -- Migration: Add email queue and notification system
 
-INSERT INTO migrations (filename, applied_at) VALUES ('004_add_email_system.sql', CURRENT_TIMESTAMP);
 
 -- Email queue for transactional messages
 CREATE TABLE emails (

@@ -30,7 +30,7 @@ function admin_my_sessions_controller(PDO $pdo, array $config): void {
 
             if ($session && $session['admin_id'] == $adminId) {
                 $pdo->prepare('DELETE FROM sessions WHERE id = ?')->execute([$sessionId]);
-                audit_log($pdo, 'session_revoke', $adminId, "Revoked session ID $sessionId");
+                audit_log($pdo, 'admin', 'session_revoked', 'session', $sessionId, [], client_ip());
                 $success = 'Session revoked.';
             }
         }
@@ -44,7 +44,7 @@ function admin_my_sessions_controller(PDO $pdo, array $config): void {
         ORDER BY last_activity DESC
     SQL);
     $stmt->execute([$adminId]);
-    $sessions = $stmt->fetch_all(PDO::FETCH_ASSOC);
+    $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $currentSessionId = get_session_id();
 

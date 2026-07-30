@@ -6,13 +6,14 @@
 <title>Upload photos: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <div class="dashboard">
   <h1>Upload photos</h1>
   <p><a href="/admin/events">← Back to events</a></p>
 
-  <div class="upload-zone" id="uploadZone">
+  <div class="upload-zone" id="uploadZone" data-csrf-token="<?= e($csrfToken) ?>">
     <p>Drag photos here or <button type="button" id="chooseFileBtn" class="btn-choose">choose from folder</button></p>
     <p class="hint">JPEG or PNG. Recommended: 2000×2000 px minimum. Max 16384×16384 px.</p>
     <input type="file" id="fileInput" multiple accept="image/jpeg,image/png">

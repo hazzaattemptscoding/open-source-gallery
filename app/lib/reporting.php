@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db_compat.php';
+
 /**
  * Get customer insights: segmentation by LTV.
  */
@@ -28,6 +30,7 @@ function get_customer_segments(PDO $pdo): array {
         SQL);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get customer segments: ' . $e->getMessage());
         return [];
     }
 }
@@ -40,6 +43,7 @@ function get_cohort_analysis(PDO $pdo): array {
         $stmt = $pdo->query('SELECT cohort_month, total_customers, returning_customers, revenue_pence, created_at FROM cohorts ORDER BY cohort_month DESC LIMIT 12');
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get cohort analysis: ' . $e->getMessage());
         return [];
     }
 }
@@ -55,6 +59,7 @@ function calculate_ltv(PDO $pdo, string $customerEmail): ?int {
         $stmt->execute([$customerEmail]);
         return (int)($stmt->fetchColumn() ?? 0);
     } catch (Throwable $e) {
+        error_log('Failed to calculate LTV for ' . $customerEmail . ': ' . $e->getMessage());
         return null;
     }
 }
@@ -64,19 +69,23 @@ function calculate_ltv(PDO $pdo, string $customerEmail): ?int {
  */
 function update_customer_analytics(PDO $pdo): int {
     try {
+        $pdo->beginTransaction();
+
+        $pdo->query('DELETE FROM customer_analytics');
+
         $stmt = $pdo->query(<<<'SQL'
             INSERT INTO customer_analytics (customer_email, total_spent_pence, order_count, first_order_at, last_order_at, lifetime_value_pence)
             SELECT email, SUM(total_pence), COUNT(*), MIN(created_at), MAX(created_at), SUM(total_pence)
             FROM orders
             GROUP BY email
-            ON DUPLICATE KEY UPDATE
-                total_spent_pence = VALUES(total_spent_pence),
-                order_count = VALUES(order_count),
-                last_order_at = VALUES(last_order_at),
-                lifetime_value_pence = VALUES(lifetime_value_pence)
         SQL);
-        return $stmt->rowCount();
+
+        $inserted = $stmt->rowCount();
+        $pdo->commit();
+        return $inserted;
     } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('Failed to update customer analytics: ' . $e->getMessage());
         return 0;
     }
 }
@@ -93,6 +102,7 @@ function get_repeat_rate(PDO $pdo): ?float {
         SQL);
         return (float)($stmt->fetchColumn() ?? 0);
     } catch (Throwable $e) {
+        error_log('Failed to get repeat rate: ' . $e->getMessage());
         return null;
     }
 }
@@ -106,6 +116,7 @@ function get_cohort_retention(PDO $pdo, string $cohortMonth): ?array {
         $stmt->execute([$cohortMonth]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('Failed to get cohort retention for ' . $cohortMonth . ': ' . $e->getMessage());
         return null;
     }
 }
@@ -124,6 +135,7 @@ function get_top_customers(PDO $pdo, int $limit = 10): array {
         $stmt->execute([$limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Failed to get top customers: ' . $e->getMessage());
         return [];
     }
 }

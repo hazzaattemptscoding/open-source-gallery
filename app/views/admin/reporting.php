@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Advanced Reporting: Admin</title>
+<title>Advanced Reporting: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <style>
 .reporting-container {
@@ -125,6 +125,7 @@
   }
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">

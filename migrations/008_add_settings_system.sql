@@ -1,16 +1,22 @@
 -- Migration: Comprehensive settings system
-
-INSERT INTO migrations (filename, applied_at) VALUES ('008_add_settings_system.sql', CURRENT_TIMESTAMP);
+--
+-- Named settings_registry, not settings: migrations/001_initial_schema.sql
+-- already created a `settings` table (a simple skey/svalue key-value store
+-- for prices and other single-value config, read by app/lib/orders.php,
+-- app/controllers/admin/events.php, and others). This migration's richer
+-- category/key_name/type/label shape backs the admin Settings UI
+-- (app/lib/settings.php) instead — a different table for a different job,
+-- not a replacement for the one 001 created.
 
 -- Core settings (database-managed for easy admin updates)
-CREATE TABLE settings (
+CREATE TABLE settings_registry (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     category VARCHAR(50) NOT NULL,
     key_name VARCHAR(100) NOT NULL,
     value LONGTEXT,
     type ENUM('string', 'integer', 'boolean', 'json', 'text', 'email'),
-    label VARCHAR(255) NOT NULL,
-    description LONGTEXT,
+    display_label VARCHAR(255) NOT NULL,
+    help_text LONGTEXT,
     placeholder VARCHAR(255),
     required TINYINT(1) DEFAULT 0,
     is_advanced TINYINT(1) DEFAULT 0,
@@ -22,7 +28,7 @@ CREATE TABLE settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert default settings
-INSERT INTO settings (category, key_name, value, type, label, description, is_advanced, order_by) VALUES
+INSERT INTO settings_registry (category, key_name, value, type, display_label, help_text, is_advanced, order_by) VALUES
 -- Site Settings
 ('site', 'name', 'Photo Gallery', 'string', 'Gallery Name', 'Display name for your photo gallery', 0, 10),
 ('site', 'tagline', '', 'string', 'Tagline', 'Short description shown on homepage', 0, 20),

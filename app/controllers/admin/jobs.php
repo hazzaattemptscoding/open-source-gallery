@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/derivatives.php';
+require_once __DIR__ . '/../../lib/db_compat.php';
 
 function admin_jobs_run_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -10,7 +11,7 @@ function admin_jobs_run_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
 
     $lockToken = 'pm_cron_browser';
-    if (!$pdo->query("SELECT GET_LOCK('{$lockToken}', 0)")->fetchColumn()) {
+    if (!db_acquire_lock($pdo, $lockToken, 0)) {
         echo json_encode(['status' => 'locked']);
         return;
     }
@@ -19,15 +20,17 @@ function admin_jobs_run_controller(PDO $pdo, array $config): void {
     $budget = 20.0;
     $jobsProcessed = 0;
 
-    while ((microtime(true) - $startTime) < $budget) {
-        $stmt = $pdo->prepare('
-            UPDATE jobs
-            SET status = ?, locked_at = NOW()
-            WHERE status = ? AND run_after <= NOW()
-            ORDER BY id ASC
-            LIMIT 1
-        ');
-        $stmt->execute(['running', 'pending']);
+    try {
+        while ((microtime(true) - $startTime) < $budget) {
+            $now = new DateTime('now', new DateTimeZone('UTC'));
+            $stmt = $pdo->prepare('
+                UPDATE jobs
+                SET status = ?, locked_at = ?
+                WHERE status = ? AND run_after <= ?
+                ORDER BY id ASC
+                LIMIT 1
+            ');
+            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), 'pending', $now->format('Y-m-d H:i:s')]);
 
         if ($stmt->rowCount() === 0) {
             break;
@@ -46,16 +49,17 @@ function admin_jobs_run_controller(PDO $pdo, array $config): void {
 
         $success = process_job($pdo, $type, $payload);
 
-        if ($success) {
-            $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
-            $jobsProcessed++;
-        } else {
-            $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['pending', $jobId]);
-            break;
+            if ($success) {
+                $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
+                $jobsProcessed++;
+            } else {
+                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['pending', $jobId]);
+                break;
+            }
         }
+    } finally {
+        db_release_lock($pdo, $lockToken);
     }
-
-    $pdo->query("SELECT RELEASE_LOCK('{$lockToken}')");
 
     echo json_encode([
         'status' => 'ok',

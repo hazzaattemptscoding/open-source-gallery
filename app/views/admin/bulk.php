@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bulk Operations: Admin</title>
+<title>Bulk Operations: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 <style>
 .bulk-container {
   max-width: 900px;
@@ -194,13 +195,17 @@ button:active {
   }
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">
-  <a href="/admin" class="site-title">Bulk Operations</a>
+  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
+  <form method="post" action="/admin/logout" class="logout-form">
+    <button type="submit">Log out</button>
+  </form>
 </header>
 
-<div class="bulk-container">
+<main class="dashboard bulk-container">
   <div class="bulk-header">
     <h1>Bulk Photo Operations</h1>
     <p>Safely perform operations on up to <?= (int)$limits['max_per_operation'] ?> photos at once.</p>
@@ -222,6 +227,7 @@ button:active {
     </div>
 
     <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <div class="form-group">
         <label>Photo IDs (comma-separated):</label>
         <textarea name="photo_ids" placeholder="1,2,3,4,5" required></textarea>
@@ -272,9 +278,8 @@ button:active {
         <div class="form-group">
           <label>New Status:</label>
           <select name="status">
-            <option value="draft">Draft</option>
             <option value="live">Live</option>
-            <option value="archived">Archived</option>
+            <option value="hidden">Hidden</option>
           </select>
         </div>
       </div>
@@ -282,7 +287,7 @@ button:active {
       <button type="submit">Execute Operation</button>
     </form>
   </div>
-</div>
+</main>
 
 <script>
   function updateForm() {

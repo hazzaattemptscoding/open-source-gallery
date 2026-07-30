@@ -5,6 +5,7 @@
 
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
 const MAX_RETRIES = 3;
+const CSRF_TOKEN = document.getElementById('uploadZone').dataset.csrfToken;
 
 let selectedFiles = [];
 let batchId = null;
@@ -72,6 +73,7 @@ function startUpload() {
 
 async function initBatch() {
   const formData = new FormData();
+  formData.append('csrf_token', CSRF_TOKEN);
   formData.append('session_id', sessionId);
   selectedFiles.forEach(file => {
     formData.append('files[]', JSON.stringify({
@@ -125,6 +127,7 @@ async function uploadFile(idx, file, fileInfo) {
     while (retries < MAX_RETRIES && !success) {
       try {
         const fd = new FormData();
+        fd.append('csrf_token', CSRF_TOKEN);
         fd.append('file_id', fileId);
         fd.append('chunk_index', chunkIndex);
         fd.append('chunk', chunk);
@@ -157,6 +160,7 @@ async function uploadFile(idx, file, fileInfo) {
 async function finalizeUpload(idx, fileId, statusEl, progressEl) {
   try {
     const fd = new FormData();
+    fd.append('csrf_token', CSRF_TOKEN);
     fd.append('file_id', fileId);
     fd.append('session_id', sessionId);
 

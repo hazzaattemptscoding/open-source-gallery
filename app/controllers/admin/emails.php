@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/email.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_emails_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -25,19 +26,23 @@ function admin_emails_controller(PDO $pdo, array $config): void {
     $success = $_GET['success'] ?? false;
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $action = $_POST['action'] ?? 'queue';
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            $errors[] = 'Invalid security token. Please try again.';
+        } else {
+            $action = $_POST['action'] ?? 'queue';
 
-        if ($action === 'update_template') {
-            $templateId = (int)($_POST['template_id'] ?? 0);
-            if (update_email_template($pdo, $templateId, [
-                'subject_template' => $_POST['subject_template'] ?? '',
-                'body_html_template' => $_POST['body_html_template'] ?? '',
-                'body_text_template' => $_POST['body_text_template'] ?? '',
-                'enabled' => isset($_POST['enabled']) ? 1 : 0,
-            ])) {
-                audit_log($pdo, 'update_email_template', "Updated email template #$templateId");
-                header('Location: /admin/emails?action=templates&success=1');
-                exit;
+            if ($action === 'update_template') {
+                $templateId = (int)($_POST['template_id'] ?? 0);
+                if (update_email_template($pdo, $templateId, [
+                    'subject_template' => $_POST['subject_template'] ?? '',
+                    'body_html_template' => $_POST['body_html_template'] ?? '',
+                    'body_text_template' => $_POST['body_text_template'] ?? '',
+                    'enabled' => isset($_POST['enabled']) ? 1 : 0,
+                ])) {
+                    audit_log($pdo, 'admin', 'update_email_template', 'email_template', $templateId, [], client_ip());
+                    header('Location: /admin/emails?action=templates&success=1');
+                    exit;
+                }
             }
         }
     }
@@ -54,5 +59,6 @@ function admin_emails_controller(PDO $pdo, array $config): void {
         'templates' => $templates,
         'errors' => $errors,
         'success' => $success,
+        'csrfToken' => csrf_token(),
     ]);
 }

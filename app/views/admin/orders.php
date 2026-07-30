@@ -6,6 +6,7 @@
 <title>Orders — <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 
@@ -58,10 +59,10 @@
                   font-size: 0.85rem;
                   font-weight: 500;
                   background: <?=
-                    $order['status'] === 'paid' ? 'rgba(81, 207, 102, 0.2); color: #51cf66;' :
-                    $order['status'] === 'refunded' ? 'rgba(255, 107, 107, 0.2); color: #ff6b6b;' :
-                    $order['status'] === 'partial_refund' ? 'rgba(255, 159, 64, 0.2); color: #ff9f40;' :
-                    'rgba(153, 153, 153, 0.2); color: #999999;'
+                    ($order['status'] === 'paid' ? 'rgba(81, 207, 102, 0.2); color: #51cf66;' :
+                    ($order['status'] === 'refunded' ? 'rgba(255, 107, 107, 0.2); color: #ff6b6b;' :
+                    ($order['status'] === 'partial_refund' ? 'rgba(255, 159, 64, 0.2); color: #ff9f40;' :
+                    'rgba(153, 153, 153, 0.2); color: #999999;')))
                   ?>">
                   <?= e($order['status']) ?>
                 </span>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($event['title']) ?>: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">
@@ -18,8 +18,18 @@
     <img class="hero-image" src="/media/d/<?= e($heroToken) ?>-1600.jpg" alt="<?= e($event['title']) ?> event photography">
   <?php endif; ?>
   <div class="hero-overlay">
-    <h1><?= e($event['title']) ?></h1>
+    <span class="hero-eyebrow">Event Gallery</span>
+    <h1 class="hero-title"><?= e($event['title']) ?></h1>
+    <div class="hero-search-box">
+      <input type="text" id="searchInput" class="hero-search-input" placeholder="Search by name, number, or class...">
+    </div>
   </div>
+</section>
+
+<!-- Hero CTA block -->
+<section class="hero-cta-block">
+  <a href="#photos" class="button hero-cta-primary">View Gallery</a>
+  <a href="/" class="hero-cta-secondary">View all events</a>
 </section>
 
 <!-- Meta tags: date, venue, session/class -->
@@ -76,12 +86,7 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
 </form>
 <?php endif; ?>
 
-<!-- Search box (prominent) -->
-<div class="search-box">
-  <input type="text" id="searchInput" class="search-input" placeholder="Search by name, number, or class...">
-</div>
-
-<main>
+<main id="photos">
   <!-- Photo grid with empty state -->
   <div class="photo-grid" id="photoGrid"
        data-photo-ids="<?= e(json_encode(array_map('intval', array_column($photos, 'id')))) ?>"
@@ -116,7 +121,7 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
 </main>
 
 <!-- Lightbox for tap-to-enlarge -->
-<div class="lightbox" id="lightbox" hidden>
+<div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
   <button class="lightbox-prev" id="lightboxPrev" aria-label="Previous">&#8249;</button>
   <img id="lightboxImage" alt="">

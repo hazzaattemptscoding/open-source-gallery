@@ -90,17 +90,6 @@ class BulkOperationsTest extends TestCase {
      * Test bulk update photo prices.
      */
     public function testBulkUpdatePrices(): void {
-        $this->markTestSkipped(
-            'bulk_update_prices() writes to photos.price_pence, a column that ' .
-            'does not exist in the schema (pricing lives on events: ' .
-            'price_single_pence/price_session_pence/price_event_pence). This is a ' .
-            'pre-existing gap, not something touched by the TIER 1/2 changes — the ' .
-            'same p.price_pence reference is also what breaks search_photos() ' .
-            '(app/lib/search.php) and appears in analytics.php, wishlist.php, ' .
-            'export.php, and api.php. Needs a product decision (add the column vs. ' .
-            'drop per-photo pricing) before this can be fixed or tested for real.'
-        );
-
         $eventId = $this->createEvent();
         $sessionId = $this->createSession($eventId);
         $photoIds = [
@@ -128,20 +117,11 @@ class BulkOperationsTest extends TestCase {
      * Test bulk change photo status.
      */
     public function testBulkChangeStatus(): void {
-        $this->markTestSkipped(
-            'The admin bulk-status UI/controller/lib chain (app/views/admin/bulk.php, ' .
-            'app/controllers/admin/bulk.php, bulk_change_status()) uses draft/live/archived, ' .
-            'but photos.status is ENUM(processing,live,hidden,failed) — draft and archived ' .
-            "aren't valid values, so this fails with a truncation error before it even runs. " .
-            'Pre-existing, not touched by the TIER 1/2 changes. Needs a product decision on ' .
-            'the right status vocabulary before this can be fixed or tested for real.'
-        );
-
         $eventId = $this->createEvent();
         $sessionId = $this->createSession($eventId);
         $photoIds = [
-            $this->createPhoto($sessionId, ['status' => 'draft']),
-            $this->createPhoto($sessionId, ['status' => 'draft']),
+            $this->createPhoto($sessionId, ['status' => 'processing']),
+            $this->createPhoto($sessionId, ['status' => 'processing']),
         ];
 
         require_once APP_ROOT . '/app/lib/bulk.php';

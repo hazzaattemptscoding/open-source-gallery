@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/settings.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_settings_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -26,6 +27,11 @@ function admin_settings_controller(PDO $pdo, array $config): void {
     $success = $_GET['success'] ?? false;
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'CSRF verification failed.';
+            return;
+        }
         $updates = [];
 
         foreach ($_POST as $key => $value) {
@@ -38,7 +44,7 @@ function admin_settings_controller(PDO $pdo, array $config): void {
         if (!empty($updates)) {
             $updated = batch_update_settings($pdo, $updates, $category);
             if ($updated > 0) {
-                audit_log($pdo, 'update_settings', "Updated $updated settings in category: $category");
+                audit_log($pdo, 'admin', 'update_settings', 'settings', null, ['category' => $category, 'count' => $updated], client_ip());
                 header("Location: /admin/settings?category=$category&mode=$mode&success=1");
                 exit;
             }
@@ -55,6 +61,7 @@ function admin_settings_controller(PDO $pdo, array $config): void {
 
     render(__DIR__ . '/../../views/admin/settings.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
+        'csrfToken' => csrf_token(),
         'categories' => $categories,
         'category' => $category,
         'mode' => $mode,

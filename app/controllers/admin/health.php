@@ -184,9 +184,9 @@ function check_derivative_health(PDO $pdo): array {
  */
 function check_storage_health(): array {
     try {
-        $storageDir = __DIR__ . '/../../storage';
+        $storageDir = __DIR__ . '/../../../storage';
         $hiresDir = $storageDir . '/hires';
-        $mediaDir = __DIR__ . '/../../public/media/d';
+        $mediaDir = __DIR__ . '/../../../public/media/d';
 
         $hiresSize = get_directory_size($hiresDir);
         $mediaSize = get_directory_size($mediaDir);
@@ -224,8 +224,13 @@ function check_storage_health(): array {
  */
 function get_recent_errors(PDO $pdo): array {
     try {
+        // audit_log's column is `meta` (JSON), not `details` — this query
+        // threw "column not found" on every call, silently caught below,
+        // so this panel was permanently empty regardless of actual errors.
+        // Aliased back to `details` so app/views/admin/health.php's
+        // existing $error['details'] reference needs no change.
         $stmt = $pdo->query(<<<'SQL'
-            SELECT action, details, created_at
+            SELECT action, meta AS details, created_at
             FROM audit_log
             WHERE action LIKE '%failed%' OR action LIKE '%error%'
             ORDER BY created_at DESC
@@ -234,6 +239,7 @@ function get_recent_errors(PDO $pdo): array {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('get_recent_errors: ' . $e->getMessage());
         return [];
     }
 }
@@ -244,25 +250,21 @@ function get_recent_errors(PDO $pdo): array {
 function get_quick_stats(PDO $pdo): array {
     try {
         $stats = [];
+        $oneDayAgo = (new DateTime('now', new DateTimeZone('UTC')))
+            ->modify('-1 day')
+            ->format('Y-m-d H:i:s');
 
-        // Recent orders (last 24 hours)
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT COUNT(*) as count
-            FROM orders
-            WHERE status = 'completed' AND created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)
-        SQL);
+        $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM orders WHERE status = ? AND created_at > ?');
+        $stmt->execute(['paid', $oneDayAgo]);
         $stats['orders_24h'] = (int)$stmt->fetchColumn();
 
-        // Recently uploaded photos
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT COUNT(*) as count
-            FROM photos
-            WHERE created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)
-        SQL);
+        $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM photos WHERE created_at > ?');
+        $stmt->execute([$oneDayAgo]);
         $stats['photos_24h'] = (int)$stmt->fetchColumn();
 
         return $stats;
     } catch (Throwable $e) {
+        error_log('Failed to get quick stats: ' . $e->getMessage());
         return [];
     }
 }

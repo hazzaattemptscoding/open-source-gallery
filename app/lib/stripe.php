@@ -49,12 +49,41 @@ function stripe_verify_webhook_signature(string $payload, string $signature, str
         return false;
     }
 
-    [$timestamp, $sigHash] = explode(',', str_replace('t=', '', str_replace('v1=', '', $signature)), 2) + ['', ''];
+    $parts = [];
+    $timestamp = null;
+    $v1Hashes = [];
+
+    foreach (explode(',', $signature) as $part) {
+        $part = trim($part);
+        if (strpos($part, 't=') === 0) {
+            $timestamp = substr($part, 2);
+        } elseif (strpos($part, 'v1=') === 0) {
+            $v1Hashes[] = substr($part, 3);
+        }
+    }
+
+    if (!$timestamp || empty($v1Hashes)) {
+        return false;
+    }
+
+    $currentTime = time();
+    $timestampTime = (int)$timestamp;
+    $timeTolerance = 300;
+
+    if ($currentTime - $timestampTime > $timeTolerance) {
+        return false;
+    }
 
     $signedContent = "$timestamp.$payload";
     $expectedHash = hash_hmac('sha256', $signedContent, $webhookSecret);
 
-    return hash_equals($expectedHash, $sigHash);
+    foreach ($v1Hashes as $sigHash) {
+        if (hash_equals($expectedHash, $sigHash)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function stripe_request(string $method, string $url, string $secretKey, array $data): array {
@@ -72,11 +101,32 @@ function stripe_request(string $method, string $url, string $secretKey, array $d
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
-    if ($httpCode < 200 || $httpCode >= 300 || !$response) {
-        throw new RuntimeException("Stripe API error: HTTP $httpCode");
+    if ($curlError) {
+        throw new RuntimeException("Stripe API connection error: $curlError");
     }
 
-    return json_decode($response, true) ?? [];
+    if ($httpCode < 200 || $httpCode >= 300) {
+        $errorMessage = "HTTP $httpCode";
+        if ($response) {
+            $decoded = json_decode($response, true);
+            if (isset($decoded['error']['message'])) {
+                $errorMessage .= " - " . $decoded['error']['message'];
+            }
+        }
+        throw new RuntimeException("Stripe API error: $errorMessage");
+    }
+
+    if (!$response) {
+        throw new RuntimeException("Stripe API error: Empty response");
+    }
+
+    $decoded = json_decode($response, true);
+    if ($decoded === null) {
+        throw new RuntimeException("Stripe API error: Invalid JSON response: $response");
+    }
+
+    return $decoded;
 }

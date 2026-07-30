@@ -81,7 +81,11 @@ function handle_checkout_completed(PDO $pdo, array $session): void {
         return;
     }
 
-    mark_order_paid($pdo, (int)$order['id']);
+    $orderId = (int)$order['id'];
+    mark_order_paid($pdo, $orderId);
+    audit_log($pdo, 'system', 'webhook_payment_confirmed', 'order', $orderId, [
+        'checkout_id' => $checkoutId,
+    ]);
 }
 
 function handle_charge_refunded(PDO $pdo, array $charge): void {
@@ -102,8 +106,13 @@ function handle_charge_refunded(PDO $pdo, array $charge): void {
     $refundType = $isFullyRefunded ? 'full' : 'partial';
     $status = $isFullyRefunded ? 'refunded' : 'partial_refund';
 
-    $stmt = $pdo->prepare('UPDATE orders SET status = ?, refunded_at = NOW() WHERE id = ?');
+    $stmt = $pdo->prepare('UPDATE orders SET status = ?, refunded_at = CURRENT_TIMESTAMP WHERE id = ?');
     $stmt->execute([$status, $orderId]);
+
+    audit_log($pdo, 'system', 'webhook_refund_processed', 'order', (int)$orderId, [
+        'refund_type' => $refundType,
+        'payment_intent' => $paymentIntentId,
+    ]);
 
     // Queue refund confirmation email
     queue_job($pdo, 'email', ['order_id' => (int)$orderId, 'type' => 'refund', 'refund_type' => $refundType]);

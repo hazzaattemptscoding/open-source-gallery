@@ -76,7 +76,11 @@ function show_photo_details(PDO $pdo, string $siteName, string $csrfToken, int $
 }
 
 function update_photo_status(PDO $pdo, int $adminId, string $ip, int $photoId): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
 
     $status = (string)($_POST['status'] ?? '');
     if (!in_array($status, ['live', 'hidden', 'processing', 'failed'], true)) {
@@ -105,7 +109,11 @@ function update_photo_status(PDO $pdo, int $adminId, string $ip, int $photoId): 
 }
 
 function delete_photo(PDO $pdo, int $adminId, string $ip, int $photoId): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
 
     $stmt = $pdo->prepare('SELECT id, event_id, session_id, public_token, file_extension FROM photos WHERE id = ?');
     $stmt->execute([$photoId]);

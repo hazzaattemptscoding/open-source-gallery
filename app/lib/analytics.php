@@ -6,6 +6,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db_compat.php';
+
 /**
  * Get revenue trend data (daily/weekly/monthly).
  */
@@ -14,28 +16,49 @@ function get_revenue_trend(
     string $period = 'daily',
     int $days = 30
 ): array {
-    $dateFormat = match ($period) {
-        'weekly' => '%Y-W%v',
-        'monthly' => '%Y-%m',
-        default => '%Y-%m-%d',
-    };
-
     try {
+        $now = new DateTime('now', new DateTimeZone('UTC'));
+        $cutoff = (clone $now)->modify("-{$days} days")->format('Y-m-d H:i:s');
+
         $stmt = $pdo->prepare(<<<'SQL'
-            SELECT
-                DATE_FORMAT(created_at, ?) as period,
-                COUNT(*) as orders,
-                SUM(total_pence) as revenue_pence,
-                AVG(total_pence) as avg_order_value
+            SELECT created_at, COUNT(*) as orders, SUM(total_pence) as revenue_pence, AVG(total_pence) as avg_order_value
             FROM orders
-            WHERE status = 'paid'
-            AND created_at > DATE_SUB(NOW(), INTERVAL ? DAY)
-            GROUP BY period
-            ORDER BY period ASC
+            WHERE status = 'paid' AND created_at > ?
+            ORDER BY created_at ASC
         SQL);
-        $stmt->execute([$dateFormat, $days]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $stmt->execute([$cutoff]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $dt = new DateTime($row['created_at']);
+            $key = match ($period) {
+                'weekly' => $dt->format('Y-W'),
+                'monthly' => $dt->format('Y-m'),
+                default => $dt->format('Y-m-d'),
+            };
+
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = ['period' => $key, 'orders' => 0, 'revenue_pence' => 0, 'count' => 0, 'sum_values' => 0];
+            }
+            $grouped[$key]['orders'] += (int)$row['orders'];
+            $grouped[$key]['revenue_pence'] += (int)($row['revenue_pence'] ?? 0);
+            $grouped[$key]['count'] += (int)$row['orders'];
+            $grouped[$key]['sum_values'] += (float)$row['avg_order_value'] * (int)$row['orders'];
+        }
+
+        $result = [];
+        foreach ($grouped as $item) {
+            $result[] = [
+                'period' => $item['period'],
+                'orders' => $item['orders'],
+                'revenue_pence' => $item['revenue_pence'],
+                'avg_order_value' => $item['count'] > 0 ? (int)($item['sum_values'] / $item['count']) : 0,
+            ];
+        }
+        return $result;
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -48,7 +71,7 @@ function get_top_photos(PDO $pdo, int $limit = 10): array {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT
                 p.id, p.public_token, p.original_filename,
-                p.price_pence, e.title as event_title,
+                COALESCE(p.price_pence, e.price_single_pence) AS price_pence, e.title as event_title,
                 COUNT(oi.id) as times_sold,
                 SUM(oi.quantity) as units_sold,
                 SUM(oi.unit_price_pence * oi.quantity) as revenue_pence
@@ -56,13 +79,14 @@ function get_top_photos(PDO $pdo, int $limit = 10): array {
             JOIN events e ON p.event_id = e.id
             LEFT JOIN order_items oi ON p.id = oi.photo_id
             WHERE oi.id IS NOT NULL
-            GROUP BY p.id, p.public_token, p.original_filename, p.price_pence, e.title
+            GROUP BY p.id, p.public_token, p.original_filename, p.price_pence, e.price_single_pence, e.title
             ORDER BY revenue_pence DESC, units_sold DESC
             LIMIT ?
         SQL);
         $stmt->execute([$limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -87,6 +111,7 @@ function get_sales_by_event(PDO $pdo): array {
         SQL);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -115,6 +140,7 @@ function get_customer_insights(PDO $pdo): array {
         SQL);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -124,18 +150,17 @@ function get_customer_insights(PDO $pdo): array {
  */
 function get_conversion_metrics(PDO $pdo, int $days = 30): array {
     try {
+        $now = new DateTime('now', new DateTimeZone('UTC'));
+        $cutoff = (clone $now)->modify("-{$days} days")->format('Y-m-d H:i:s');
+
         // Total gallery views
         $stmt = $pdo->prepare('SELECT SUM(view_count) as total_views FROM photos');
         $stmt->execute();
         $views = $stmt->fetch(PDO::FETCH_ASSOC)['total_views'] ?? 0;
 
         // Total orders in period
-        $stmt = $pdo->prepare(<<<'SQL'
-            SELECT COUNT(*) as total_orders
-            FROM orders
-            WHERE status = 'paid' AND created_at > DATE_SUB(NOW(), INTERVAL ? DAY)
-        SQL);
-        $stmt->execute([$days]);
+        $stmt = $pdo->prepare('SELECT COUNT(*) as total_orders FROM orders WHERE status = ? AND created_at > ?');
+        $stmt->execute(['paid', $cutoff]);
         $orders = $stmt->fetch(PDO::FETCH_ASSOC)['total_orders'] ?? 0;
 
         // Session events (gallery page views)
@@ -156,38 +181,41 @@ function get_conversion_metrics(PDO $pdo, int $days = 30): array {
  */
 function get_analytics_summary(PDO $pdo): array {
     try {
+        $now = new DateTime('now', new DateTimeZone('UTC'));
+        $cutoff30 = (clone $now)->modify('-30 days')->format('Y-m-d H:i:s');
+
         $stats = [];
 
         // Revenue (all time)
-        $stmt = $pdo->query('SELECT SUM(total_pence) as total FROM orders WHERE status = "paid"');
+        $stmt = $pdo->prepare('SELECT SUM(total_pence) as total FROM orders WHERE status = ?');
+        $stmt->execute(['paid']);
         $stats['all_time_revenue'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         // Orders (all time)
-        $stmt = $pdo->query('SELECT COUNT(*) as total FROM orders WHERE status = "paid"');
+        $stmt = $pdo->prepare('SELECT COUNT(*) as total FROM orders WHERE status = ?');
+        $stmt->execute(['paid']);
         $stats['all_time_orders'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         // Photos uploaded
-        $stmt = $pdo->query('SELECT COUNT(*) as total FROM photos WHERE status = "live"');
+        $stmt = $pdo->prepare('SELECT COUNT(*) as total FROM photos WHERE status = ?');
+        $stmt->execute(['live']);
         $stats['photos_live'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         // Last 30 days
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT
-                SUM(total_pence) as revenue,
-                COUNT(*) as orders
-            FROM orders
-            WHERE status = 'paid' AND created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
-        SQL);
+        $stmt = $pdo->prepare('SELECT SUM(total_pence) as revenue, COUNT(*) as orders FROM orders WHERE status = ? AND created_at > ?');
+        $stmt->execute(['paid', $cutoff30]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         $stats['last_30_days_revenue'] = (int)($row['revenue'] ?? 0);
         $stats['last_30_days_orders'] = (int)($row['orders'] ?? 0);
 
         // Average order value
-        $stmt = $pdo->query('SELECT AVG(total_pence) as avg FROM orders WHERE status = "paid"');
+        $stmt = $pdo->prepare('SELECT AVG(total_pence) as avg FROM orders WHERE status = ?');
+        $stmt->execute(['paid']);
         $stats['avg_order_value'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['avg'] ?? 0);
 
         return $stats;
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }
@@ -197,18 +225,25 @@ function get_analytics_summary(PDO $pdo): array {
  */
 function get_order_distribution_by_hour(PDO $pdo): array {
     try {
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT
-                HOUR(created_at) as hour,
-                COUNT(*) as orders,
-                SUM(total_pence) as revenue_pence
-            FROM orders
-            WHERE status = 'paid'
-            GROUP BY hour
-            ORDER BY hour ASC
-        SQL);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $stmt = $pdo->query('SELECT created_at, SUM(total_pence) as revenue_pence FROM orders WHERE status = ? GROUP BY created_at ORDER BY created_at ASC');
+        $stmt->execute(['paid']);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $byHour = [];
+        foreach ($rows as $row) {
+            $dt = new DateTime($row['created_at']);
+            $hour = (int)$dt->format('H');
+            if (!isset($byHour[$hour])) {
+                $byHour[$hour] = ['hour' => $hour, 'orders' => 0, 'revenue_pence' => 0];
+            }
+            $byHour[$hour]['orders']++;
+            $byHour[$hour]['revenue_pence'] += (int)($row['revenue_pence'] ?? 0);
+        }
+
+        ksort($byHour);
+        return array_values($byHour);
     } catch (Throwable $e) {
+        error_log('Analytics error: ' . $e->getMessage());
         return [];
     }
 }

@@ -24,8 +24,9 @@ require __DIR__ . '/app/bootstrap.php';
 
 $outputDir = $argv[1] ?? __DIR__ . '/public_static';
 
-echo "PowerMedia Gallery - Static HTML Generator\n";
-echo "==========================================\n\n";
+$siteName = $config['site']['name'] ?? 'Gallery';
+echo "{$siteName} - Static HTML Generator\n";
+echo str_repeat('=', strlen($siteName) + 22) . "\n\n";
 
 // Create output directory
 if (!is_dir($outputDir)) {

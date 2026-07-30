@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/reporting.php';
+require_once __DIR__ . '/../../lib/currency.php';
 
 function admin_reporting_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -26,9 +27,10 @@ function admin_reporting_controller(PDO $pdo, array $config): void {
         'repeat_rate' => get_repeat_rate($pdo),
     ];
 
+    $currencyCode = $config['currency'] ?? 'GBP';
     render(__DIR__ . '/../../views/admin/reporting.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'reporting' => $reporting,
-        'currencySymbol' => $config['currency']['symbol'] ?? '£',
+        'currencySymbol' => currency_symbol($currencyCode),
     ]);
 }

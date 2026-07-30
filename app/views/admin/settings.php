@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings: Admin</title>
+<title>Settings: <?= e($siteName) ?></title>
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
 <style>
 body { background: var(--bg-alt); }
 
@@ -344,6 +345,7 @@ button.submit:active {
   }
 }
 </style>
+<link rel="stylesheet" href="/api/styles.css">
 </head>
 <body>
 <header class="site-header">
@@ -382,6 +384,7 @@ button.submit:active {
     </div>
 
     <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <div class="settings-section">
         <div class="settings-section-title">
           <h3><?= e(get_category_label($category)) ?></h3>

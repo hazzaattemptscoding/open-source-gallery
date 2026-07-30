@@ -10,7 +10,7 @@
 declare(strict_types=1);
 
 echo "==================================\n";
-echo "PowerMedia Gallery — Setup Verification\n";
+echo "Gallery — Setup Verification\n";
 echo "==================================\n\n";
 
 $errors = [];

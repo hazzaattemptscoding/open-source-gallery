@@ -10,20 +10,10 @@ namespace Tests\Integration;
 use Tests\TestCase;
 
 class SearchTest extends TestCase {
-    private const PRICE_PENCE_SKIP_REASON =
-        'search_photos() selects p.price_pence, a column that does not exist on ' .
-        'photos (pricing lives on events: price_single_pence/price_session_pence/ ' .
-        'price_event_pence). This means /search is broken for every real query right ' .
-        'now — pre-existing, not touched by the TIER 1/2 changes. Same root cause as ' .
-        'BulkOperationsTest::testBulkUpdatePrices. Needs a product decision before ' .
-        'this can be fixed or tested for real.';
-
     /**
      * Test basic photo search by filename.
      */
     public function testSearchByFilename(): void {
-        $this->markTestSkipped(SearchTest::PRICE_PENCE_SKIP_REASON);
-
         require_once APP_ROOT . '/app/lib/search.php';
 
         // Create published event and session.
@@ -55,8 +45,6 @@ class SearchTest extends TestCase {
      * Test search respects published status.
      */
     public function testSearchRespectesPublishedStatus(): void {
-        $this->markTestSkipped(SearchTest::PRICE_PENCE_SKIP_REASON);
-
         require_once APP_ROOT . '/app/lib/search.php';
 
         // Create unpublished event.
@@ -87,8 +75,6 @@ class SearchTest extends TestCase {
      * Test search respects photo status (only 'live').
      */
     public function testSearchRespectesPhotoStatus(): void {
-        $this->markTestSkipped(SearchTest::PRICE_PENCE_SKIP_REASON);
-
         require_once APP_ROOT . '/app/lib/search.php';
 
         $eventId = $this->createEvent(['is_published' => true]);
@@ -120,8 +106,6 @@ class SearchTest extends TestCase {
      * Test search with pagination.
      */
     public function testSearchPagination(): void {
-        $this->markTestSkipped(SearchTest::PRICE_PENCE_SKIP_REASON);
-
         require_once APP_ROOT . '/app/lib/search.php';
 
         $eventId = $this->createEvent(['is_published' => true]);
@@ -185,8 +169,6 @@ class SearchTest extends TestCase {
      * Test search returns event and session info.
      */
     public function testSearchReturnsEventAndSessionInfo(): void {
-        $this->markTestSkipped(SearchTest::PRICE_PENCE_SKIP_REASON);
-
         require_once APP_ROOT . '/app/lib/search.php';
 
         $eventId = $this->createEvent([

@@ -1,0 +1,19 @@
+-- Migration: Persist the download link URL on the order itself.
+--
+-- get_or_create_download_link() used to call create_download_link()
+-- unconditionally on every call, so each visit to the checkout success page
+-- minted a fresh download_links row with its own independent download-count
+-- budget, orphaning the previous link (whose raw token was only ever shown
+-- once and is now unrecoverable, since only its SHA-256 hash is stored).
+--
+-- The raw token can't be reconstructed from download_links after creation
+-- by design (a DB leak must not leak live links), but the success page and
+-- the receipt email both need to show the *same* URL across repeat views/
+-- sends. Storing it once on the order row is a considered, narrow exception
+-- to that design: the token already leaves the system in plaintext exactly
+-- once, over email, the moment it's created, so keeping a second plaintext
+-- copy here for redisplay doesn't meaningfully change the attack surface.
+-- Every real security check (hash lookup, revocation, expiry, download cap)
+-- still happens exclusively in download.php against download_links, which
+-- this column has no bearing on.
+ALTER TABLE orders ADD COLUMN download_url VARCHAR(500) NULL AFTER paid_at;

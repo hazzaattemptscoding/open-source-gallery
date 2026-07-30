@@ -253,6 +253,7 @@ CREATE TABLE IF NOT EXISTS download_links (
 );
 
 CREATE INDEX IF NOT EXISTS idx_links_order ON download_links(order_id);
+CREATE INDEX IF NOT EXISTS idx_download_links_token_hash ON download_links(token_hash);
 
 CREATE TABLE IF NOT EXISTS downloads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

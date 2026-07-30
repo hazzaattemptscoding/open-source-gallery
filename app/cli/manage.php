@@ -10,6 +10,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/db_compat.php';
 require_once __DIR__ . '/../lib/cli_helpers.php';
 
 $command = $argv[1] ?? 'help';
@@ -67,7 +68,7 @@ function perf_stats(PDO $pdo): void {
     $stmt = $pdo->query('SELECT COUNT(*) FROM photos WHERE status = "live"');
     $livePhotos = $stmt->fetchColumn();
 
-    $stmt = $pdo->query('SELECT COUNT(*) FROM orders WHERE status = "completed"');
+    $stmt = $pdo->query('SELECT COUNT(*) FROM orders WHERE status = "paid"');
     $completedOrders = $stmt->fetchColumn();
 
     $stmt = $pdo->query('SELECT SUM(view_count) FROM photos');
@@ -157,7 +158,7 @@ function perf_top_photos(PDO $pdo): void {
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN order_items oi ON p.id = oi.photo_id
-        LEFT JOIN orders o ON oi.order_id = o.id AND o.status = "completed"
+        LEFT JOIN orders o ON oi.order_id = o.id AND o.status = "paid"
         WHERE p.status = "live"
         GROUP BY p.id
         ORDER BY p.view_count DESC
@@ -279,7 +280,7 @@ function jobs_status(PDO $pdo): void {
         $icon = match($stat['status']) {
             'pending' => '⏳',
             'running' => '🔄',
-            'completed' => '✅',
+            'done' => '✅',
             'failed' => '❌',
             default => '•',
         };
@@ -289,7 +290,7 @@ function jobs_status(PDO $pdo): void {
 
     echo "\n";
 
-    $stmt = $pdo->query('SELECT type, COUNT(*) as count FROM jobs WHERE status != "completed" GROUP BY type');
+    $stmt = $pdo->query('SELECT type, COUNT(*) as count FROM jobs WHERE status NOT IN ("done", "failed") GROUP BY type');
     $byType = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (!empty($byType)) {
@@ -478,10 +479,10 @@ function batch_export_orders(PDO $pdo, ?string $filename): void {
     $filename = $filename ?? 'orders_' . date('Y-m-d_Hi') . '.csv';
 
     $stmt = $pdo->query('
-        SELECT o.id, o.customer_email, o.total_pence, o.created_at, COUNT(oi.id) as item_count
+        SELECT o.id, o.email, o.total_pence, o.created_at, COUNT(oi.id) as item_count
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
-        WHERE o.status = "completed"
+        WHERE o.status = "paid"
         GROUP BY o.id
         ORDER BY o.created_at DESC
     ');
@@ -549,7 +550,7 @@ function batch_reprocess_derivatives(PDO $pdo): void {
     foreach ($photoIds as $photoId) {
         $stmt = $pdo->prepare('
             INSERT IGNORE INTO jobs (type, payload, status, run_after)
-            VALUES (?, ?, ?, NOW())
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             'derivative',
@@ -606,7 +607,8 @@ function handle_health(PDO $pdo, array $args): void {
     $checks[] = [$failed > 0 ? '⚠️  Failed jobs' : '✅ Failed jobs', number_format($failed)];
 
     // Pending jobs
-    $stmt = $pdo->query('SELECT COUNT(*) FROM jobs WHERE status = "pending" AND locked_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE)');
+    $stuckThreshold = db_date_sub_sql($pdo, 'CURRENT_TIMESTAMP', 10, 'minute');
+    $stmt = $pdo->query("SELECT COUNT(*) FROM jobs WHERE status = 'pending' AND locked_at < {$stuckThreshold}");
     $stuck = $stmt->fetchColumn();
     $checks[] = [$stuck > 0 ? '⚠️  Stuck jobs' : '✅ Stuck jobs', number_format($stuck)];
 

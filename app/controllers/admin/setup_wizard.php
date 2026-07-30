@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/csrf.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/setup.php';
+require_once __DIR__ . '/../../lib/db_compat.php';
 
 function admin_setup_wizard_controller(PDO $pdo, array $config): void {
     // Redirect if setup already complete (has admin account)
@@ -323,9 +324,19 @@ function update_config_setting(PDO $pdo, string $key, string $value): void {
     // For now, store in settings table as a reference.
     // The actual config.php update is a manual step or done via
     // a config manager in production.
-    $stmt = $pdo->prepare('
-        INSERT INTO settings (skey, svalue) VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)
-    ');
-    $stmt->execute(['setup_config_' . $key, $value]);
+    $skey = 'setup_config_' . $key;
+
+    if (db_supports_on_duplicate_key($pdo)) {
+        $stmt = $pdo->prepare('
+            INSERT INTO settings (skey, svalue) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)
+        ');
+        $stmt->execute([$skey, $value]);
+    } else {
+        $stmt = $pdo->prepare('UPDATE settings SET svalue = ? WHERE skey = ?');
+        $stmt->execute([$value, $skey]);
+        if ($stmt->rowCount() === 0) {
+            $pdo->prepare('INSERT INTO settings (skey, svalue) VALUES (?, ?)')->execute([$skey, $value]);
+        }
+    }
 }

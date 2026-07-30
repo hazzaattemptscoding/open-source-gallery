@@ -50,6 +50,70 @@ if (($config['admin_mode'] ?? 'local') === 'remote' && strpos($path, '/admin') =
 // URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
 // cron is URL-based rather than CLI. cron/run.php lives outside the docroot
 // and has no direct HTTP path, so this is the only way to reach it over the web.
+// Dynamic CSS with customization overrides
+if ($path === '/api/styles.css') {
+    require __DIR__ . '/../app/lib/customize.php';
+    header('Content-Type: text/css; charset=utf-8');
+
+    // Cache bust on customize.json changes
+    $customizeFile = __DIR__ . '/../storage/customize.json';
+    $mtime = file_exists($customizeFile) ? filemtime($customizeFile) : 0;
+    $baseFile = __DIR__ . '/assets/css/podium-ink.css';
+    $baseMtime = filemtime($baseFile);
+    $etag = '"' . md5("$baseMtime-$mtime") . '"';
+
+    // Set ETag and allow short cache, checking ETag on each request
+    header("ETag: $etag");
+    header('Cache-Control: public, max-age=60, must-revalidate');
+
+    // If client has cached version, check if it's still valid
+    if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] === $etag) {
+        http_response_code(304);
+        exit;
+    }
+
+    echo file_get_contents($baseFile);
+    echo "\n/* Customization Overrides */\n\n";
+    $settings = get_customize_settings();
+    echo get_customize_css_overrides($settings);
+    exit;
+}
+
+// Serve customization assets (logos, etc)
+if (preg_match('#^/storage/customize/(.+)$#', $path, $assetMatch)) {
+    $filename = $assetMatch[1];
+    // Prevent directory traversal
+    if (strpos($filename, '..') !== false || strpos($filename, '/') !== false) {
+        http_response_code(404);
+        exit;
+    }
+
+    $filepath = __DIR__ . '/../storage/customize/' . $filename;
+    if (!file_exists($filepath)) {
+        http_response_code(404);
+        exit;
+    }
+
+    // Determine MIME type
+    $mimeTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+    ];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $mimeType = $mimeTypes[$ext] ?? 'application/octet-stream';
+
+    header('Content-Type: ' . $mimeType);
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . filesize($filepath));
+    readfile($filepath);
+    exit;
+}
+
+// URL-invoked cron fallback (docs/architecture.md section 5) for hosts whose
+// cron is URL-based rather than CLI. cron/run.php lives outside the docroot
+// and has no direct HTTP path, so this is the only way to reach it over the web.
 if (preg_match('#^/cron/(.+)$#', $path, $cronMatch)) {
     $cronSecret = $config['security']['cron_secret'] ?? '';
     if ($cronSecret === '' || !hash_equals($cronSecret, $cronMatch[1])) {
@@ -87,12 +151,22 @@ switch ($path) {
 
     case '/cart/add':
         require __DIR__ . '/../app/controllers/public/cart.php';
-        public_cart_add_controller($pdo, $config);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_cart_add_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
         break;
 
     case '/cart/remove':
         require __DIR__ . '/../app/controllers/public/cart.php';
-        public_cart_remove_controller($pdo, $config);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_cart_remove_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
         break;
 
     case '/api/photos':
@@ -168,6 +242,11 @@ switch ($path) {
     case '/admin/settings':
         require __DIR__ . '/../app/controllers/admin/settings.php';
         admin_settings_controller($pdo, $config);
+        break;
+
+    case '/admin/customize':
+        require __DIR__ . '/../app/controllers/admin/customize.php';
+        admin_customize_controller($pdo, $config);
         break;
 
     case '/admin/export':

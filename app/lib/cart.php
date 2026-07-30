@@ -62,6 +62,10 @@ function cart_get(array $config): array {
 /** @param array<int, array{type: string, id: int}> $items */
 function cart_save(array $config, array $items): void {
     $hmacKey = $config['security']['hmac_key'] ?? '';
+    if ($hmacKey === '') {
+        throw new RuntimeException('Cart HMAC key not configured in config/config.php');
+    }
+
     $payload = json_encode(array_values($items));
     $signature = sign_payload($payload, $hmacKey);
     $encodedPayload = strtr(base64_encode($payload), '+/', '-_');
@@ -139,6 +143,7 @@ function cart_price(PDO $pdo, array $items, array $config = []): array {
             $lines[] = [
                 'type' => 'photo',
                 'id' => (int)$row['id'],
+                'public_token' => $row['public_token'],
                 'description' => "Photo {$row['public_token']} — {$row['event_title']}",
                 'unit_price_pence' => $price,
             ];

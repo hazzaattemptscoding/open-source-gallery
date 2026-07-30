@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/upload.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_upload_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -12,6 +13,16 @@ function admin_upload_controller(PDO $pdo, array $config): void {
 
     $path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/', '/');
     $method = $_SERVER['REQUEST_METHOD'];
+
+    // Reusable (non-invalidating) check: the upload page embeds one token
+    // and makes many sequential requests (init, N chunks, finalize) under
+    // it -- csrf_verify()'s one-time-use semantics would break the second
+    // request in the sequence.
+    if ($method === 'POST' && !csrf_verify_reusable($_POST['csrf_token'] ?? null)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'CSRF verification failed']);
+        return;
+    }
 
     if ($path === '/admin/upload/init' && $method === 'POST') {
         handle_init($pdo, $adminId, $ip);
@@ -50,11 +61,12 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
     }
 
     $batchId = init_upload_batch($pdo, $sessionId);
-    $response = [];
+    $response = ['accepted' => [], 'rejected' => []];
 
     foreach ($fileStrings as $fileString) {
         $file = json_decode($fileString, true);
         if (!is_array($file)) {
+            $response['rejected'][] = ['name' => '(invalid)', 'error' => 'Invalid JSON'];
             continue;
         }
 
@@ -62,13 +74,14 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
         $fileName = safe_original_filename((string)($file['name'] ?? ''));
 
         if ($fileSize <= 0) {
+            $response['rejected'][] = ['name' => $fileName ?: '(empty name)', 'error' => 'File size is 0 or missing'];
             continue;
         }
 
         $chunksTotal = (int)ceil($fileSize / CHUNK_SIZE);
         $fileId = register_upload_file($pdo, $batchId, $fileName, $fileSize, $chunksTotal);
 
-        $response[] = [
+        $response['accepted'][] = [
             'file_id' => $fileId,
             'name' => $fileName,
             'size' => $fileSize,
@@ -76,10 +89,10 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
         ];
     }
 
-    audit_log($pdo, 'admin', 'upload_batch_initiated', 'batch', $batchId, ['file_count' => count($response)], $ip);
+    audit_log($pdo, 'admin', 'upload_batch_initiated', 'batch', $batchId, ['files_accepted' => count($response['accepted']), 'files_rejected' => count($response['rejected'])], $ip);
 
     header('Content-Type: application/json');
-    echo json_encode(['batch_id' => $batchId, 'files' => $response]);
+    echo json_encode(['batch_id' => $batchId, 'accepted' => $response['accepted'], 'rejected' => $response['rejected']]);
 }
 
 function handle_chunk(PDO $pdo, int $adminId, string $ip): void {
@@ -313,7 +326,7 @@ function generate_public_token(): string {
 function queue_derivative_job(PDO $pdo, int $photoId): void {
     $stmt = $pdo->prepare('
         INSERT INTO jobs (type, payload, status, attempts, run_after)
-        VALUES (?, ?, ?, 0, NOW())
+        VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
     ');
     $stmt->execute(['derivative', json_encode(['photo_id' => $photoId]), 'pending']);
 }
