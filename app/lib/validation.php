@@ -76,6 +76,31 @@ function validate_email(mixed $email): ?string {
 }
 
 /**
+ * Validate email format, allowing localhost addresses in dev mode.
+ * In dev mode, allows admin@localhost, admin@127.0.0.1, etc.
+ * In production, uses standard email validation only.
+ *
+ * @param mixed $email User input
+ * @param array $config Application config with 'dev_mode' key
+ * @return string|null Valid email if valid, null otherwise
+ */
+function validate_email_for_mode(mixed $email, array $config): ?string {
+    $email = (string)$email;
+
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return $email;
+    }
+
+    if ($config['dev_mode'] === 'local') {
+        if (preg_match('/^[a-z0-9._+-]+@(localhost|127\.0\.0\.1)$/i', $email)) {
+            return $email;
+        }
+    }
+
+    return null;
+}
+
+/**
  * Validate URL format.
  *
  * @param mixed $url User input

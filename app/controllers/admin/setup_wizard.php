@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../lib/csrf.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/setup.php';
 require_once __DIR__ . '/../../lib/db_compat.php';
+require_once __DIR__ . '/../../lib/validation.php';
 
 function admin_setup_wizard_controller(PDO $pdo, array $config): void {
     // Redirect if setup already complete (has admin account)
@@ -78,7 +79,7 @@ function handle_admin_account(PDO $pdo, array $config, array $post): array {
     $password = $post['password'] ?? '';
     $passwordConfirm = $post['password_confirm'] ?? '';
 
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!validate_email_for_mode($email, $config)) {
         return ['Enter a valid email address.', false];
     }
     if (strlen($password) < 12) {
@@ -110,7 +111,7 @@ function handle_business_details(PDO $pdo, array $config, array $post): array {
     if ($name === '') {
         return ['Gallery name is required.', false];
     }
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!validate_email_for_mode($email, $config)) {
         return ['Contact email is required and must be valid.', false];
     }
     if (!preg_match('/^[A-Z]{3}$/', $currency)) {
@@ -145,7 +146,7 @@ function handle_email_setup(PDO $pdo, array $config, array $post): array {
     $user = trim($post['smtp_user'] ?? '');
     $pass = $post['smtp_pass'] ?? '';
 
-    if ($fromEmail === '' || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+    if (!validate_email_for_mode($fromEmail, $config)) {
         return ['From email is required and must be valid.', false];
     }
 

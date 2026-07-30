@@ -11,6 +11,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/csrf.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/validation.php';
 
 function admin_setup_controller(PDO $pdo, array $config): void
 {
@@ -32,7 +33,7 @@ function admin_setup_controller(PDO $pdo, array $config): void
             $password = $_POST['password'] ?? '';
             $passwordConfirm = $_POST['password_confirm'] ?? '';
 
-            if ($emailValue === '' || !filter_var($emailValue, FILTER_VALIDATE_EMAIL)) {
+            if (!validate_email_for_mode($emailValue, $config)) {
                 $error = 'Enter a valid email address.';
             } elseif (strlen($password) < 12) {
                 $error = 'Password must be at least 12 characters.';
