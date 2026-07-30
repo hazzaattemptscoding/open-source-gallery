@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Events';
 $currentPage = 'events';
-require_once __DIR__ . '/partials/layout_header.php';
+require_once __DIR__ . '/../partials/layout_header.php';
 ?>
 <div class="dashboard">
   <h1>Events</h1>
