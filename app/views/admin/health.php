@@ -7,14 +7,14 @@ require_once __DIR__ . '/partials/layout_header.php';
   <h1>System Health</h1>
 
   <div class="refresh-note">
-    🔄 Status as of <?= date('H:i:s') ?> — <a href="">Refresh</a>
+    Status as of <?= date('H:i:s') ?> — <a href="">Refresh</a>
   </div>
 
   <!-- Database -->
   <div class="health-card">
     <div class="health-status">
-      <div class="status-icon status-<?= e($health['database']['status']) ?>">
-        <?= $health['database']['status'] === 'ok' ? '✓' : ($health['database']['status'] === 'warning' ? '⚠' : '✗') ?>
+      <div class="status-icon status-<?= e($health['database']['status']) ?>" aria-hidden="true">
+        <?= $health['database']['status'] === 'ok' ? '●' : ($health['database']['status'] === 'warning' ? '○' : '×') ?>
       </div>
       <div>
         <div class="status-message">Database</div>
@@ -42,8 +42,8 @@ require_once __DIR__ . '/partials/layout_header.php';
   <!-- Cron -->
   <div class="health-card">
     <div class="health-status">
-      <div class="status-icon status-<?= e($health['cron']['status']) ?>">
-        <?= $health['cron']['status'] === 'ok' ? '✓' : ($health['cron']['status'] === 'warning' ? '⚠' : '✗') ?>
+      <div class="status-icon status-<?= e($health['cron']['status']) ?>" aria-hidden="true">
+        <?= $health['cron']['status'] === 'ok' ? '●' : ($health['cron']['status'] === 'warning' ? '○' : '×') ?>
       </div>
       <div>
         <div class="status-message">Background Jobs (Cron)</div>
@@ -71,8 +71,8 @@ require_once __DIR__ . '/partials/layout_header.php';
   <!-- Email -->
   <div class="health-card">
     <div class="health-status">
-      <div class="status-icon status-<?= e($health['email']['status']) ?>">
-        <?= $health['email']['status'] === 'ok' ? '✓' : '⚠' ?>
+      <div class="status-icon status-<?= e($health['email']['status']) ?>" aria-hidden="true">
+        <?= $health['email']['status'] === 'ok' ? '●' : '○' ?>
       </div>
       <div>
         <div class="status-message">Email</div>

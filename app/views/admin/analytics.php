@@ -128,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
   const textMutedColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
   const bgAltColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-alt').trim();
+  const currencySymbol = <?= json_encode($currencySymbol) ?>;
 
   // Revenue Trend
   const revenueTrendData = <?= json_encode($analytics['revenue_trend']) ?>;
@@ -155,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
           tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
         },
         scales: {
-          y: { beginAtZero: true, ticks: { callback: v => '£' + v, color: textMutedColor } },
+          y: { beginAtZero: true, ticks: { callback: v => currencySymbol + v, color: textMutedColor } },
           x: { ticks: { color: textMutedColor } }
         }
       }
