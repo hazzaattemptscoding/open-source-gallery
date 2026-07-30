@@ -92,4 +92,22 @@ final class EmailDeliveryTest extends TestCase {
 
         $this->assertStringContainsString('partial refund', $rendered['html']);
     }
+
+    public function testMailFallbackHeadersUseConfiguredFromEmail(): void {
+        $headers = build_mail_fallback_headers(['from_email' => 'orders@my-gallery.example', 'from_name' => 'My Gallery']);
+
+        $this->assertStringContainsString('From: My Gallery <orders@my-gallery.example>', $headers);
+    }
+
+    public function testMailFallbackHeadersFallBackToASafeAddressWhenFromEmailIsBlank(): void {
+        // Before the fix, this fell back to parse_url($_SERVER['HTTP_HOST'] ?? 'localhost', PHP_URL_HOST),
+        // which returns null for any bare hostname (with or without a scheme) --
+        // producing the malformed header "From: noreply@" with no domain, in
+        // every real request and every cron-driven send (cron has no HTTP_HOST
+        // at all). Most receiving mail servers reject or spam-filter that.
+        $headers = build_mail_fallback_headers(['from_email' => '', 'from_name' => '']);
+
+        $this->assertMatchesRegularExpression('/^From: [^\s@<]+@[^\s@>]+\r\n/m', $headers);
+        $this->assertStringNotContainsString('From: noreply@\r\n', $headers, 'the domain part must never be empty');
+    }
 }

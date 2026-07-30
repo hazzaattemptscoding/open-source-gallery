@@ -39,7 +39,7 @@ function send_email_via_configured_transport(array $config, string $recipient, s
 
     return smtp_is_available($smtp)
         ? send_email_smtp($smtp, $recipient, $subject, $bodyHtml, $bodyText)
-        : send_email_mail_fallback($recipient, $subject, $bodyHtml, $bodyText);
+        : send_email_mail_fallback($smtp, $recipient, $subject, $bodyHtml, $bodyText);
 }
 
 function send_email_smtp(array $smtp, string $recipient, string $subject, string $bodyHtml, string $bodyText): bool
@@ -68,13 +68,46 @@ function send_email_smtp(array $smtp, string $recipient, string $subject, string
     }
 }
 
-/** Plain mail(), unchanged from the previous send_email_direct() in email.php. */
-function send_email_mail_fallback(string $recipient, string $subject, string $bodyHtml, string $bodyText = ''): bool
+/**
+ * Split out from send_email_mail_fallback() so the header string can be
+ * asserted on directly in tests without a real mail() call (mail() has no
+ * fake-transport hook, unlike PHPMailer's, and sendmail_path can only be
+ * overridden at PHP process start, not at test runtime).
+ *
+ * Previously built the From address as 'noreply@' . parse_url($_SERVER['HTTP_HOST']
+ * ?? 'localhost', PHP_URL_HOST) -- parse_url() returns null for any bare
+ * hostname with no scheme (confirmed: parse_url('localhost', PHP_URL_HOST)
+ * and parse_url('gallery.example.com', PHP_URL_HOST) both return null), so
+ * this always produced the malformed header "From: noreply@" with an empty
+ * domain, on every real request and every cron-driven send (cron has no
+ * HTTP_HOST at all). It also ignored smtp.from_email entirely, even though
+ * that's the config value self-hosters are told to set. Most receiving mail
+ * servers reject or spam-filter a From address with no domain.
+ */
+function build_mail_fallback_headers(array $smtp): string
 {
+    $fromEmail = (string)($smtp['from_email'] ?? '');
+    if ($fromEmail === '') {
+        // $_SERVER['HTTP_HOST'] is the app's real domain on a live request or
+        // a URL-triggered cron run; strip an optional port, it's not part of
+        // an email domain. CLI-invoked cron has no HTTP_HOST, so fall back to
+        // the machine hostname, then 'localhost' as the last resort.
+        $host = isset($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : (gethostname() ?: 'localhost');
+        $fromEmail = 'noreply@' . $host;
+    }
+    $fromName = (string)($smtp['from_name'] ?? '');
+
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= 'From: noreply@' . parse_url($_SERVER['HTTP_HOST'] ?? 'localhost', PHP_URL_HOST) . "\r\n";
+    $headers .= 'From: ' . ($fromName !== '' ? "$fromName <$fromEmail>" : $fromEmail) . "\r\n";
 
+    return $headers;
+}
+
+/** Plain mail(). */
+function send_email_mail_fallback(array $smtp, string $recipient, string $subject, string $bodyHtml, string $bodyText = ''): bool
+{
+    $headers = build_mail_fallback_headers($smtp);
     $body = $bodyText ?: strip_tags($bodyHtml);
     return (bool)mail($recipient, $subject, $body, $headers);
 }
