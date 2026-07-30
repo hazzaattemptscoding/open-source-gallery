@@ -34,5 +34,34 @@ function admin_upload_page_controller(PDO $pdo, array $config): void {
         }
     }
 
-    render(__DIR__ . '/../../views/admin/upload.php', compact('siteName', 'sessionsByEvent', 'csrfToken'));
+    // Load recent upload batch and its files to show persisted state
+    $recentBatch = null;
+    $recentFiles = [];
+    try {
+        $stmt = $pdo->prepare('
+            SELECT id, admin_id, created_at, completed_at
+            FROM upload_batches
+            WHERE admin_id = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+        ');
+        $stmt->execute([$_SESSION['admin_id']]);
+        $recentBatch = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($recentBatch) {
+            $stmt = $pdo->prepare('
+                SELECT id, original_filename, status, photo_id
+                FROM upload_files
+                WHERE batch_id = ?
+                ORDER BY id
+            ');
+            $stmt->execute([(int)$recentBatch['id']]);
+            $recentFiles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    } catch (Exception $e) {
+        // Silently fail if tables don't exist or other error
+        error_log('Failed to load recent upload state: ' . $e->getMessage());
+    }
+
+    render(__DIR__ . '/../../views/admin/upload.php', compact('siteName', 'sessionsByEvent', 'csrfToken', 'recentBatch', 'recentFiles'));
 }

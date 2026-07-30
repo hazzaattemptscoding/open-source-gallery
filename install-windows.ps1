@@ -65,12 +65,6 @@ $pdo = dev_connect_db($config);
 dev_reset_schema($pdo);
 dev_seed_dummy_data($pdo);
 
-file_put_contents('storage\dev_setup_creds.txt', json_encode([
-    'url' => $config['site']['base_url'],
-    'email' => 'admin@localhost',
-    'password' => $adminPassword,
-]));
-
 echo "\n[+] Setup complete!\n";
 '@
 
@@ -82,12 +76,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Read credentials
-$credsJson = Get-Content "storage\dev_setup_creds.txt" -Raw
-$creds = $credsJson | ConvertFrom-Json
-$email = $creds.email
-$password = $creds.password
-Remove-Item "storage\dev_setup_creds.txt"
+$url = "http://localhost:8000"
 
 Write-Host ""
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
@@ -95,16 +84,18 @@ Write-Host "Starting development server..." -ForegroundColor Cyan
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Access the gallery:" -ForegroundColor Yellow
-Write-Host "  URL: http://localhost:8000" -ForegroundColor Cyan
+Write-Host "  Public:  $url" -ForegroundColor Cyan
+Write-Host "  Admin:   $url/admin" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Admin login:" -ForegroundColor Yellow
-Write-Host "  Email:    $email" -ForegroundColor Cyan
-Write-Host "  Password: $password" -ForegroundColor Cyan
+Write-Host "First-time setup:" -ForegroundColor Yellow
+Write-Host "  1. Open $url/admin/setup in your browser" -ForegroundColor Cyan
+Write-Host "  2. Create your first admin account" -ForegroundColor Cyan
+Write-Host "  3. Enable two-factor authentication" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Notes:" -ForegroundColor Yellow
-Write-Host "  - Change password in /admin/settings after login"
-Write-Host "  - Add real Stripe keys: Settings > Payment Gateway"
-Write-Host "  - Configure email: Settings > Email"
+Write-Host "After login:" -ForegroundColor Yellow
+Write-Host "  - Add real Stripe keys: Admin > Settings > Payment"
+Write-Host "  - Configure email: Admin > Settings > Email"
+Write-Host "  - View sample photos: Admin > Manage Content"
 Write-Host "  - Press Ctrl+C to stop the server"
 Write-Host ""
 
