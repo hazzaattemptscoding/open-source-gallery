@@ -62,47 +62,52 @@ function db_now_sql(): string {
 }
 
 /**
- * Date subtraction: DATE_SUB(date, INTERVAL X unit) on MySQL, date('-X days') on SQLite.
+ * Date subtraction: DATE_SUB(date, INTERVAL X unit) on MySQL,
+ * datetime('...', '-X unit') on SQLite. Uses SQLite's datetime() rather
+ * than date() so minute/hour granularity survives — date() truncates its
+ * result to midnight, which silently breaks any interval finer than a day.
  */
-function db_date_sub_sql(string $dateColumn, int $amount, string $unit = 'day'): string {
-    if (is_mysql($_GLOBALS['pdo'] ?? null)) {
-        $unitMap = ['day' => 'DAY', 'hour' => 'HOUR', 'week' => 'WEEK'];
+function db_date_sub_sql(PDO $pdo, string $dateColumn, int $amount, string $unit = 'day'): string {
+    if (is_mysql($pdo)) {
+        $unitMap = ['minute' => 'MINUTE', 'hour' => 'HOUR', 'day' => 'DAY', 'week' => 'WEEK'];
         $sqlUnit = $unitMap[$unit] ?? 'DAY';
         return "DATE_SUB({$dateColumn}, INTERVAL {$amount} {$sqlUnit})";
     }
 
-    $unitMap = ['day' => 'days', 'hour' => 'hours', 'week' => 'days'];
+    $unitMap = ['minute' => 'minutes', 'hour' => 'hours', 'day' => 'days', 'week' => 'days'];
     $sqlUnit = $unitMap[$unit] ?? 'days';
     if ($unit === 'week') {
         $amount *= 7;
     }
-    return "date({$dateColumn}, '-{$amount} {$sqlUnit}')";
+    return "datetime({$dateColumn}, '-{$amount} {$sqlUnit}')";
 }
 
 /**
- * Date addition: DATE_ADD(date, INTERVAL X unit) on MySQL, date('+X days') on SQLite.
+ * Date addition: DATE_ADD(date, INTERVAL X unit) on MySQL,
+ * datetime('...', '+X unit') on SQLite. See db_date_sub_sql() for why
+ * datetime() and not date().
  */
-function db_date_add_sql(string $dateColumn, int $amount, string $unit = 'day'): string {
-    if (is_mysql($_GLOBALS['pdo'] ?? null)) {
-        $unitMap = ['day' => 'DAY', 'hour' => 'HOUR', 'week' => 'WEEK'];
+function db_date_add_sql(PDO $pdo, string $dateColumn, int $amount, string $unit = 'day'): string {
+    if (is_mysql($pdo)) {
+        $unitMap = ['minute' => 'MINUTE', 'hour' => 'HOUR', 'day' => 'DAY', 'week' => 'WEEK'];
         $sqlUnit = $unitMap[$unit] ?? 'DAY';
         return "DATE_ADD({$dateColumn}, INTERVAL {$amount} {$sqlUnit})";
     }
 
-    $unitMap = ['day' => 'days', 'hour' => 'hours', 'week' => 'days'];
+    $unitMap = ['minute' => 'minutes', 'hour' => 'hours', 'day' => 'days', 'week' => 'days'];
     $sqlUnit = $unitMap[$unit] ?? 'days';
     if ($unit === 'week') {
         $amount *= 7;
     }
-    return "date({$dateColumn}, '+{$amount} {$sqlUnit}')";
+    return "datetime({$dateColumn}, '+{$amount} {$sqlUnit}')";
 }
 
 /**
  * Date formatting: DATE_FORMAT(date, format) on MySQL, strftime(format, date) on SQLite.
  * Only supports a few common formats to keep it portable.
  */
-function db_date_format_sql(string $dateColumn, string $format): string {
-    if (is_mysql($_GLOBALS['pdo'] ?? null)) {
+function db_date_format_sql(PDO $pdo, string $dateColumn, string $format): string {
+    if (is_mysql($pdo)) {
         return "DATE_FORMAT({$dateColumn}, '{$format}')";
     }
 

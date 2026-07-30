@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cart.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
+require_once __DIR__ . '/../../lib/db_compat.php';
 
 /**
  * Event page, matching both /e/{event-slug} (full-event grid across all
@@ -101,11 +102,20 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     // Best-effort view counter; a failed UPDATE here shouldn't break the page.
     try {
         $today = date('Y-m-d');
-        $stmt = $pdo->prepare('
-            INSERT INTO stats_daily (stat_date, event_id, gallery_views) VALUES (?, ?, 1)
-            ON DUPLICATE KEY UPDATE gallery_views = gallery_views + 1
-        ');
-        $stmt->execute([$today, $eventId]);
+        if (db_supports_on_duplicate_key($pdo)) {
+            $stmt = $pdo->prepare('
+                INSERT INTO stats_daily (stat_date, event_id, gallery_views) VALUES (?, ?, 1)
+                ON DUPLICATE KEY UPDATE gallery_views = gallery_views + 1
+            ');
+            $stmt->execute([$today, $eventId]);
+        } else {
+            $stmt = $pdo->prepare('UPDATE stats_daily SET gallery_views = gallery_views + 1 WHERE stat_date = ? AND event_id = ?');
+            $stmt->execute([$today, $eventId]);
+            if ($stmt->rowCount() === 0) {
+                $pdo->prepare('INSERT INTO stats_daily (stat_date, event_id, gallery_views) VALUES (?, ?, 1)')
+                    ->execute([$today, $eventId]);
+            }
+        }
     } catch (Throwable $e) {
         // Stats are non-critical; ignore.
     }

@@ -250,12 +250,21 @@ function process_view_count_job(PDO $pdo, array $payload): bool {
 
     // Increment daily stats for analytics
     $today = date('Y-m-d');
-    $stmt = $pdo->prepare('
-        INSERT INTO stats_daily (stat_date, event_id, photo_views)
-        VALUES (?, ?, 1)
-        ON DUPLICATE KEY UPDATE photo_views = photo_views + 1
-    ');
-    $stmt->execute([$today, $eventId]);
+    if (db_supports_on_duplicate_key($pdo)) {
+        $stmt = $pdo->prepare('
+            INSERT INTO stats_daily (stat_date, event_id, photo_views)
+            VALUES (?, ?, 1)
+            ON DUPLICATE KEY UPDATE photo_views = photo_views + 1
+        ');
+        $stmt->execute([$today, $eventId]);
+    } else {
+        $stmt = $pdo->prepare('UPDATE stats_daily SET photo_views = photo_views + 1 WHERE stat_date = ? AND event_id = ?');
+        $stmt->execute([$today, $eventId]);
+        if ($stmt->rowCount() === 0) {
+            $pdo->prepare('INSERT INTO stats_daily (stat_date, event_id, photo_views) VALUES (?, ?, 1)')
+                ->execute([$today, $eventId]);
+        }
+    }
 
     return true;
 }

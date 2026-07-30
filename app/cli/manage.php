@@ -10,6 +10,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/db_compat.php';
 require_once __DIR__ . '/../lib/cli_helpers.php';
 
 $command = $argv[1] ?? 'help';
@@ -606,7 +607,8 @@ function handle_health(PDO $pdo, array $args): void {
     $checks[] = [$failed > 0 ? '⚠️  Failed jobs' : '✅ Failed jobs', number_format($failed)];
 
     // Pending jobs
-    $stmt = $pdo->query('SELECT COUNT(*) FROM jobs WHERE status = "pending" AND locked_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE)');
+    $stuckThreshold = db_date_sub_sql($pdo, 'CURRENT_TIMESTAMP', 10, 'minute');
+    $stmt = $pdo->query("SELECT COUNT(*) FROM jobs WHERE status = 'pending' AND locked_at < {$stuckThreshold}");
     $stuck = $stmt->fetchColumn();
     $checks[] = [$stuck > 0 ? '⚠️  Stuck jobs' : '✅ Stuck jobs', number_format($stuck)];
 

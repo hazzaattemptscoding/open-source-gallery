@@ -92,25 +92,25 @@ function db_connect_mysql(array $dbConfig): PDO
  */
 function db_upsert_sql(PDO $pdo, string $table, array $values, string|array $primaryKey): array
 {
-    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    require_once __DIR__ . '/db_compat.php';
+
     $columns = array_keys($values);
     $placeholders = array_fill(0, count($values), '?');
 
-    if ($driver === 'sqlite') {
-        $sql = sprintf(
-            'INSERT OR REPLACE INTO %s (%s) VALUES (%s)',
-            $table,
-            implode(', ', $columns),
-            implode(', ', $placeholders)
-        );
-    } else {
-        // MySQL
+    if (db_supports_on_duplicate_key($pdo)) {
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
             $table,
             implode(', ', $columns),
             implode(', ', $placeholders),
             implode(', ', array_map(fn($col) => "$col = VALUES($col)", $columns))
+        );
+    } else {
+        $sql = sprintf(
+            'INSERT OR REPLACE INTO %s (%s) VALUES (%s)',
+            $table,
+            implode(', ', $columns),
+            implode(', ', $placeholders)
         );
     }
 
