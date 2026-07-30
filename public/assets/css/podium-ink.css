@@ -133,7 +133,7 @@ input[type="number"],
 select,
 textarea {
   width: 100%;
-  padding: 1rem;
+  padding: 0.875rem 1rem;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
@@ -706,7 +706,7 @@ body.lightbox-open {
 
 .search-form input {
   flex: 1;
-  padding: 0.75rem;
+  padding: 0.875rem 1rem;
   font-size: 1rem;
   border: 1px solid var(--border);
   border-radius: 0;
@@ -1864,7 +1864,7 @@ body.lightbox-open {
 .form-textarea,
 .form-select {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
+  padding: 0.875rem 1rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: var(--text-base);
