@@ -18,8 +18,8 @@ PHP_VERSION=$(php -v | head -n 1)
 echo "[✓] $PHP_VERSION"
 
 # Check for required extensions
-for ext in pdo pdo_sqlite json; do
-    if ! php -m | grep -q "^$ext$"; then
+for ext in pdo_sqlite json; do
+    if ! php -m | grep -q "$ext"; then
         echo "[✗] PHP extension '$ext' not found. Install with: sudo apt-get install php-sqlite3"
         exit 1
     fi

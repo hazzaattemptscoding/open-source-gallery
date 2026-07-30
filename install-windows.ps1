@@ -18,9 +18,9 @@ $phpVersion = php -v | Select-Object -First 1
 Write-Host "[+] $phpVersion" -ForegroundColor Green
 
 # Check for required extensions
-$extensions = @('pdo', 'pdo_sqlite', 'json')
+$extensions = @('pdo_sqlite', 'json')
 foreach ($ext in $extensions) {
-    $found = php -m | Select-String "^$ext$"
+    $found = php -m | Select-String "$ext"
     if (-not $found) {
         Write-Host "[X] PHP extension '$ext' not found. Verify PHP installation." -ForegroundColor Red
         Read-Host "Press Enter to exit"
