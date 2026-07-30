@@ -91,7 +91,7 @@ function run_cron_drain(PDO $pdo): void {
  * Requires mail server configured via sendmail_path or SMTP settings.
  */
 function process_email_job(PDO $pdo, array $payload): bool {
-    require_once __DIR__ . '/email.php';
+    require_once __DIR__ . '/mailer.php';
 
     $orderId = (int)($payload['order_id'] ?? 0);
     $emailType = (string)($payload['type'] ?? 'receipt');

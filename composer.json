@@ -14,6 +14,7 @@
         }
     },
     "suggest": {
-        "phpseclib/phpseclib": "Required for remote admin mode (when admin_mode = 'remote'). Install with: composer require phpseclib/phpseclib"
+        "phpseclib/phpseclib": "Required for remote admin mode (when admin_mode = 'remote'). Install with: composer require phpseclib/phpseclib",
+        "phpmailer/phpmailer": "Required only if SMTP is configured (Admin -> Settings -> Email -> SMTP host non-empty). Without it, email sends via mail() -- the default and the right choice for most shared hosting. Install with: composer require phpmailer/phpmailer"
     }
 }

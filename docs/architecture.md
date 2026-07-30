@@ -22,9 +22,16 @@ shared hosting. Cron every 5 minutes. No daemons, no Node, no Redis, no framewor
 | Money is integer pence everywhere | No floats near payments. Prices treated as VAT-inclusive gross; no tax logic (flag to revisit if the business registers for VAT). |
 | Image processing: Imagick if `class_exists('Imagick')`, else GD | Runtime detection; a build that dies on a missing extension is useless on shared hosting. |
 
-Vendored Composer packages (uploaded, not installed on server): `stripe/stripe-php`,
-`phpmailer/phpmailer` (SMTP delivery of receipts/links — hand-rolled SMTP is a risk, not a saving).
-TOTP is ~60 lines of RFC 6238 and will be hand-rolled with test vectors rather than pulling a dependency.
+Optional, suggested-not-required Composer packages, each gated behind a
+`class_exists()` check so a host that never opts in sees zero behavior
+change and never needs to install anything (see `app/lib/sftp.php` for the
+pattern): `phpseclib/phpseclib` (remote admin mode's SFTP push) and
+`phpmailer/phpmailer` (SMTP delivery of receipts/links, once SMTP settings
+are actually filled in — otherwise mail() is the default and the right
+choice for most shared hosting). Stripe is a hand-rolled curl wrapper
+(`app/lib/stripe.php`), not the `stripe/stripe-php` SDK — no Stripe
+dependency is vendored at all. TOTP is ~60 lines of RFC 6238, hand-rolled
+with test vectors, also no dependency.
 
 ---
 

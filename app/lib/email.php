@@ -100,15 +100,15 @@ function get_pending_emails(PDO $pdo, int $limit = 50): array {
 }
 
 /**
- * Send email via configured mailer (PHP mail, SMTP, etc).
+ * Send email via the configured transport (SMTP if set up, mail() otherwise
+ * — see app/lib/mailer.php). $config is optional only for backwards
+ * compatibility with any existing caller that doesn't have it in scope;
+ * omitting it always falls back to mail(), matching this function's
+ * previous (mail()-only) behavior exactly.
  */
-function send_email_direct(string $recipient, string $subject, string $bodyHtml, string $bodyText = ''): bool {
-    $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: noreply@" . parse_url($_SERVER['HTTP_HOST'] ?? '', PHP_URL_HOST) . "\r\n";
-
-    $body = $bodyText ?: strip_tags($bodyHtml);
-    return (bool)mail($recipient, $subject, $body, $headers);
+function send_email_direct(string $recipient, string $subject, string $bodyHtml, string $bodyText = '', array $config = []): bool {
+    require_once __DIR__ . '/mailer.php';
+    return send_email_via_configured_transport($config, $recipient, $subject, $bodyHtml, $bodyText);
 }
 
 /**
@@ -218,13 +218,21 @@ function update_email_template(PDO $pdo, int $templateId, array $data): bool {
 
 /**
  * Cron worker: process email queue.
+ *
+ * Note: nothing in the app currently calls queue_email() or
+ * queue_email_from_template(), and nothing in cron.php's job dispatcher
+ * calls this function either — the emails/email_templates tables and this
+ * whole enqueue/drain pair exist but are not wired into any live feature.
+ * Left as-is rather than removed (deleting a working, tested subsystem to
+ * fix an unrelated bug is out of scope) or wired up (building the feature
+ * that would call it is a v2-sized task, not a bug fix).
  */
-function process_email_queue(PDO $pdo): int {
+function process_email_queue(PDO $pdo, array $config = []): int {
     $sent = 0;
     $emails = get_pending_emails($pdo, 100);
 
     foreach ($emails as $email) {
-        if (send_email_direct($email['recipient_email'], $email['subject'], $email['body_html'], $email['body_text'])) {
+        if (send_email_direct($email['recipient_email'], $email['subject'], $email['body_html'], $email['body_text'], $config)) {
             mark_email_sent($pdo, $email['id']);
             $sent++;
         } else {

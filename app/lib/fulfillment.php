@@ -163,5 +163,10 @@ and the system will package and email them to the customer.
 Site: {$siteName}
 EOF;
 
-    send_email($adminEmail, $subject, $body);
+    // send_email() (bare 3-arg name) was never defined anywhere in the
+    // codebase — this call would throw "undefined function" the first
+    // time a fulfillment job actually stalled. send_email_via_configured_
+    // transport() (app/lib/mailer.php) is the real send entrypoint.
+    $bodyHtml = '<pre>' . htmlspecialchars($body, ENT_QUOTES, 'UTF-8') . '</pre>';
+    send_email_via_configured_transport($config, $adminEmail, $subject, $bodyHtml, $body);
 }
