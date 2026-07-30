@@ -25,10 +25,10 @@ function admin_api_health_controller(PDO $pdo, array $config): void {
 
     // Storage
     $dirs = [
-        'hires' => __DIR__ . '/../../storage/hires',
-        'derivatives' => __DIR__ . '/../../storage/derivatives',
-        'cache' => __DIR__ . '/../../storage/cache',
-        'zips' => __DIR__ . '/../../storage/zips',
+        'hires' => __DIR__ . '/../../../storage/hires',
+        'derivatives' => __DIR__ . '/../../../storage/derivatives',
+        'cache' => __DIR__ . '/../../../storage/cache',
+        'zips' => __DIR__ . '/../../../storage/zips',
     ];
 
     foreach ($dirs as $name => $path) {
@@ -47,7 +47,7 @@ function admin_api_health_controller(PDO $pdo, array $config): void {
     $checks['jobs'] = $jobs;
 
     // Cache
-    $cacheDir = __DIR__ . '/../../storage/cache';
+    $cacheDir = __DIR__ . '/../../../storage/cache';
     if (is_dir($cacheDir)) {
         $files = array_diff(scandir($cacheDir), ['.', '..']);
         $size = 0;
@@ -152,8 +152,8 @@ function admin_api_cache_controller(PDO $pdo, array $config): void {
 }
 
 function api_cache_stats(PDO $pdo): void {
-    $cacheDir = __DIR__ . '/../../storage/cache';
-    $zipDir = __DIR__ . '/../../storage/zips';
+    $cacheDir = __DIR__ . '/../../../storage/cache';
+    $zipDir = __DIR__ . '/../../../storage/zips';
 
     $cacheStats = ['files' => 0, 'size_bytes' => 0];
     if (is_dir($cacheDir)) {
@@ -177,7 +177,7 @@ function api_cache_stats(PDO $pdo): void {
 }
 
 function api_cache_clear(array $input): void {
-    $cacheDir = __DIR__ . '/../../storage/cache';
+    $cacheDir = __DIR__ . '/../../../storage/cache';
     $pattern = $input['pattern'] ?? null;
 
     if (!is_dir($cacheDir)) {

@@ -147,7 +147,7 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
             $eventId = (int)$photo['event_id'];
             $token = (string)$photo['public_token'];
             $ext = (string)($photo['file_extension'] ?? 'jpg');
-            $filePath = __DIR__ . "/../storage/hires/{$eventId}/{$token}.{$ext}";
+            $filePath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
 
             if (file_exists($filePath)) {
                 $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
@@ -163,7 +163,7 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
         return false;
     }
 
-    $zipDir = __DIR__ . '/../storage/zips';
+    $zipDir = __DIR__ . '/../../storage/zips';
     if (!is_dir($zipDir)) {
         @mkdir($zipDir, 0755, true);
     }

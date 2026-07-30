@@ -72,7 +72,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
                 $eventIdFromPhoto = (int)$photo['event_id'];
                 $token = (string)$photo['public_token'];
                 $ext = (string)($photo['file_extension'] ?? 'jpg');
-                $filePath = __DIR__ . "/../../storage/hires/{$eventIdFromPhoto}/{$token}.{$ext}";
+                $filePath = __DIR__ . "/../../../storage/hires/{$eventIdFromPhoto}/{$token}.{$ext}";
 
                 if (file_exists($filePath)) {
                     $filename = (string)($photo['original_filename'] ?? 'photo.jpg');
@@ -146,7 +146,7 @@ function stream_zip(array $files, int $orderId = 0): void {
 
     // Check for pre-built ZIP from cron job
     if ($orderId > 0) {
-        $prebuiltZip = __DIR__ . "/../../storage/zips/{$orderId}.zip";
+        $prebuiltZip = __DIR__ . "/../../../storage/zips/{$orderId}.zip";
         if (file_exists($prebuiltZip) && is_readable($prebuiltZip)) {
             $zipPath = $prebuiltZip;
         }

@@ -184,9 +184,9 @@ function check_derivative_health(PDO $pdo): array {
  */
 function check_storage_health(): array {
     try {
-        $storageDir = __DIR__ . '/../../storage';
+        $storageDir = __DIR__ . '/../../../storage';
         $hiresDir = $storageDir . '/hires';
-        $mediaDir = __DIR__ . '/../../public/media/d';
+        $mediaDir = __DIR__ . '/../../../public/media/d';
 
         $hiresSize = get_directory_size($hiresDir);
         $mediaSize = get_directory_size($mediaDir);
