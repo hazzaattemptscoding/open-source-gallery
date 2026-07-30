@@ -38,6 +38,25 @@
     </div>
   </div>
 
+  <!-- Trust signals -->
+  <div style="background: #f7f6f3; padding: 1.5rem; border-radius: 8px; margin: 2rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; text-align: center;">
+    <div>
+      <p style="margin: 0 0 0.5rem; font-size: 1.5rem;">🔒</p>
+      <strong style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Secure Payment</strong>
+      <span style="color: #999; font-size: 0.85rem;">Powered by Stripe</span>
+    </div>
+    <div>
+      <p style="margin: 0 0 0.5rem; font-size: 1.5rem;">📧</p>
+      <strong style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Email Confirmation</strong>
+      <span style="color: #999; font-size: 0.85rem;">Sent to your inbox</span>
+    </div>
+    <div>
+      <p style="margin: 0 0 0.5rem; font-size: 1.5rem;">⚡</p>
+      <strong style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Instant Download</strong>
+      <span style="color: #999; font-size: 0.85rem;">No delays or fees</span>
+    </div>
+  </div>
+
   <div class="confirmation-cta">
     <a href="<?= e($downloadLink) ?>" class="button">Download your files</a>
   </div>

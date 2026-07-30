@@ -395,6 +395,9 @@ switch ($path) {
         } elseif (preg_match('#^/checkout/success/([a-z0-9]+)$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/checkout.php';
             public_checkout_success_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/order/([a-z0-9-]+)$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/order_tracking.php';
+            public_order_tracking_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);
