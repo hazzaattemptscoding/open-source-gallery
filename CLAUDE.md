@@ -12,7 +12,9 @@ Open source, self-hosted client photo gallery and sales platform for sports phot
 
 ## Design
 
-Premium editorial photography aesthetic. White and black only, minimal, generous whitespace, full-bleed images. Clean typographic hierarchy, no decorative elements. Maximizes focus on the photographs themselves. Not swappable—one solid, timeless look.
+Premium editorial photography aesthetic. Minimal, generous whitespace, full-bleed images. Clean typographic hierarchy, no decorative elements. Maximizes focus on the photographs themselves.
+
+Chrome is warm-neutral, near-monochrome (purple at very low chroma, reads as tinted ink rather than "a purple site" — see `--bg`/`--text`/`--border` in `public/assets/css/podium-ink.css`). One accent color exists: a deep plum/mulberry purple (`--accent`, hue ~318, not the default Tailwind-violet/AI-gradient hue), reserved for primary actions, selection, and focus — never atmosphere, never a gradient. Supports light and dark (`prefers-color-scheme`); the admin can override `--text`/`--bg`/`--border`/`--accent` and related tokens per-site via Settings → Customization.
 
 ## Product rules
 
