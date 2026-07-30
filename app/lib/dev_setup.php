@@ -218,47 +218,162 @@ function dev_reset_schema(PDO $pdo): void {
 }
 
 /**
- * Seed dummy data: one event, 10 photos per session, dummy tags.
+ * Seed randomized dummy data for local dev: several events with rosters,
+ * sessions, photos/videos, orders, view stats, and cohort rows — enough
+ * that every admin view (dashboard, analytics, reporting, orders, events)
+ * has something real to render instead of an empty state. Numbers and
+ * names are randomized per run rather than fixed, so repeated local
+ * installs don't all look identical.
  */
 function dev_seed_dummy_data(PDO $pdo): void {
     echo "[*] Seeding dummy data...\n";
 
     try {
-        // Create event
-        $stmt = $pdo->prepare(
-            'INSERT INTO events (title, slug, event_date, is_published, price_single_pence, price_session_pence, price_event_pence)
-             VALUES (?, ?, ?, 1, 500, 2500, 5000)'
-        );
-        $stmt->execute(['Test Event', 'test-event', date('Y-m-d')]);
-        $eventId = (int)$pdo->lastInsertId();
+        $eventDefs = [
+            ['Silverstone Sprint Cup', 'Silverstone Circuit', 45, 500],
+            ['Brands Hatch Club Day', 'Brands Hatch', 30, 600],
+            ['Donington Park Trophy', 'Donington Park', 14, 450],
+            ['Oulton Park Endurance', 'Oulton Park', 2, 750],
+        ];
+        $classes = ['Cadet', 'Junior Rotax', 'Senior Rotax', 'IAME X30'];
+        $sessionNames = ['Qualifying', 'Heat 1', 'Heat 2', 'Final'];
+        $firstNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Isla', 'Jack', 'Kate', 'Liam', 'Mia', 'Noah', 'Olivia'];
+        $lastNames = ['Smith', 'Jones', 'Taylor', 'Brown', 'Wilson', 'Evans', 'Walker', 'Wright', 'Green', 'Hall'];
 
-        // Create session
-        $stmt = $pdo->prepare(
-            'INSERT INTO sessions (event_id, name, slug, sort_order)
-             VALUES (?, ?, ?, 1)'
-        );
-        $stmt->execute([$eventId, 'Test Session', 'test-session']);
-        $sessionId = (int)$pdo->lastInsertId();
+        $eventPrices = [];       // event_id => price_single_pence
+        $eventPhotoIds = [];     // event_id => [photo_id, ...] (photos only, not videos)
 
-        // Create 10 photos
-        for ($i = 1; $i <= 10; $i++) {
+        foreach ($eventDefs as [$title, $venue, $daysAgo, $priceSingle]) {
+            $eventDate = date('Y-m-d', strtotime("-{$daysAgo} days"));
+            $slug = strtolower(str_replace(' ', '-', $title)) . '-' . date('Y', strtotime($eventDate));
+
             $stmt = $pdo->prepare(
-                'INSERT INTO photos (event_id, session_id, public_token, original_filename, width, height, hires_size_bytes, status, view_count)
-                 VALUES (?, ?, ?, ?, 1920, 1080, 2048000, \'live\', 0)'
+                'INSERT INTO events (title, slug, venue, event_date, is_published, price_single_pence, price_session_pence, price_event_pence)
+                 VALUES (?, ?, ?, ?, 1, ?, ?, ?)'
             );
-            $token = substr(bin2hex(random_bytes(6)), 0, 12);
-            $stmt->execute([$eventId, $sessionId, $token, "test-photo-$i.jpg"]);
-            $photoId = (int)$pdo->lastInsertId();
+            $stmt->execute([$title, $slug, $venue, $eventDate, $priceSingle, $priceSingle * 4, $priceSingle * 8]);
+            $eventId = (int)$pdo->lastInsertId();
+            $eventPrices[$eventId] = $priceSingle;
 
-            // Add kart metadata to photos
-            $kartNumber = 100 + $i;
-            $drivers = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'];
-            $driver = $drivers[$i % count($drivers)];
-            $stmt = $pdo->prepare('INSERT INTO photo_tags (photo_id, kart_number, driver_name) VALUES (?, ?, ?)');
-            $stmt->execute([$photoId, (string)$kartNumber, $driver]);
+            // Race entry roster (kart/driver/class): backs both the filter
+            // dropdowns (fetched from event_entries) and the tags on photos
+            // below (so a filter someone picks actually matches something).
+            $roster = [];
+            for ($r = 0, $entryCount = random_int(8, 14); $r < $entryCount; $r++) {
+                $entry = [
+                    'kart' => (string)random_int(1, 99),
+                    'driver' => $firstNames[array_rand($firstNames)] . ' ' . $lastNames[array_rand($lastNames)],
+                    'class' => $classes[array_rand($classes)],
+                ];
+                $roster[] = $entry;
+                try {
+                    $pdo->prepare('INSERT INTO event_entries (event_id, kart_number, driver_name, class) VALUES (?, ?, ?, ?)')
+                        ->execute([$eventId, $entry['kart'], $entry['driver'], $entry['class']]);
+                } catch (PDOException $e) {
+                    // Random kart+class combo collided with an earlier one for
+                    // this event (unique constraint) — harmless, skip it.
+                }
+            }
+
+            // 1-3 sessions per event
+            $sessionIds = [];
+            for ($s = 0, $numSessions = random_int(1, 3); $s < $numSessions; $s++) {
+                $name = $sessionNames[$s] ?? ('Session ' . ($s + 1));
+                $stmt = $pdo->prepare('INSERT INTO sessions (event_id, name, slug, sort_order) VALUES (?, ?, ?, ?)');
+                $stmt->execute([$eventId, $name, strtolower(str_replace(' ', '-', $name)), $s + 1]);
+                $sessionIds[] = (int)$pdo->lastInsertId();
+            }
+
+            // Photos (and a few videos) scattered across sessions, each
+            // tagged from the roster above.
+            $photoIds = [];
+            for ($p = 0, $photoCount = random_int(20, 40); $p < $photoCount; $p++) {
+                $sessionId = $sessionIds[array_rand($sessionIds)];
+                $isVideo = random_int(1, 20) === 1; // ~5% video
+                $mediaType = $isVideo ? 'video' : 'photo';
+                $token = substr(bin2hex(random_bytes(6)), 0, 12);
+                $filename = ($isVideo ? 'clip-' : 'photo-') . ($p + 1) . ($isVideo ? '.mp4' : '.jpg');
+
+                $stmt = $pdo->prepare(
+                    "INSERT INTO photos (event_id, session_id, public_token, original_filename, media_type, width, height, hires_size_bytes, status, view_count, sort_order)
+                     VALUES (?, ?, ?, ?, ?, 1920, 1080, ?, 'live', ?, ?)"
+                );
+                $stmt->execute([$eventId, $sessionId, $token, $filename, $mediaType, random_int(1_500_000, 6_500_000), random_int(0, 120), $p]);
+                $photoId = (int)$pdo->lastInsertId();
+
+                $entry = $roster[array_rand($roster)];
+                $pdo->prepare('INSERT INTO photo_tags (photo_id, kart_number, driver_name, class) VALUES (?, ?, ?, ?)')
+                    ->execute([$photoId, $entry['kart'], $entry['driver'], $entry['class']]);
+
+                if (!$isVideo) {
+                    $photoIds[] = $photoId;
+                }
+            }
+            $eventPhotoIds[$eventId] = $photoIds;
+
+            // Three weeks of view history so the analytics trend chart has
+            // something to plot rather than a flat line.
+            for ($d = 0; $d < 21; $d++) {
+                $date = date('Y-m-d', strtotime("-{$d} days"));
+                $pdo->prepare('INSERT INTO stats_daily (stat_date, event_id, gallery_views, photo_views) VALUES (?, ?, ?, ?)')
+                    ->execute([$date, $eventId, random_int(5, 80), random_int(20, 400)]);
+            }
         }
 
-        echo "[✓] Seeded 1 event, 1 session, 10 photos with tags\n";
+        // Orders spread across events/customers/dates, mostly paid with a
+        // realistic mix of pending and refunded, so the orders list,
+        // dashboard revenue card, and reporting cohorts aren't all zero.
+        $eventIds = array_keys($eventPhotoIds);
+        $statusPool = ['paid', 'paid', 'paid', 'paid', 'paid', 'paid', 'pending', 'pending', 'refunded'];
+        for ($o = 0, $orderCount = random_int(25, 35); $o < $orderCount; $o++) {
+            $eventId = $eventIds[array_rand($eventIds)];
+            $photoPool = $eventPhotoIds[$eventId];
+            if (empty($photoPool)) {
+                continue;
+            }
+
+            shuffle($photoPool);
+            $chosen = array_slice($photoPool, 0, min(random_int(1, 4), count($photoPool)));
+            $unitPrice = $eventPrices[$eventId];
+
+            $status = $statusPool[array_rand($statusPool)];
+            $createdAt = date('Y-m-d H:i:s', strtotime('-' . random_int(0, 45) . ' days'));
+            $paidAt = in_array($status, ['paid', 'refunded'], true) ? $createdAt : null;
+            $refundedAt = $status === 'refunded' ? date('Y-m-d H:i:s', strtotime($createdAt . ' +2 days')) : null;
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO orders (public_token, email, status, currency, total_pence, paid_at, refunded_at, created_at)
+                 VALUES (?, ?, ?, 'GBP', ?, ?, ?, ?)"
+            );
+            $email = strtolower($firstNames[array_rand($firstNames)] . '.' . $lastNames[array_rand($lastNames)]) . '@example.com';
+            $stmt->execute([bin2hex(random_bytes(11)), $email, $status, $unitPrice * count($chosen), $paidAt, $refundedAt, $createdAt]);
+            $orderId = (int)$pdo->lastInsertId();
+
+            foreach ($chosen as $photoId) {
+                $pdo->prepare(
+                    "INSERT INTO order_items (order_id, item_type, photo_id, event_id, description, unit_price_pence, quantity, line_total_pence)
+                     VALUES (?, 'photo', ?, ?, ?, ?, 1, ?)"
+                )->execute([$orderId, $photoId, $eventId, "Photo #{$photoId}", $unitPrice, $unitPrice]);
+            }
+        }
+
+        // Derive customer_analytics from the orders just created, via the
+        // same function the real reporting cron uses — exercises the real
+        // code path instead of hand-seeding a parallel copy of its output.
+        require_once __DIR__ . '/reporting.php';
+        update_customer_analytics($pdo);
+
+        // No cohort-builder exists yet (get_cohort_analysis() only reads),
+        // so these rows are hand-seeded rather than derived.
+        for ($m = 0; $m < 4; $m++) {
+            $month = date('Y-m-01', strtotime("-{$m} months"));
+            $pdo->prepare(
+                'INSERT INTO cohorts (cohort_month, customers_acquired, revenue_pence, retention_month_1, retention_month_3, retention_month_6)
+                 VALUES (?, ?, ?, ?, ?, ?)'
+            )->execute([$month, random_int(5, 20), random_int(15000, 80000), random_int(10, 60), random_int(5, 40), random_int(0, 25)]);
+        }
+
+        echo '[✓] Seeded ' . count($eventDefs) . " events with rosters, sessions, photos/videos, orders, and analytics data\n";
     } catch (Exception $e) {
         fwrite(STDERR, "[✗] Data seeding failed: " . $e->getMessage() . "\n");
         exit(1);

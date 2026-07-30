@@ -19,10 +19,6 @@ if ($bootstrapError) {
 
 require __DIR__ . '/../app/lib/session.php';
 require __DIR__ . '/../app/lib/view.php';
-require __DIR__ . '/../app/lib/seeder.php';
-
-// Auto-seed test data on first run (dev-friendly)
-seed_test_data($pdo);
 
 session_start_secure();
 
