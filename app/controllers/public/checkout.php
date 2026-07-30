@@ -36,7 +36,8 @@ function public_checkout_controller(PDO $pdo, array $config): void {
     // email alone would let an attacker who merely knows a victim's email
     // address exhaust their checkout budget from any IP, or let one victim
     // sharing their own email across devices/networks lock themselves out.
-    if (!check_rate_limit($pdo, 'checkout', checkout_rate_limit_key($email, $ip), 3600, 5)) {
+    $maxCheckoutAttempts = adjust_rate_limit_for_dev($config, 5);
+    if (!check_rate_limit($pdo, 'checkout', checkout_rate_limit_key($email, $ip), 3600, $maxCheckoutAttempts)) {
         http_response_code(429);
         echo json_encode(['error' => 'Too many checkout attempts. Try again later.']);
         return;

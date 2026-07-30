@@ -33,7 +33,11 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()');
 header('X-Permitted-Cross-Domain-Policies: none');
-header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+
+// HSTS only in production (meaningless on http://localhost)
+if (($config['dev_mode'] ?? 'production') !== 'local') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+}
 
 $path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/', '/');
 if ($path === '') {

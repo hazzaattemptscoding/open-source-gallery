@@ -27,15 +27,16 @@ const AUTH_DECOY_HASH = '$argon2id$v=19$m=65536,t=4,p=1$OC9adHRUeVZCN2FSVEJwVA$Q
  *   user without leaking account existence; the controller maps
  *   'invalid_credentials' and 'invalid_totp' to the same generic message.
  */
-function admin_attempt_login(PDO $pdo, string $email, string $password, ?string $totpCode, string $ip): array
+function admin_attempt_login(PDO $pdo, array $config, string $email, string $password, ?string $totpCode, string $ip): array
 {
     $email = strtolower(trim($email));
 
     // Per docs/architecture.md section 6: 5 attempts per 15 minutes, per IP
     // AND per account. Checked before touching the password hash so a
     // locked-out attempt doesn't cost an Argon2id verify either.
-    $ipOk = check_rate_limit($pdo, 'login', 'ip:' . $ip, 900, 5);
-    $accountOk = check_rate_limit($pdo, 'login', 'acct:' . $email, 900, 5);
+    $maxAttempts = adjust_rate_limit_for_dev($config, 5);
+    $ipOk = check_rate_limit($pdo, 'login', 'ip:' . $ip, 900, $maxAttempts);
+    $accountOk = check_rate_limit($pdo, 'login', 'acct:' . $email, 900, $maxAttempts);
     if (!$ipOk || !$accountOk) {
         audit_log($pdo, 'public', 'login_rate_limited', 'admin_users', null, ['email' => $email], $ip);
         return ['ok' => false, 'reason' => 'rate_limited'];
@@ -63,7 +64,7 @@ function admin_attempt_login(PDO $pdo, string $email, string $password, ?string 
         // no dedicated limit at all, since the password step already
         // passed. docs/architecture.md's security requirements table
         // explicitly lists "TOTP attempts" as its own rate-limited bucket.
-        if (!check_rate_limit($pdo, 'totp', 'acct:' . $email, 900, 5)) {
+        if (!check_rate_limit($pdo, 'totp', 'acct:' . $email, 900, $maxAttempts)) {
             audit_log($pdo, 'admin', 'login_rate_limited_totp', 'admin_users', (int) $admin['id'], null, $ip);
             return ['ok' => false, 'reason' => 'rate_limited'];
         }

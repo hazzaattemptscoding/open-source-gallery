@@ -13,13 +13,34 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase {
     protected PDO $pdo;
+    protected array $config;
 
     protected function setUp(): void {
         parent::setUp();
         $this->pdo = $GLOBALS['test_pdo'];
+        $this->config = $this->getTestConfig();
 
         // Start transaction for test isolation.
         $this->pdo->beginTransaction();
+    }
+
+    /**
+     * Get test configuration with sensible defaults.
+     */
+    protected function getTestConfig(): array {
+        return [
+            'dev_mode' => 'local',
+            'site' => ['name' => 'Test Gallery', 'support_email' => 'test@example.com'],
+            'currency' => 'GBP',
+            'branding' => ['theme' => 'podium-ink'],
+            'stripe' => ['publishable_key' => '', 'secret_key' => '', 'webhook_secret' => ''],
+            'smtp' => ['host' => '', 'port' => 587, 'user' => '', 'pass' => '', 'from_email' => '', 'from_name' => ''],
+            'discounts' => [10 => 0.15, 20 => 0.20],
+            'security' => ['hmac_key' => bin2hex(random_bytes(32)), 'cron_secret' => bin2hex(random_bytes(16))],
+            'timezone' => 'UTC',
+            'storage_mode' => 'local',
+            'admin_mode' => 'local',
+        ];
     }
 
     protected function tearDown(): void {
