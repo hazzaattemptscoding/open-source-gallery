@@ -123,6 +123,8 @@ function admin_customize_controller(PDO $pdo, array $config): void {
         }
 
         render(__DIR__ . '/../../views/admin/customize_preview_public.php', [
+            'pageTitle' => 'Customization Preview',
+            'currentPage' => 'customize',
             'siteName' => $config['site']['name'] ?? 'Gallery',
             'settings' => $settings,
             'cssOverrides' => $cssOverrides,
@@ -130,6 +132,8 @@ function admin_customize_controller(PDO $pdo, array $config): void {
         ]);
     } else {
         render(__DIR__ . '/../../views/admin/customize.php', [
+            'pageTitle' => 'Customization',
+            'currentPage' => 'customize',
             'siteName' => $config['site']['name'] ?? 'Gallery',
             'settings' => $settings,
             'availableFonts' => $availableFonts,

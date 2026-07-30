@@ -15,6 +15,8 @@ function admin_export_page_controller(PDO $pdo, array $config): void {
     require_admin();
 
     render(__DIR__ . '/../../views/admin/export.php', [
+        'pageTitle' => 'Export Data',
+        'currentPage' => 'export',
         'siteName' => $config['site']['name'] ?? 'Gallery',
     ]);
 }

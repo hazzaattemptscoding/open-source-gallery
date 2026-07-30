@@ -49,6 +49,8 @@ function admin_my_sessions_controller(PDO $pdo, array $config): void {
     $currentSessionId = get_session_id();
 
     render(__DIR__ . '/../../views/admin/my_sessions.php', [
+        'pageTitle' => 'My Sessions',
+        'currentPage' => 'my-sessions',
         'sessions' => $sessions,
         'currentSessionId' => $currentSessionId,
         'csrfToken' => $csrfToken,

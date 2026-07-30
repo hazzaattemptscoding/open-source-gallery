@@ -90,6 +90,8 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
     }
 
     render(__DIR__ . '/../../views/admin/bulk.php', [
+        'pageTitle' => 'Bulk Operations',
+        'currentPage' => 'bulk',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'csrfToken' => csrf_token(),
         'action' => $action,

@@ -45,12 +45,16 @@ function admin_migrations_controller(PDO $pdo, array $config): void {
         }
 
         $pending = migrations_pending($pdo, $migrationsDir);
-        render(__DIR__ . '/../../views/admin/migrations.php', compact('siteName', 'csrfToken', 'pending', 'applied', 'error'));
+        $pageTitle = 'Migrations';
+        $currentPage = 'migrations';
+        render(__DIR__ . '/../../views/admin/migrations.php', compact('pageTitle', 'currentPage', 'siteName', 'csrfToken', 'pending', 'applied', 'error'));
         return;
     }
 
     $pending = migrations_pending($pdo, $migrationsDir);
     $applied = [];
     $error = '';
-    render(__DIR__ . '/../../views/admin/migrations.php', compact('siteName', 'csrfToken', 'pending', 'applied', 'error'));
+    $pageTitle = 'Migrations';
+    $currentPage = 'migrations';
+    render(__DIR__ . '/../../views/admin/migrations.php', compact('pageTitle', 'currentPage', 'siteName', 'csrfToken', 'pending', 'applied', 'error'));
 }

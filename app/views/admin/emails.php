@@ -1,28 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Email Management: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<style>
-.emails-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-.queue-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
-.queue-table th, .queue-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
-.queue-table th { background: #f9f9f9; font-weight: 600; }
-.badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; }
-.badge-pending { background: #fff8e1; color: #f57f17; }
-.badge-sent { background: #c8e6c9; color: #2e7d32; }
-.badge-failed { background: #ffebee; color: #c62828; }
-</style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
-</header>
-
+<?php
+$pageTitle = 'Emails';
+$currentPage = 'emails';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <div class="emails-container">
   <div style="margin-bottom: 3rem;">
     <h2>Email Queue</h2>
@@ -86,5 +66,5 @@
   </div>
 </div>
 
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

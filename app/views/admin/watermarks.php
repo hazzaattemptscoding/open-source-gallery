@@ -1,29 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Watermark Settings: Admin</title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<style>
-.watermark-container { max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-.preview { width: 100%; max-width: 400px; aspect-ratio: 4/3; background: var(--bg-alt); position: relative; margin: 2rem 0; border: 1px solid var(--border); border-radius: 0; }
-.watermark-preview { position: absolute; font-weight: 500; opacity: 0.7; color: var(--text); }
-.form-group { margin-bottom: 1.5rem; }
-.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.95rem; }
-.form-group input, .form-group select { padding: 0.75rem; border: 1px solid var(--border); border-radius: 0; background: var(--bg); color: var(--text); width: 100%; font-family: inherit; font-size: 1rem; box-sizing: border-box; }
-.form-group input:focus, .form-group select:focus { outline: 2px solid var(--text); outline-offset: -1px; }
-button[type="submit"] { padding: 0.875rem 1.5rem; background: var(--text); color: var(--bg); border: none; border-radius: 0; cursor: pointer; font-size: 1rem; font-weight: 500; transition: background 0.2s ease-out; }
-button[type="submit"]:active { transform: scale(0.98); transition: transform 160ms ease-out; }
-.preview p { text-align: center; padding: 5rem 1rem; color: var(--text-muted); margin: 0; }
-</style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/admin" class="site-title">Watermark Settings</a>
-</header>
-
+<?php
+$pageTitle = 'Watermarks';
+$currentPage = 'watermarks';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <div class="watermark-container">
   <h1>Watermark Customization</h1>
   <p>Configure how watermarks appear on your gallery photos (800px and larger).</p>
@@ -69,5 +48,5 @@ button[type="submit"]:active { transform: scale(0.98); transition: transform 160
   </div>
 </div>
 
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

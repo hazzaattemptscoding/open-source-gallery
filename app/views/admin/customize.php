@@ -1,17 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Site Customization: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+<?php
+$pageTitle = 'Customization';
+$currentPage = 'customize';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 
 <div class="customize-layout">
   <div class="customize-form-panel">
@@ -196,5 +187,5 @@ function openPublicPreview() {
   window.open('/admin/customize?preview=public', 'customize_preview', 'width=1200,height=800');
 }
 </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

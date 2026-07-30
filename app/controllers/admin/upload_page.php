@@ -63,5 +63,7 @@ function admin_upload_page_controller(PDO $pdo, array $config): void {
         error_log('Failed to load recent upload state: ' . $e->getMessage());
     }
 
-    render(__DIR__ . '/../../views/admin/upload.php', compact('siteName', 'sessionsByEvent', 'csrfToken', 'recentBatch', 'recentFiles'));
+    $pageTitle = 'Upload Photos';
+    $currentPage = 'upload';
+    render(__DIR__ . '/../../views/admin/upload.php', compact('pageTitle', 'currentPage', 'siteName', 'sessionsByEvent', 'csrfToken', 'recentBatch', 'recentFiles'));
 }

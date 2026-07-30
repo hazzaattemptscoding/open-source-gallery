@@ -23,6 +23,8 @@ function admin_health_check_controller(PDO $pdo, array $config): void {
     ];
 
     render(__DIR__ . '/../../views/admin/health.php', [
+        'pageTitle' => 'System Health',
+        'currentPage' => 'health',
         'health' => $health,
         'siteName' => $config['site']['name'] ?? 'Gallery',
     ]);

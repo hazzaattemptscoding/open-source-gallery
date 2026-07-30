@@ -44,10 +44,12 @@ function admin_orders_controller(PDO $pdo, array $config): void {
     $totalPages = ceil($totalOrders / $perPage);
 
     render(__DIR__ . '/../../views/admin/orders.php', [
+        'pageTitle' => 'Order History',
+        'currentPage' => 'orders',
         'siteName' => $siteName,
         'currencyCode' => $currencyCode,
         'orders' => $orders,
-        'currentPage' => $page,
+        'paginationPage' => $page,
         'totalPages' => $totalPages,
         'totalOrders' => $totalOrders,
     ]);

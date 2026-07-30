@@ -1,98 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>System Health: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<style>
-.health-card {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-.health-status {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-.status-icon {
-    font-size: 2rem;
-    min-width: 2.5rem;
-}
-.status-ok { color: #4caf50; }
-.status-warning { color: #ff9800; }
-.status-error { color: #f44336; }
-.status-message {
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-.status-details {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-top: 0.5rem;
-}
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-.stat-box {
-    padding: 1rem;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    text-align: center;
-}
-.stat-value {
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-.stat-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-.refresh-note {
-    padding: 1rem;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    text-align: center;
-}
-.error-log {
-    background-color: #fff3f3;
-    border: 1px solid #ffdddd;
-    border-radius: 4px;
-    padding: 1rem;
-}
-.error-item {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #ffdddd;
-    font-size: 0.9rem;
-}
-.error-item:last-child {
-    border-bottom: none;
-}
-.error-time {
-    color: #999;
-    font-size: 0.85rem;
-}
-</style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
-  <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Log out</button>
-  </form>
-</header>
-
+<?php
+$pageTitle = 'Health';
+$currentPage = 'health';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <main class="dashboard">
   <h1>System Health</h1>
 
@@ -269,5 +179,5 @@
 
 </main>
 
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

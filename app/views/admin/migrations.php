@@ -1,14 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Migrations — <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Migrations';
+$currentPage = 'migrations';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <div class="dashboard">
   <h1>Migrations</h1>
   <p><a href="/admin">← Back to dashboard</a></p>
@@ -42,5 +36,5 @@
   <?php endif; ?>
 </div>
 <script src="/assets/js/admin-common.js" defer></script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

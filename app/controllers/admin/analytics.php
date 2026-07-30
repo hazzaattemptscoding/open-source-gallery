@@ -33,6 +33,8 @@ function admin_analytics_controller(PDO $pdo, array $config): void {
 
     $currencyCode = $config['currency'] ?? 'GBP';
     render(__DIR__ . '/../../views/admin/analytics.php', [
+        'pageTitle' => 'Analytics',
+        'currentPage' => 'analytics',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'analytics' => $analytics,
         'currencyCode' => $currencyCode,

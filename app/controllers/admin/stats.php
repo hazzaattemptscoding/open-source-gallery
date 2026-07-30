@@ -50,6 +50,8 @@ function admin_stats_controller(PDO $pdo, array $config): void {
     $siteStats = $stmt->fetch(PDO::FETCH_ASSOC);
 
     render(__DIR__ . '/../../views/admin/stats.php', [
+        'pageTitle' => 'Sales Dashboard',
+        'currentPage' => 'stats',
         'siteName' => $siteName,
         'currencyCode' => $currencyCode,
         'eventStats' => $eventStats,

@@ -1,99 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Sessions — Admin</title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<style>
-.session-card {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-.session-card.current {
-    background-color: #f0f8ff;
-    border-left: 4px solid #1a1a1a;
-}
-.session-info {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-.session-field {
-    font-size: 0.9rem;
-}
-.session-field strong {
-    display: block;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-bottom: 0.25rem;
-}
-.ip-address {
-    font-family: monospace;
-    font-size: 0.9rem;
-}
-.user-agent {
-    word-break: break-all;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    font-family: monospace;
-}
-.revoke-button {
-    padding: 0.5rem 1rem;
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    font-weight: 500;
-}
-.revoke-button:hover {
-    background-color: #b71c1c;
-}
-.current-badge {
-    display: inline-block;
-    padding: 0.3rem 0.6rem;
-    background-color: #1a1a1a;
-    color: white;
-    border-radius: 3px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-.alert {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 4px;
-}
-.alert-error {
-    background-color: #fee;
-    color: #c33;
-    border: 1px solid #fcc;
-}
-.alert-success {
-    background-color: #efe;
-    color: #3c3;
-    border: 1px solid #cfc;
-}
-.time-ago {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-</style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-
-<header class="site-header">
-  <a href="/admin" class="site-title">My Sessions</a>
-  <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Log out</button>
-  </form>
-</header>
-
+<?php
+$pageTitle = 'My Sessions';
+$currentPage = 'my-sessions';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <main class="dashboard">
   <h1>My Sessions</h1>
 
@@ -201,8 +110,6 @@
 
 </main>
 
-</body>
-</html>
 
 <?php
 function format_time_ago(string $datetime): string {
@@ -226,3 +133,5 @@ function format_time_ago(string $datetime): string {
     }
 }
 ?>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

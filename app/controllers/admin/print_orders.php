@@ -47,6 +47,8 @@ function admin_print_orders_controller(PDO $pdo, array $config): void {
     }
 
     render(__DIR__ . '/../../views/admin/print_orders.php', [
+        'pageTitle' => 'Print Orders',
+        'currentPage' => 'print_orders',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'printOrders' => $printOrders,
         'action' => $action,
