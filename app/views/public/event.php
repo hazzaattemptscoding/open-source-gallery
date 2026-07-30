@@ -116,7 +116,7 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasCli
 
   <button type="submit">Filter</button>
   <?php if ($filters['kart'] || $filters['driver'] || $filters['class'] || $filters['client'] || $filters['location'] || $filters['style'] || $filters['featured']): ?>
-    <button type="button" class="clear-filters" onclick="location.href='<?= e($basePath) ?>'">Clear</button>
+    <button type="button" class="clear-filters" data-clear-href="<?= e($basePath) ?>">Clear</button>
   <?php endif; ?>
 </form>
 <?php endif; ?>
@@ -124,8 +124,8 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasCli
 <main id="photos">
   <!-- Photo grid with empty state -->
   <div class="photo-grid" id="photoGrid"
-       data-photo-ids="<?= e(json_encode(array_map('intval', array_column($photos, 'id')))) ?>"
-       data-photo-tokens="<?= e(json_encode(array_column($photos, 'public_token'))) ?>">
+       data-photo-ids='<?= htmlspecialchars(json_encode(array_map('intval', array_column($photos, 'id'))), ENT_QUOTES, 'UTF-8') ?>'
+       data-photo-tokens='<?= htmlspecialchars(json_encode(array_column($photos, 'public_token')), ENT_QUOTES, 'UTF-8') ?>'>
     <?php if (!empty($photos)): ?>
       <?php require __DIR__ . '/_photo_grid_items.php'; ?>
     <?php else: ?>

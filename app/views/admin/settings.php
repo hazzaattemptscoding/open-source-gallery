@@ -280,18 +280,18 @@ button.submit:active {
 </div>
 
 <?php if ($success): ?>
-  <div class="success-msg">✓ Settings updated successfully</div>
+  <div class="success-msg">Settings updated successfully</div>
 <?php endif; ?>
 
 <div class="mode-toggle">
-  <button class="<?= $mode === 'basic' ? 'active' : '' ?>" onclick="location.href='/admin/settings/<?= e($category) ?>?mode=basic'">
+  <button class="<?= $mode === 'basic' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=basic">
     Basic Settings
   </button>
-  <button class="<?= $mode === 'advanced' ? 'active' : '' ?>" onclick="location.href='/admin/settings/<?= e($category) ?>?mode=advanced'">
+  <button class="<?= $mode === 'advanced' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=advanced">
     Advanced Settings
   </button>
   <?php if ($mode === 'advanced'): ?>
-    <span>⚠ Advanced settings may affect performance or security. Change carefully.</span>
+    <span>Advanced settings may affect performance or security. Change carefully.</span>
   <?php endif; ?>
 </div>
 
@@ -361,5 +361,15 @@ button.submit:active {
     <p>Switch to <strong>Advanced Settings</strong> above to access additional configuration options for power users.</p>
   </div>
 <?php endif; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.mode-toggle button[data-href]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      window.location.href = btn.dataset.href;
+    });
+  });
+});
+</script>
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

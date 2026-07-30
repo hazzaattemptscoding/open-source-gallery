@@ -18,10 +18,10 @@ require_once __DIR__ . '/partials/layout_header.php';
     <ul>
       <?php foreach ($setupChecklist as $item): ?>
         <li class="checklist-item checklist-<?= e($item['status']) ?>">
-          <span class="icon">
+          <span class="icon" aria-hidden="true">
             <?php if ($item['status'] === 'complete'): ?>✓
-            <?php elseif ($item['status'] === 'skipped'): ?>⊘
-            <?php else: ?>•
+            <?php elseif ($item['status'] === 'skipped'): ?>○
+            <?php else: ?>●
             <?php endif; ?>
           </span>
           <a href="<?= e($item['url']) ?>" class="label">

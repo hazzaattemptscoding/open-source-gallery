@@ -2072,3 +2072,40 @@ textarea:focus-visible {
     border-radius: 6px;
   }
 }
+
+/* Trust signals on order confirmation */
+.trust-signals {
+  background: var(--bg-alt);
+  padding: var(--space-6);
+  border-radius: 8px;
+  margin: var(--space-6) 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-5);
+  text-align: center;
+}
+
+.trust-signal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.trust-signal-icon {
+  font-size: var(--text-xl);
+  color: var(--text);
+  line-height: 1;
+}
+
+.trust-signal strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+}
+
+.trust-signal span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}

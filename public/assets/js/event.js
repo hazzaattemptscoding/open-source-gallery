@@ -32,6 +32,8 @@ function closeLightbox() {
 // `immediate` skips the crossfade for the first image of a session, so
 // opening the lightbox doesn't add extra latency before the first paint.
 function updateLightbox(immediate) {
+  if (lightboxIndex < 0 || lightboxIndex >= photoTokens.length) return;
+
   const img = document.getElementById('lightboxImage');
   const token = photoTokens[lightboxIndex];
 
@@ -87,6 +89,14 @@ photoGrid.addEventListener('click', (e) => {
   const thumb = e.target.closest('.photo-thumb');
   if (thumb) {
     openLightbox(parseInt(thumb.dataset.index, 10));
+  }
+});
+
+// Handle clear filters button from filter form
+document.addEventListener('click', (e) => {
+  const clearBtn = e.target.closest('.filter-bar .clear-filters');
+  if (clearBtn && clearBtn.dataset.clearHref) {
+    window.location.href = clearBtn.dataset.clearHref;
   }
 });
 
@@ -167,7 +177,9 @@ function showToast(message) {
 }
 
 document.getElementById('lightboxCart').addEventListener('click', () => {
-  addToCart('photo', photoIds[lightboxIndex], null);
+  if (lightboxIndex >= 0 && lightboxIndex < photoIds.length) {
+    addToCart('photo', photoIds[lightboxIndex], null);
+  }
 });
 
 // Progressive enhancement: filter changes re-fetch /api/photos instead of a full reload.
@@ -228,7 +240,18 @@ if (searchInput) {
       const div = document.createElement('div');
       div.className = 'empty-state';
       div.style.gridColumn = '1 / -1';
-      div.innerHTML = '<p>No photos match your search.</p><button type="button" class="clear-filters" onclick="document.getElementById(\'searchInput\').value = \'\'; document.getElementById(\'searchInput\').dispatchEvent(new Event(\'input\'))">Clear search</button>';
+      const p = document.createElement('p');
+      p.textContent = 'No photos match your search.';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'clear-filters';
+      btn.textContent = 'Clear search';
+      btn.addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchInput').dispatchEvent(new Event('input'));
+      });
+      div.appendChild(p);
+      div.appendChild(btn);
       photoGrid.appendChild(div);
     } else if (visibleCount > 0 && emptyState) {
       emptyState.remove();
