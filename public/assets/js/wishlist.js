@@ -151,12 +151,26 @@ function showToast(message) {
   }, 2000);
 }
 
-// Heart button HTML snippet for reuse
+// Heart button DOM element for reuse
 function renderHeartButton(photoId, isActive = false) {
-  const activeClass = isActive ? 'active' : '';
-  return `<button class="heart-button ${activeClass}" data-photo-id="${photoId}" title="Add to wishlist" aria-label="Add to wishlist">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-    </svg>
-  </button>`;
+  const btn = document.createElement('button');
+  btn.className = `heart-button${isActive ? ' active' : ''}`;
+  btn.dataset.photoId = photoId;
+  btn.title = 'Add to wishlist';
+  btn.setAttribute('aria-label', 'Add to wishlist');
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '20');
+  svg.setAttribute('height', '20');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z');
+  svg.appendChild(path);
+  btn.appendChild(svg);
+
+  return btn;
 }
