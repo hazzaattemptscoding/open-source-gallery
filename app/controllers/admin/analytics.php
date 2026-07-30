@@ -22,13 +22,13 @@ function admin_analytics_controller(PDO $pdo, array $config): void {
 
     // Get all analytics data
     $analytics = [
-        'summary' => get_analytics_summary($pdo),
-        'revenue_trend' => get_revenue_trend($pdo, 'daily', 30),
-        'top_photos' => get_top_photos($pdo, 10),
+        'summary' => get_dashboard_metrics($pdo),
+        'revenue_trend' => get_revenue_trend($pdo, 30),
+        'top_photos' => get_top_photos($pdo, 'purchases', 10),
         'sales_by_event' => get_sales_by_event($pdo),
-        'customer_insights' => get_customer_insights($pdo),
-        'conversion_metrics' => get_conversion_metrics($pdo, 30),
-        'hourly_distribution' => get_order_distribution_by_hour($pdo),
+        'customer_cohorts' => get_customer_cohorts($pdo),
+        'repeat_rate' => get_repeat_customer_rate($pdo),
+        'ltv_distribution' => get_ltv_distribution($pdo),
     ];
 
     $currencyCode = $config['currency'] ?? 'GBP';

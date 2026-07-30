@@ -1,249 +1,229 @@
 <?php
 /**
- * Advanced analytics and reporting.
- * Generates revenue trends, top photos, customer insights, etc.
+ * Analytics queries for admin dashboards: revenue, customer cohorts,
+ * photo intelligence, trends, and business metrics.
  */
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/db_compat.php';
-
 /**
- * Get revenue trend data (daily/weekly/monthly).
+ * Get dashboard summary metrics for a date range.
  */
-function get_revenue_trend(
-    PDO $pdo,
-    string $period = 'daily',
-    int $days = 30
-): array {
-    try {
-        $now = new DateTime('now', new DateTimeZone('UTC'));
-        $cutoff = (clone $now)->modify("-{$days} days")->format('Y-m-d H:i:s');
+function get_dashboard_metrics(PDO $pdo, ?string $dateStart = null, ?string $dateEnd = null): array {
+    if (!$dateStart) $dateStart = date('Y-m-d', strtotime('-30 days'));
+    if (!$dateEnd) $dateEnd = date('Y-m-d');
 
-        $stmt = $pdo->prepare(<<<'SQL'
-            SELECT created_at, COUNT(*) as orders, SUM(total_pence) as revenue_pence, AVG(total_pence) as avg_order_value
-            FROM orders
-            WHERE status = 'paid' AND created_at > ?
-            ORDER BY created_at ASC
-        SQL);
-        $stmt->execute([$cutoff]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    // Total revenue in period
+    $stmt = $pdo->prepare('
+        SELECT SUM(total_pence) as total_revenue, COUNT(*) as order_count
+        FROM orders
+        WHERE status IN (?, ?) AND DATE(paid_at) BETWEEN ? AND ?
+    ');
+    $stmt->execute(['paid', 'partial_refund', $dateStart, $dateEnd]);
+    $revenue = $stmt->fetch(PDO::FETCH_ASSOC) ?? ['total_revenue' => 0, 'order_count' => 0];
 
-        $grouped = [];
-        foreach ($rows as $row) {
-            $dt = new DateTime($row['created_at']);
-            $key = match ($period) {
-                'weekly' => $dt->format('Y-W'),
-                'monthly' => $dt->format('Y-m'),
-                default => $dt->format('Y-m-d'),
-            };
+    // Average order value
+    $aov = $revenue['order_count'] > 0 ? (int)($revenue['total_revenue'] ?? 0) / $revenue['order_count'] : 0;
 
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = ['period' => $key, 'orders' => 0, 'revenue_pence' => 0, 'count' => 0, 'sum_values' => 0];
-            }
-            $grouped[$key]['orders'] += (int)$row['orders'];
-            $grouped[$key]['revenue_pence'] += (int)($row['revenue_pence'] ?? 0);
-            $grouped[$key]['count'] += (int)$row['orders'];
-            $grouped[$key]['sum_values'] += (float)$row['avg_order_value'] * (int)$row['orders'];
-        }
+    // Top photo (by purchase count)
+    $stmt = $pdo->prepare('
+        SELECT p.id, p.public_token, COUNT(*) as purchase_count
+        FROM order_items oi
+        JOIN photos p ON oi.photo_id = p.id
+        JOIN orders o ON oi.order_id = o.id
+        WHERE DATE(o.paid_at) BETWEEN ? AND ?
+        GROUP BY p.id
+        ORDER BY purchase_count DESC
+        LIMIT 1
+    ');
+    $stmt->execute([$dateStart, $dateEnd]);
+    $topPhoto = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $result = [];
-        foreach ($grouped as $item) {
-            $result[] = [
-                'period' => $item['period'],
-                'orders' => $item['orders'],
-                'revenue_pence' => $item['revenue_pence'],
-                'avg_order_value' => $item['count'] > 0 ? (int)($item['sum_values'] / $item['count']) : 0,
-            ];
-        }
-        return $result;
-    } catch (Throwable $e) {
-        error_log('Analytics error: ' . $e->getMessage());
-        return [];
-    }
+    return [
+        'total_revenue_pence' => (int)($revenue['total_revenue'] ?? 0),
+        'order_count' => (int)($revenue['order_count'] ?? 0),
+        'average_order_value_pence' => (int)$aov,
+        'top_photo' => $topPhoto,
+        'date_start' => $dateStart,
+        'date_end' => $dateEnd,
+    ];
 }
 
 /**
- * Get top-selling photos.
+ * Get revenue trend data (daily breakdown for graph).
  */
-function get_top_photos(PDO $pdo, int $limit = 10): array {
-    try {
-        $stmt = $pdo->prepare(<<<'SQL'
-            SELECT
-                p.id, p.public_token, p.original_filename,
-                COALESCE(p.price_pence, e.price_single_pence) AS price_pence, e.title as event_title,
-                COUNT(oi.id) as times_sold,
-                SUM(oi.quantity) as units_sold,
-                SUM(oi.unit_price_pence * oi.quantity) as revenue_pence
-            FROM photos p
+function get_revenue_trend(PDO $pdo, int $days = 30): array {
+    $startDate = date('Y-m-d', strtotime("-{$days} days"));
+    $stmt = $pdo->prepare('
+        SELECT DATE(paid_at) as date, SUM(total_pence) as revenue_pence, COUNT(*) as order_count
+        FROM orders
+        WHERE status IN (?, ?) AND DATE(paid_at) >= ?
+        GROUP BY DATE(paid_at)
+        ORDER BY date ASC
+    ');
+    $stmt->execute(['paid', 'partial_refund', $startDate]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
+
+/**
+ * Get customer cohorts: first-time, repeat (2-5x), loyal (5+x).
+ */
+function get_customer_cohorts(PDO $pdo): array {
+    $stmt = $pdo->prepare('
+        SELECT
+            email,
+            COUNT(*) as order_count,
+            SUM(total_pence) as total_spent_pence,
+            MIN(paid_at) as first_purchase_date,
+            MAX(paid_at) as last_purchase_date,
+            CASE
+                WHEN COUNT(*) = 1 THEN "first-time"
+                WHEN COUNT(*) BETWEEN 2 AND 5 THEN "repeat"
+                ELSE "loyal"
+            END as cohort
+        FROM orders
+        WHERE status IN (?, ?)
+        GROUP BY email
+        ORDER BY last_purchase_date DESC
+    ');
+    $stmt->execute(['paid', 'partial_refund']);
+    $cohorts = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    // Aggregate by cohort
+    $aggregated = [
+        'first-time' => ['count' => 0, 'total_spent_pence' => 0, 'avg_order_value' => 0],
+        'repeat' => ['count' => 0, 'total_spent_pence' => 0, 'avg_order_value' => 0],
+        'loyal' => ['count' => 0, 'total_spent_pence' => 0, 'avg_order_value' => 0],
+    ];
+
+    foreach ($cohorts as $customer) {
+        $c = $customer['cohort'];
+        $aggregated[$c]['count']++;
+        $aggregated[$c]['total_spent_pence'] += (int)($customer['total_spent_pence'] ?? 0);
+    }
+
+    // Compute averages
+    foreach ($aggregated as &$cohort) {
+        $cohort['avg_order_value'] = $cohort['count'] > 0 ? (int)($cohort['total_spent_pence'] / $cohort['count']) : 0;
+    }
+
+    return $aggregated;
+}
+
+/**
+ * Get top-performing photos by purchase count or view count.
+ */
+function get_top_photos(PDO $pdo, string $metric = 'purchases', int $limit = 10): array {
+    if ($metric === 'purchases') {
+        $stmt = $pdo->prepare('
+            SELECT p.id, p.public_token, e.title as event_title, COUNT(*) as metric_value
+            FROM order_items oi
+            JOIN photos p ON oi.photo_id = p.id
             JOIN events e ON p.event_id = e.id
-            LEFT JOIN order_items oi ON p.id = oi.photo_id
-            WHERE oi.id IS NOT NULL
-            GROUP BY p.id, p.public_token, p.original_filename, p.price_pence, e.price_single_pence, e.title
-            ORDER BY revenue_pence DESC, units_sold DESC
+            WHERE p.status = ?
+            GROUP BY p.id
+            ORDER BY metric_value DESC
             LIMIT ?
-        SQL);
-        $stmt->execute([$limit]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    } catch (Throwable $e) {
-        error_log('Analytics error: ' . $e->getMessage());
+        ');
+        $stmt->execute(['live', $limit]);
+    } elseif ($metric === 'views') {
+        $stmt = $pdo->prepare('
+            SELECT id, public_token, title as event_title, views
+            FROM photos
+            WHERE status = ?
+            ORDER BY views DESC
+            LIMIT ?
+        ');
+        $stmt->execute(['live', $limit]);
+    } else {
         return [];
     }
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 }
 
 /**
- * Get sales by event.
+ * Get sales by event (revenue breakdown per event).
  */
 function get_sales_by_event(PDO $pdo): array {
-    try {
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT
-                e.id, e.title, e.slug,
-                COUNT(DISTINCT o.id) as orders,
-                COUNT(DISTINCT oi.id) as items_sold,
-                SUM(o.total_pence) as revenue_pence
-            FROM events e
-            JOIN photos p ON e.id = p.event_id
-            LEFT JOIN order_items oi ON p.id = oi.photo_id AND oi.item_type = 'photo'
-            LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'paid'
-            GROUP BY e.id, e.title, e.slug
-            ORDER BY revenue_pence DESC NULLS LAST
-        SQL);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    } catch (Throwable $e) {
-        error_log('Analytics error: ' . $e->getMessage());
-        return [];
-    }
+    $stmt = $pdo->prepare('
+        SELECT e.id, e.title, COUNT(DISTINCT o.id) as order_count, SUM(oi.quantity) as item_count, SUM(o.total_pence) as revenue_pence
+        FROM order_items oi
+        JOIN photos p ON oi.photo_id = p.id
+        JOIN events e ON p.event_id = e.id
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.status IN (?, ?)
+        GROUP BY e.id
+        ORDER BY revenue_pence DESC
+    ');
+    $stmt->execute(['paid', 'partial_refund']);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 }
 
 /**
- * Get customer insights (lifetime value, repeat customers, etc.).
+ * Get customer lifetime value (LTV) distribution.
  */
-function get_customer_insights(PDO $pdo): array {
-    try {
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT
-                COUNT(DISTINCT email) as total_customers,
-                COUNT(*) as total_orders,
-                AVG(revenue_per_customer) as avg_customer_ltv,
-                MAX(revenue_per_customer) as top_customer_ltv,
-                SUM(CASE WHEN order_count > 1 THEN 1 ELSE 0 END) as repeat_customers
-            FROM (
-                SELECT
-                    email,
-                    COUNT(*) as order_count,
-                    SUM(total_pence) as revenue_per_customer
-                FROM orders
-                WHERE status = 'paid'
-                GROUP BY email
-            ) customer_data
-        SQL);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-    } catch (Throwable $e) {
-        error_log('Analytics error: ' . $e->getMessage());
-        return [];
-    }
+function get_ltv_distribution(PDO $pdo): array {
+    $stmt = $pdo->prepare('
+        SELECT
+            CASE
+                WHEN total_spent_pence < 5000 THEN "under_50"
+                WHEN total_spent_pence < 10000 THEN "50_to_100"
+                WHEN total_spent_pence < 25000 THEN "100_to_250"
+                ELSE "over_250"
+            END as ltv_bracket,
+            COUNT(*) as customer_count
+        FROM (
+            SELECT email, SUM(total_pence) as total_spent_pence
+            FROM orders
+            WHERE status IN (?, ?)
+            GROUP BY email
+        ) customer_spending
+        GROUP BY ltv_bracket
+        ORDER BY ltv_bracket ASC
+    ');
+    $stmt->execute(['paid', 'partial_refund']);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 }
 
 /**
- * Get conversion metrics.
+ * Get repeat customer rate (% of returning customers).
  */
-function get_conversion_metrics(PDO $pdo, int $days = 30): array {
-    try {
-        $now = new DateTime('now', new DateTimeZone('UTC'));
-        $cutoff = (clone $now)->modify("-{$days} days")->format('Y-m-d H:i:s');
+function get_repeat_customer_rate(PDO $pdo): float {
+    $stmt = $pdo->prepare('
+        SELECT
+            COUNT(CASE WHEN order_count > 1 THEN 1 END) as repeat_count,
+            COUNT(*) as total_count
+        FROM (
+            SELECT email, COUNT(*) as order_count
+            FROM orders
+            WHERE status IN (?, ?)
+            GROUP BY email
+        ) cohort_counts
+    ');
+    $stmt->execute(['paid', 'partial_refund']);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Total gallery views
-        $stmt = $pdo->prepare('SELECT SUM(view_count) as total_views FROM photos');
-        $stmt->execute();
-        $views = $stmt->fetch(PDO::FETCH_ASSOC)['total_views'] ?? 0;
-
-        // Total orders in period
-        $stmt = $pdo->prepare('SELECT COUNT(*) as total_orders FROM orders WHERE status = ? AND created_at > ?');
-        $stmt->execute(['paid', $cutoff]);
-        $orders = $stmt->fetch(PDO::FETCH_ASSOC)['total_orders'] ?? 0;
-
-        // Session events (gallery page views)
-        $sessions = 0; // Would require analytics table
-
-        return [
-            'total_views' => (int)$views,
-            'total_orders' => (int)$orders,
-            'conversion_rate' => ($orders > 0) ? ($orders / max($views, 1)) * 100 : 0,
-        ];
-    } catch (Throwable $e) {
-        return ['total_views' => 0, 'total_orders' => 0, 'conversion_rate' => 0];
+    if (!$result || $result['total_count'] === 0) {
+        return 0.0;
     }
+
+    return (float)(($result['repeat_count'] ?? 0) / $result['total_count'] * 100);
 }
 
 /**
- * Get summary statistics.
+ * Get average days between purchases (for returning customers).
  */
-function get_analytics_summary(PDO $pdo): array {
-    try {
-        $now = new DateTime('now', new DateTimeZone('UTC'));
-        $cutoff30 = (clone $now)->modify('-30 days')->format('Y-m-d H:i:s');
-
-        $stats = [];
-
-        // Revenue (all time)
-        $stmt = $pdo->prepare('SELECT SUM(total_pence) as total FROM orders WHERE status = ?');
-        $stmt->execute(['paid']);
-        $stats['all_time_revenue'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-
-        // Orders (all time)
-        $stmt = $pdo->prepare('SELECT COUNT(*) as total FROM orders WHERE status = ?');
-        $stmt->execute(['paid']);
-        $stats['all_time_orders'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-
-        // Photos uploaded
-        $stmt = $pdo->prepare('SELECT COUNT(*) as total FROM photos WHERE status = ?');
-        $stmt->execute(['live']);
-        $stats['photos_live'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-
-        // Last 30 days
-        $stmt = $pdo->prepare('SELECT SUM(total_pence) as revenue, COUNT(*) as orders FROM orders WHERE status = ? AND created_at > ?');
-        $stmt->execute(['paid', $cutoff30]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-        $stats['last_30_days_revenue'] = (int)($row['revenue'] ?? 0);
-        $stats['last_30_days_orders'] = (int)($row['orders'] ?? 0);
-
-        // Average order value
-        $stmt = $pdo->prepare('SELECT AVG(total_pence) as avg FROM orders WHERE status = ?');
-        $stmt->execute(['paid']);
-        $stats['avg_order_value'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['avg'] ?? 0);
-
-        return $stats;
-    } catch (Throwable $e) {
-        error_log('Analytics error: ' . $e->getMessage());
-        return [];
-    }
-}
-
-/**
- * Get hourly distribution (when orders come in).
- */
-function get_order_distribution_by_hour(PDO $pdo): array {
-    try {
-        $stmt = $pdo->query('SELECT created_at, SUM(total_pence) as revenue_pence FROM orders WHERE status = ? GROUP BY created_at ORDER BY created_at ASC');
-        $stmt->execute(['paid']);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-        $byHour = [];
-        foreach ($rows as $row) {
-            $dt = new DateTime($row['created_at']);
-            $hour = (int)$dt->format('H');
-            if (!isset($byHour[$hour])) {
-                $byHour[$hour] = ['hour' => $hour, 'orders' => 0, 'revenue_pence' => 0];
-            }
-            $byHour[$hour]['orders']++;
-            $byHour[$hour]['revenue_pence'] += (int)($row['revenue_pence'] ?? 0);
-        }
-
-        ksort($byHour);
-        return array_values($byHour);
-    } catch (Throwable $e) {
-        error_log('Analytics error: ' . $e->getMessage());
-        return [];
-    }
+function get_average_repurchase_interval(PDO $pdo): float {
+    $stmt = $pdo->prepare('
+        SELECT AVG(DATEDIFF(MAX(paid_at), MIN(paid_at)) / (COUNT(*) - 1)) as avg_interval
+        FROM orders
+        WHERE status IN (?, ?) AND email IN (
+            SELECT email FROM orders WHERE status IN (?, ?) GROUP BY email HAVING COUNT(*) > 1
+        )
+        GROUP BY email
+    ');
+    $stmt->execute(['paid', 'partial_refund', 'paid', 'partial_refund']);
+    $result = $stmt->fetchColumn();
+    return (float)($result ?? 0);
 }
