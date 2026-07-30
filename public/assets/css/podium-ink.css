@@ -422,7 +422,6 @@ button:disabled,
 
 .cart-badge:hover {
   background: #333333;
-  transform: translateY(-1px);
 }
 
 .cart-badge.is-bumped {
@@ -433,13 +432,6 @@ button:disabled,
   0% { transform: scale(1); }
   40% { transform: scale(1.08); }
   100% { transform: scale(1); }
-}
-
-.empty-state {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 4rem 2rem;
-  font-size: 0.95rem;
 }
 
 /* Event Cards */
@@ -668,42 +660,10 @@ body.lightbox-open {
   outline-offset: -2px;
 }
 
-/* Filter bar */
-
-.filter-bar {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: var(--bg-alt);
-  border-bottom: 1px solid var(--border);
-}
-
-.filter-bar button {
-  width: auto;
-  margin: 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-  border-radius: 3px;
-}
-
-.clear-filters {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  cursor: pointer;
-  border: none;
-  background: none;
-  padding: 0;
-  margin: 0;
-  text-decoration: underline;
-  width: auto;
-  transition: color 150ms ease-out;
-}
-
-.clear-filters:hover {
-  color: var(--text);
-}
+/* Filter bar: full definition (padding, select, button, .clear-filters) lives
+   in the "Phase 1: Discovery & Engagement" section below — kept in one place
+   rather than split across two blocks that used to silently override
+   each other's padding/gap/radius/font-size. */
 
 /* Search results page */
 
@@ -1052,7 +1012,6 @@ body.lightbox-open {
 .lightbox-prev:hover,
 .lightbox-next:hover {
   background: #333333;
-  transform: scale(1.05);
 }
 
 .lightbox-close:active,
@@ -1247,7 +1206,6 @@ body.lightbox-open {
 
 .download-link:hover {
   background: #333333;
-  transform: translateY(-1px);
 }
 
 /* Tabs */
@@ -1435,6 +1393,8 @@ body.lightbox-open {
 }
 
 .filter-bar button {
+  width: auto;
+  margin: 0;
   padding: var(--space-2) var(--space-4);
   background: var(--text);
   color: var(--bg);
@@ -1442,20 +1402,39 @@ body.lightbox-open {
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 160ms ease-out;
+  font-size: var(--text-sm);
+  transition: background 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+              filter 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .filter-bar button:hover {
   background: #333333;
 }
 
-.filter-bar .clear-filters {
-  background: var(--border);
-  color: var(--text);
+.filter-bar button:active {
+  transform: scale(0.97);
+  filter: brightness(0.95);
 }
 
-.filter-bar .clear-filters:hover {
-  background: #d5d5d5;
+/* .clear-filters is also used outside .filter-bar (empty-state fallback in
+   _photo_grid_items.php), so it stays a single unscoped rule rather than
+   forking into a second visual style per ancestor. */
+.clear-filters {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: underline;
+  width: auto;
+  transition: color 150ms ease-out;
+}
+
+.clear-filters:hover {
+  color: var(--text);
 }
 
 .filter-checkbox {
@@ -1512,7 +1491,6 @@ body.lightbox-open {
 .heart-button:hover,
 .share-button:hover {
   background: rgba(255, 255, 255, 1);
-  transform: scale(1.05);
 }
 
 .heart-button:active,
@@ -1544,11 +1522,6 @@ body.lightbox-open {
   justify-content: center;
   z-index: 2000;
   animation: fadeIn 200ms ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .share-modal {
@@ -1622,7 +1595,6 @@ body.lightbox-open {
 .share-option:hover {
   background: var(--bg);
   border-color: var(--text);
-  transform: translateY(-2px);
 }
 
 .share-option svg {
@@ -1673,11 +1645,10 @@ body.lightbox-open {
   transition: background 160ms ease-out, transform 160ms ease-out, border-color 160ms ease-out;
 }
 
-.wishlist-badge:hover {
-  transform: scale(1.05);
-}
-
-/* Lightbox enhancements */
+/* Lightbox enhancements
+   .lightbox is the server-rendered shell in event.php, toggled by event.js
+   adding/removing .is-open — it must stay hidden until then, or it covers
+   the whole page from first paint (it did: display was unconditional here). */
 .lightbox {
   position: fixed;
   top: 0;
@@ -1685,10 +1656,14 @@ body.lightbox-open {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.95);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 3000;
+}
+
+.lightbox.is-open {
+  display: flex;
   animation: lightboxEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -1789,11 +1764,17 @@ body.lightbox-open {
   line-height: 1.4;
 }
 
-/* Phase 4: Empty States */
+/* Empty states: the plain-text usages (home.php, orders.php,
+   _photo_grid_items.php's filtered-to-nothing case) and the icon/title/
+   message/action card (partials/empty-state.php, used on cart.php and
+   event.php) share this one definition rather than two that used to
+   silently fight over which color/font-size/padding won. */
 .empty-state {
   grid-column: 1 / -1;
   padding: var(--space-8);
   text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1827,22 +1808,31 @@ body.lightbox-open {
   margin: 0;
 }
 
-/* Phase 4: Loading Skeletons */
+/* Phase 4: Loading Skeletons
+   A gallery page can show 10-20+ of these at once. Animating
+   background-position (the old approach) repaints every tile on every
+   frame; a translateX sweep on a pseudo-element is GPU-composited instead,
+   which is what actually matters when this many run simultaneously. */
 @keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
   100% {
-    background-position: 1000px 0;
+    transform: translateX(100%);
   }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-alt) 0%, #f5f3f0 40%, #f0ede8 50%, #f5f3f0 60%, var(--bg-alt) 100%);
-  background-size: 1200px 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  will-change: transform;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-alt);
   border-radius: 6px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 .skeleton-photo {
@@ -2027,6 +2017,37 @@ textarea:focus-visible {
   .add-to-cart:hover {
     background: var(--text);
     color: var(--bg);
+    transform: scale(1.05);
+  }
+
+  /* Transform-only hover lift/scale for elements that stay tappable on
+     touch (cart badge, download link, lightbox controls, heart/share,
+     share options, wishlist badge) — gated so a tap doesn't leave the
+     element visibly stuck mid-hover until the user taps elsewhere. */
+  .cart-badge:hover {
+    transform: translateY(-1px);
+  }
+
+  .lightbox-close:hover,
+  .lightbox-prev:hover,
+  .lightbox-next:hover {
+    transform: scale(1.05);
+  }
+
+  .download-link:hover {
+    transform: translateY(-1px);
+  }
+
+  .heart-button:hover,
+  .share-button:hover {
+    transform: scale(1.05);
+  }
+
+  .share-option:hover {
+    transform: translateY(-2px);
+  }
+
+  .wishlist-badge:hover {
     transform: scale(1.05);
   }
 }
