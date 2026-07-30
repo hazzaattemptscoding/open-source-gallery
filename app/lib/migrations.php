@@ -26,19 +26,12 @@ function migrations_pending(PDO $pdo, string $migrationsDir): array
     $files = glob($migrationsDir . '/*.sql');
     sort($files, SORT_STRING);
 
+    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $isSqlite = $driver === 'sqlite';
+
     $pending = [];
     foreach ($files as $path) {
         $filename = basename($path);
-
-        // *.sqlite.sql files are alternate schema variants for 001 only,
-        // picked once at initial install time based on the chosen driver
-        // (see install.php) — not part of the sequential 002+ chain this
-        // runner walks. Including them here means the runner would try to
-        // apply SQLite-only syntax (e.g. PRAGMA statements) against a MySQL
-        // connection and fail outright.
-        if (str_ends_with($filename, '.sqlite.sql')) {
-            continue;
-        }
 
         // 001_initial_schema.sql is always applied out-of-band at install
         // time (phpMyAdmin/mysql CLI per INSTALL.md, or install.php/setup.sh
@@ -48,12 +41,26 @@ function migrations_pending(PDO $pdo, string $migrationsDir): array
         // relying on every install entry point to remember to INSERT a row
         // for it) means the runner never re-attempts it and never errors on
         // "table already exists".
-        if ($filename === '001_initial_schema.sql') {
+        if ($filename === '001_initial_schema.sql' || $filename === '001_initial_schema.sqlite.sql') {
             continue;
         }
 
-        if (!isset($applied[$filename])) {
-            $pending[] = $filename;
+        // For SQLite, skip the non-sqlite variants (002+.sql) and include sqlite variants.
+        // For MySQL, skip all .sqlite.sql files and include only standard .sql files.
+        if ($isSqlite) {
+            // For SQLite, we want the .sqlite.sql variants of 002+
+            if (str_ends_with($filename, '.sqlite.sql') && !str_starts_with($filename, '001')) {
+                if (!isset($applied[$filename])) {
+                    $pending[] = $filename;
+                }
+            }
+        } else {
+            // For MySQL, skip .sqlite.sql files entirely
+            if (!str_ends_with($filename, '.sqlite.sql')) {
+                if (!isset($applied[$filename])) {
+                    $pending[] = $filename;
+                }
+            }
         }
     }
 

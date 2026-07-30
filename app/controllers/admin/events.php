@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cache.php';
+require_once __DIR__ . '/../../lib/validation.php';
 
 function admin_events_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -43,7 +44,9 @@ function list_events(PDO $pdo, string $siteName, string $currencyCode, string $c
     $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $error = ($_GET['error'] ?? '') === 'has_sessions' ? 'Cannot delete: this event still has sessions. Delete the sessions first.' : '';
-    render(__DIR__ . '/../../views/admin/events/list.php', compact('siteName', 'currencyCode', 'csrfToken', 'events', 'error'));
+    $pageTitle = 'Events';
+    $currentPage = 'events';
+    render(__DIR__ . '/../../views/admin/events/list.php', compact('pageTitle', 'currentPage', 'siteName', 'currencyCode', 'csrfToken', 'events', 'error'));
 }
 
 function show_event_form(PDO $pdo, string $siteName, string $currencyCode, string $csrfToken, bool $isNew, ?int $eventId = null): void {
@@ -63,7 +66,9 @@ function show_event_form(PDO $pdo, string $siteName, string $currencyCode, strin
         $event['price_single_pence'] = default_single_price($pdo);
     }
 
-    render(__DIR__ . '/../../views/admin/events/form.php', compact('siteName', 'currencyCode', 'csrfToken', 'event', 'error', 'isNew'));
+    $pageTitle = 'Events';
+    $currentPage = 'events';
+    render(__DIR__ . '/../../views/admin/events/form.php', compact('pageTitle', 'currentPage', 'siteName', 'currencyCode', 'csrfToken', 'event', 'error', 'isNew'));
 }
 
 function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, string $currencyCode, string $csrfToken): void {
@@ -87,8 +92,8 @@ function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     if (!$error && empty($title)) {
         $error = 'Title is required.';
     }
-    if (!$error && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $eventDate)) {
-        $error = 'Invalid date format.';
+    if (!$error && !validate_iso_date($eventDate)) {
+        $error = 'Invalid event date.';
     }
     if (!$error && $priceSingle < 0) {
         $error = 'Single photo price cannot be negative.';
@@ -96,7 +101,9 @@ function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
 
     if ($error) {
         $event = compact('slug', 'title', 'venue', 'eventDate', 'isPublished', 'priceSingle', 'priceSession', 'priceEvent');
-        render(__DIR__ . '/../../views/admin/events/form.php', compact('siteName', 'currencyCode', 'csrfToken', 'event', 'error', 'isNew'));
+        $pageTitle = 'Events';
+        $currentPage = 'events';
+        render(__DIR__ . '/../../views/admin/events/form.php', compact('pageTitle', 'currentPage', 'siteName', 'currencyCode', 'csrfToken', 'event', 'error', 'isNew'));
         return;
     }
 
@@ -144,14 +151,16 @@ function update_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     if (!$error && empty($title)) {
         $error = 'Title is required.';
     }
-    if (!$error && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $eventDate)) {
-        $error = 'Invalid date format.';
+    if (!$error && !validate_iso_date($eventDate)) {
+        $error = 'Invalid event date.';
     }
 
     if ($error) {
         $event = compact('slug', 'title', 'venue', 'eventDate', 'isPublished', 'priceSingle', 'priceSession', 'priceEvent');
         $event['id'] = $eventId;
-        render(__DIR__ . '/../../views/admin/events/form.php', compact('siteName', 'currencyCode', 'csrfToken', 'event', 'error', 'isNew'));
+        $pageTitle = 'Events';
+        $currentPage = 'events';
+        render(__DIR__ . '/../../views/admin/events/form.php', compact('pageTitle', 'currentPage', 'siteName', 'currencyCode', 'csrfToken', 'event', 'error', 'isNew'));
         return;
     }
 

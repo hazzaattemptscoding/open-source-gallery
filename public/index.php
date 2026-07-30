@@ -243,11 +243,6 @@ switch ($path) {
         admin_orders_controller($pdo, $config);
         break;
 
-    case '/admin/settings':
-        require __DIR__ . '/../app/controllers/admin/settings.php';
-        admin_settings_controller($pdo, $config);
-        break;
-
     case '/admin/customize':
         require __DIR__ . '/../app/controllers/admin/customize.php';
         admin_customize_controller($pdo, $config);
@@ -374,7 +369,12 @@ switch ($path) {
         break;
 
     default:
-        if (strpos($path, '/admin/events') === 0) {
+        if (preg_match('#^/admin/settings(?:/([a-z_]+))?$#', $path, $m)) {
+            // Handle /admin/settings or /admin/settings/{category}
+            $_GET['category'] = $m[1] ?? 'site';
+            require __DIR__ . '/../app/controllers/admin/settings.php';
+            admin_settings_controller($pdo, $config);
+        } elseif (strpos($path, '/admin/events') === 0) {
             require __DIR__ . '/../app/controllers/admin/events.php';
             admin_events_controller($pdo, $config);
         } elseif (strpos($path, '/admin/sessions') === 0) {
@@ -395,6 +395,9 @@ switch ($path) {
         } elseif (preg_match('#^/checkout/success/([a-z0-9]+)$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/checkout.php';
             public_checkout_success_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/order/([a-z0-9-]+)$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/order_tracking.php';
+            public_order_tracking_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);

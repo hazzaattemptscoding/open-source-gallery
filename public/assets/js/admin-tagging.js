@@ -69,7 +69,19 @@ function renderPendingTags() {
     if (tag.kart) parts.push('Kart ' + tag.kart);
     if (tag.driver) parts.push('Driver: ' + tag.driver);
     if (tag.class) parts.push('Class: ' + tag.class);
-    li.innerHTML = `<code>${parts.join(' | ')}</code> <button type="button" class="tag-remove-btn" data-idx="${idx}">Remove</button>`;
+
+    const code = document.createElement('code');
+    code.textContent = parts.join(' | ');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tag-remove-btn';
+    btn.dataset.idx = idx;
+    btn.textContent = 'Remove';
+
+    li.appendChild(code);
+    li.appendChild(document.createTextNode(' '));
+    li.appendChild(btn);
     list.appendChild(li);
   });
 }

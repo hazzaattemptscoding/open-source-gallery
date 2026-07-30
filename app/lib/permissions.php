@@ -76,6 +76,13 @@ function can_view_settings(PDO $pdo): bool {
 }
 
 /**
+ * Check if current admin can edit settings.
+ */
+function can_edit_settings(PDO $pdo): bool {
+    return is_admin($pdo);
+}
+
+/**
  * Check if current admin can export data.
  */
 function can_export(PDO $pdo): bool {

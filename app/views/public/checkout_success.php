@@ -38,6 +38,25 @@
     </div>
   </div>
 
+  <!-- Trust signals -->
+  <div class="trust-signals">
+    <div class="trust-signal">
+      <div class="trust-signal-icon">●</div>
+      <strong>Secure Payment</strong>
+      <span>Powered by Stripe</span>
+    </div>
+    <div class="trust-signal">
+      <div class="trust-signal-icon">●</div>
+      <strong>Email Confirmation</strong>
+      <span>Sent to your inbox</span>
+    </div>
+    <div class="trust-signal">
+      <div class="trust-signal-icon">●</div>
+      <strong>Instant Download</strong>
+      <span>No delays or fees</span>
+    </div>
+  </div>
+
   <div class="confirmation-cta">
     <a href="<?= e($downloadLink) ?>" class="button">Download your files</a>
   </div>

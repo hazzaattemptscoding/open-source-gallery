@@ -60,6 +60,8 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
     }
 
     render(__DIR__ . '/../../views/admin/watermarks.php', [
+        'pageTitle' => 'Watermarks',
+        'currentPage' => 'watermarks',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'csrfToken' => csrf_token(),
         'settings' => $settings,

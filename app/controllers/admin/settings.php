@@ -45,7 +45,7 @@ function admin_settings_controller(PDO $pdo, array $config): void {
             $updated = batch_update_settings($pdo, $updates, $category);
             if ($updated > 0) {
                 audit_log($pdo, 'admin', 'update_settings', 'settings', null, ['category' => $category, 'count' => $updated], client_ip());
-                header("Location: /admin/settings?category=$category&mode=$mode&success=1");
+                header("Location: /admin/settings/$category?mode=$mode&success=1");
                 exit;
             }
         }
@@ -60,6 +60,8 @@ function admin_settings_controller(PDO $pdo, array $config): void {
     });
 
     render(__DIR__ . '/../../views/admin/settings.php', [
+        'pageTitle' => 'Settings',
+        'currentPage' => 'settings',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'csrfToken' => csrf_token(),
         'categories' => $categories,

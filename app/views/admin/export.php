@@ -1,74 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Export Data: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<style>
-.export-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-.export-card {
-    padding: 1.5rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    text-align: center;
-}
-.export-card h3 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-}
-.export-card p {
-    margin: 0.5rem 0;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-.export-button {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.75rem 1.5rem;
-    background-color: #1a1a1a;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: background-color 0.2s;
-}
-.export-button:hover {
-    background-color: #333;
-}
-.info-box {
-    background-color: #f5f5f5;
-    padding: 1.5rem;
-    border-radius: 4px;
-    margin-bottom: 2rem;
-    border-left: 4px solid #1a1a1a;
-}
-.info-box h3 {
-    margin-top: 0;
-}
-.info-box ul {
-    margin: 1rem 0 0 0;
-    padding-left: 1.5rem;
-}
-</style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
-  <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Log out</button>
-  </form>
-</header>
-
+<?php
+$pageTitle = 'Export';
+$currentPage = 'export';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <main class="dashboard">
   <h1>Data Export</h1>
 
@@ -135,5 +69,5 @@
 
 </main>
 
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

@@ -12,6 +12,7 @@ require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/bulk.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/csrf.php';
+require_once __DIR__ . '/../../lib/tagging.php';
 
 function admin_bulk_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -43,12 +44,29 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
             switch ($action) {
                 case 'tag':
                     if ($limits['can_bulk_tag']) {
-                        $updated = bulk_tag_photos($pdo, $photoIds, [
+                        // Old motorsport-specific tags (kart, driver, class)
+                        $oldTags = [
                             'kart' => $_POST['kart'] ?? '',
                             'driver' => $_POST['driver'] ?? '',
                             'class' => $_POST['class'] ?? '',
-                        ]);
-                        audit_log($pdo, 'admin', 'bulk_tag', 'photos', null, ['count' => $updated], client_ip());
+                        ];
+                        if (array_filter($oldTags)) {
+                            bulk_tag_photos($pdo, $photoIds, $oldTags);
+                        }
+
+                        // New tag-based system (client, location, style, featured)
+                        $newTags = [
+                            'client' => $_POST['client'] ?? '',
+                            'location' => $_POST['location'] ?? '',
+                            'style' => $_POST['style'] ?? '',
+                            'featured' => isset($_POST['featured']) && $_POST['featured'] === '1',
+                        ];
+                        if (array_filter($newTags, fn($v) => $v !== false)) {
+                            bulk_tag_photos_new($pdo, $photoIds, $newTags);
+                        }
+
+                        $tagData = array_merge($oldTags, array_filter($newTags, fn($v) => $v !== false));
+                        audit_log($pdo, 'admin', 'bulk_tag', 'photos', null, ['count' => count($photoIds), 'tags' => $tagData], client_ip());
                         header('Location: /admin/bulk?action=select&success=1');
                         exit;
                     }
@@ -90,6 +108,8 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
     }
 
     render(__DIR__ . '/../../views/admin/bulk.php', [
+        'pageTitle' => 'Bulk Operations',
+        'currentPage' => 'bulk',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'csrfToken' => csrf_token(),
         'action' => $action,

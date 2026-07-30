@@ -1,13 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($isNew ? 'Create event' : 'Edit event') ?>: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Events';
+$currentPage = 'events';
+require_once __DIR__ . '/../partials/layout_header.php';
+?>
 <div class="dashboard">
   <h1><?= e($isNew ? 'Create event' : 'Edit event') ?></h1>
   <p><a href="/admin/events">← Back to events</a></p>
@@ -51,5 +46,5 @@
     <button type="submit"><?= e($isNew ? 'Create event' : 'Update event') ?></button>
   </form>
 </div>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

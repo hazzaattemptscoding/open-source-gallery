@@ -101,6 +101,8 @@ function admin_admins_controller(PDO $pdo, array $config): void {
     $success = $_GET['success'] ?? false;
 
     render(__DIR__ . '/../../views/admin/admins.php', [
+        'pageTitle' => 'Admin Users',
+        'currentPage' => 'admins',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'csrfToken' => csrf_token(), // re-fetch: csrf_verify() above invalidates the token on success, and a POST that succeeded already redirected away, so this always reflects the current session's live token for the page about to render
         'action' => $action,

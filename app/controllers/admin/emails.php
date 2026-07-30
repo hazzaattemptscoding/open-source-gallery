@@ -52,6 +52,8 @@ function admin_emails_controller(PDO $pdo, array $config): void {
     $templates = get_email_templates($pdo);
 
     render(__DIR__ . '/../../views/admin/emails.php', [
+        'pageTitle' => 'Email Management',
+        'currentPage' => 'emails',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'action' => $action,
         'stats' => $stats,

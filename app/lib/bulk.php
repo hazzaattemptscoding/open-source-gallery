@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/db_compat.php';
+require_once __DIR__ . '/tagging.php';
 
 /**
  * Bulk tag photos.
@@ -55,6 +56,19 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
     }
 
     return $inserted;
+}
+
+/**
+ * Bulk tag photos with new tag system (client, location, style, featured).
+ * Uses the tagging.php library's photos_bulk_add_tags function.
+ */
+function bulk_tag_photos_new(PDO $pdo, array $photoIds, array $tags): int {
+    if (empty($photoIds) || empty($tags)) {
+        return 0;
+    }
+
+    photos_bulk_add_tags($pdo, $photoIds, $tags);
+    return count($photoIds);
 }
 
 /**

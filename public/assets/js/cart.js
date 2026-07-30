@@ -62,7 +62,7 @@ async function refreshCart() {
     const freshMain = doc.querySelector('.cart-page');
     const currentMain = document.querySelector('.cart-page');
     if (!freshMain || !currentMain) throw new Error('missing .cart-page');
-    currentMain.innerHTML = freshMain.innerHTML;
+    currentMain.replaceWith(freshMain);
     initCartPage();
   } catch (err) {
     console.error(err);

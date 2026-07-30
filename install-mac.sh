@@ -64,13 +64,6 @@ dev_reset_schema($pdo);
 // Seed dummy data
 dev_seed_dummy_data($pdo);
 
-// Store credentials for later display
-file_put_contents('/tmp/gallery_setup_creds.txt', json_encode([
-    'url' => $config['site']['base_url'],
-    'email' => 'admin@localhost',
-    'password' => $adminPassword,
-]));
-
 echo "\n[✓] Setup complete!\n";
 PHPEOF
 
@@ -79,12 +72,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Read credentials
-CREDS=$(cat /tmp/gallery_setup_creds.txt)
-URL=$(echo $CREDS | php -r "echo json_decode(file_get_contents('php://stdin'), true)['url'];")
-EMAIL=$(echo $CREDS | php -r "echo json_decode(file_get_contents('php://stdin'), true)['email'];")
-PASSWORD=$(echo $CREDS | php -r "echo json_decode(file_get_contents('php://stdin'), true)['password'];")
-rm -f /tmp/gallery_setup_creds.txt
+URL="http://localhost:8000"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -92,16 +80,18 @@ echo "Starting development server..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "Access the gallery:"
-echo "  URL: http://localhost:8000"
+echo "  Public:  $URL"
+echo "  Admin:   $URL/admin"
 echo ""
-echo "Admin login:"
-echo "  Email:    $EMAIL"
-echo "  Password: $PASSWORD"
+echo "First-time setup:"
+echo "  1. Open $URL/admin/setup in your browser"
+echo "  2. Create your first admin account"
+echo "  3. Enable two-factor authentication"
 echo ""
-echo "Notes:"
-echo "  - Change password in /admin/settings after login"
-echo "  - Add real Stripe keys: Settings → Payment Gateway"
-echo "  - Configure email: Settings → Email"
+echo "After login:"
+echo "  - Add real Stripe keys: Admin → Settings → Payment"
+echo "  - Configure email: Admin → Settings → Email"
+echo "  - View sample photos: Admin → Manage Content"
 echo "  - Press Ctrl+C to stop the server"
 echo ""
 

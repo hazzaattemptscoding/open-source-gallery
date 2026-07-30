@@ -113,16 +113,30 @@
 
           <?php if ($results['pages'] > 1): ?>
             <div class="pagination">
+              <?php
+                // Build filter query string to preserve filters on pagination
+                $filterParams = [];
+                if (!empty($query)) $filterParams[] = 'q=' . urlencode($query);
+                if (!empty($filters['event_id'])) $filterParams[] = 'event=' . (int)$filters['event_id'];
+                if (!empty($filters['kart'])) $filterParams[] = 'kart=' . urlencode($filters['kart']);
+                if (!empty($filters['driver'])) $filterParams[] = 'driver=' . urlencode($filters['driver']);
+                if (!empty($filters['class'])) $filterParams[] = 'class=' . urlencode($filters['class']);
+                if (!empty($filters['price_min'])) $filterParams[] = 'price_min=' . (int)$filters['price_min'];
+                if (!empty($filters['price_max'])) $filterParams[] = 'price_max=' . (int)$filters['price_max'];
+                if (!empty($filters['date_from'])) $filterParams[] = 'date_from=' . urlencode($filters['date_from']);
+                if (!empty($filters['date_to'])) $filterParams[] = 'date_to=' . urlencode($filters['date_to']);
+                $baseUrl = count($filterParams) > 0 ? '?' . implode('&', $filterParams) . '&' : '?';
+              ?>
               <?php if ($results['page'] > 1): ?>
-                <a href="?q=<?= urlencode($query) ?>&page=1">First</a>
-                <a href="?q=<?= urlencode($query) ?>&page=<?= $results['page'] - 1 ?>">← Prev</a>
+                <a href="<?= $baseUrl ?>page=1">First</a>
+                <a href="<?= $baseUrl ?>page=<?= $results['page'] - 1 ?>">← Prev</a>
               <?php endif; ?>
 
               <span class="current"><?= e($results['page']) ?> / <?= e($results['pages']) ?></span>
 
               <?php if ($results['page'] < $results['pages']): ?>
-                <a href="?q=<?= urlencode($query) ?>&page=<?= $results['page'] + 1 ?>">Next →</a>
-                <a href="?q=<?= urlencode($query) ?>&page=<?= $results['pages'] ?>">Last</a>
+                <a href="<?= $baseUrl ?>page=<?= $results['page'] + 1 ?>">Next →</a>
+                <a href="<?= $baseUrl ?>page=<?= $results['pages'] ?>">Last</a>
               <?php endif; ?>
             </div>
           <?php endif; ?>

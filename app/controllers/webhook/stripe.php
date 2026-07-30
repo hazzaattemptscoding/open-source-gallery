@@ -86,6 +86,12 @@ function handle_checkout_completed(PDO $pdo, array $session): void {
     audit_log($pdo, 'system', 'webhook_payment_confirmed', 'order', $orderId, [
         'checkout_id' => $checkoutId,
     ]);
+
+    // Queue order confirmation email
+    queue_job($pdo, 'email', [
+        'order_id' => $orderId,
+        'type' => 'order_confirmation',
+    ]);
 }
 
 function handle_charge_refunded(PDO $pdo, array $charge): void {

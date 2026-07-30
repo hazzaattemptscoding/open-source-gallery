@@ -204,12 +204,11 @@ function dev_reset_schema(PDO $pdo): void {
             }
         }
 
-        // In dev mode with SQLite, only run 001 (002+ are MySQL-specific)
-        if ($driver !== 'sqlite') {
-            $pending = migrations_pending($pdo, $migrationsDir);
-            foreach ($pending as $filename) {
-                migrations_apply($pdo, $migrationsDir, $filename);
-            }
+        // Apply remaining migrations (002+)
+        // migrations_pending() already handles driver-specific variants
+        $pending = migrations_pending($pdo, $migrationsDir);
+        foreach ($pending as $filename) {
+            migrations_apply($pdo, $migrationsDir, $filename);
         }
         echo "[✓] Schema created\n";
     } catch (Exception $e) {

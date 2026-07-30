@@ -44,7 +44,10 @@
 $hasKartFilter = !empty($kartOptions);
 $hasDriverFilter = !empty($driverOptions);
 $hasClassFilter = !empty($classOptions);
-$hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
+$hasClientFilter = !empty($clientOptions);
+$hasLocationFilter = !empty($locationOptions);
+$hasStyleFilter = !empty($styleOptions);
+$hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasClientFilter || $hasLocationFilter || $hasStyleFilter;
 ?>
 
 <?php if ($hasAnyFilter): ?>
@@ -79,9 +82,41 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
     </select>
   <?php endif; ?>
 
+  <?php if ($hasClientFilter): ?>
+    <select name="client" id="filterClient">
+      <option value="">All clients</option>
+      <?php foreach ($clientOptions as $client): ?>
+        <option value="<?= e($client) ?>" <?= $filters['client'] === $client ? 'selected' : '' ?>><?= e($client) ?></option>
+      <?php endforeach; ?>
+    </select>
+  <?php endif; ?>
+
+  <?php if ($hasLocationFilter): ?>
+    <select name="location" id="filterLocation">
+      <option value="">All locations</option>
+      <?php foreach ($locationOptions as $location): ?>
+        <option value="<?= e($location) ?>" <?= $filters['location'] === $location ? 'selected' : '' ?>><?= e($location) ?></option>
+      <?php endforeach; ?>
+    </select>
+  <?php endif; ?>
+
+  <?php if ($hasStyleFilter): ?>
+    <select name="style" id="filterStyle">
+      <option value="">All styles</option>
+      <?php foreach ($styleOptions as $style): ?>
+        <option value="<?= e($style) ?>" <?= $filters['style'] === $style ? 'selected' : '' ?>><?= e($style) ?></option>
+      <?php endforeach; ?>
+    </select>
+  <?php endif; ?>
+
+  <label class="filter-checkbox">
+    <input type="checkbox" name="featured" value="1" <?= $filters['featured'] ? 'checked' : '' ?>>
+    Featured only
+  </label>
+
   <button type="submit">Filter</button>
-  <?php if ($filters['kart'] || $filters['driver'] || $filters['class']): ?>
-    <button type="button" class="clear-filters" onclick="location.href='<?= e($basePath) ?>'">Clear</button>
+  <?php if ($filters['kart'] || $filters['driver'] || $filters['class'] || $filters['client'] || $filters['location'] || $filters['style'] || $filters['featured']): ?>
+    <button type="button" class="clear-filters" data-clear-href="<?= e($basePath) ?>">Clear</button>
   <?php endif; ?>
 </form>
 <?php endif; ?>
@@ -89,15 +124,22 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
 <main id="photos">
   <!-- Photo grid with empty state -->
   <div class="photo-grid" id="photoGrid"
-       data-photo-ids="<?= e(json_encode(array_map('intval', array_column($photos, 'id')))) ?>"
-       data-photo-tokens="<?= e(json_encode(array_column($photos, 'public_token'))) ?>">
+       data-photo-ids='<?= htmlspecialchars(json_encode(array_map('intval', array_column($photos, 'id'))), ENT_QUOTES, 'UTF-8') ?>'
+       data-photo-tokens='<?= htmlspecialchars(json_encode(array_column($photos, 'public_token')), ENT_QUOTES, 'UTF-8') ?>'>
     <?php if (!empty($photos)): ?>
       <?php require __DIR__ . '/_photo_grid_items.php'; ?>
     <?php else: ?>
-      <div class="empty-state" style="grid-column: 1 / -1;">
-        <p>No photos match your filters.</p>
-        <button type="button" class="clear-filters" onclick="location.href='<?= e($basePath) ?>'">Clear filters</button>
-      </div>
+      <?php
+        $emptyState = [
+          'title' => 'No photos match your filters',
+          'message' => 'Try adjusting your search or filters to find what you\'re looking for.',
+          'action' => [
+            'label' => 'Clear filters',
+            'href' => e($basePath),
+          ],
+        ];
+        require __DIR__ . '/partials/empty-state.php';
+      ?>
     <?php endif; ?>
   </div>
 
@@ -129,6 +171,16 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
   <button class="lightbox-cart" id="lightboxCart">Add to cart</button>
 </div>
 
+<script src="/assets/js/ui-feedback.js" defer></script>
+<script src="/assets/js/accessibility.js" defer></script>
 <script src="/assets/js/event.js" defer></script>
+<script>
+  // Initialize accessibility on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof A11y !== 'undefined') {
+      A11y.init(document);
+    }
+  });
+</script>
 </body>
 </html>

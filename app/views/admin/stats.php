@@ -1,21 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stats — <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-
-<header class="site-header">
-  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
-  <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Log out</button>
-  </form>
-</header>
-
+<?php
+$pageTitle = 'Stats';
+$currentPage = 'stats';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <main class="dashboard">
   <h1>Sales Dashboard</h1>
 
@@ -96,5 +83,5 @@
 
 </main>
 
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

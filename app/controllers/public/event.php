@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cart.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/db_compat.php';
+require_once __DIR__ . '/../../lib/tagging.php';
 
 /**
  * Event page, matching both /e/{event-slug} (full-event grid across all
@@ -64,6 +65,12 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
         'kart' => trim((string)($_GET['kart'] ?? '')),
         'driver' => trim((string)($_GET['driver'] ?? '')),
         'class' => trim((string)($_GET['class'] ?? '')),
+        'client' => trim((string)($_GET['client'] ?? '')),
+        'location' => trim((string)($_GET['location'] ?? '')),
+        'style' => trim((string)($_GET['style'] ?? '')),
+        'date_start' => trim((string)($_GET['date_start'] ?? '')),
+        'date_end' => trim((string)($_GET['date_end'] ?? '')),
+        'featured' => isset($_GET['featured']) && $_GET['featured'] === '1',
     ];
 
     $heroToken = null;
@@ -92,6 +99,10 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     $stmt = $pdo->prepare('SELECT DISTINCT class FROM event_entries WHERE event_id = ? AND class <> \'\' ORDER BY class ASC');
     $stmt->execute([$eventId]);
     $classOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $clientOptions = photo_get_tag_values($pdo, $eventId, 'client');
+    $locationOptions = photo_get_tag_values($pdo, $eventId, 'location');
+    $styleOptions = photo_get_tag_values($pdo, $eventId, 'style');
 
     $basePath = $activeSession
         ? "/e/{$event['slug']}/{$activeSession['slug']}"
@@ -123,15 +134,16 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     render(__DIR__ . '/../../views/public/event.php', compact(
         'siteName', 'currencyCode', 'event', 'sessions', 'activeSession', 'sessionId',
         'filters', 'heroToken', 'photos', 'videos', 'kartOptions', 'driverOptions', 'classOptions',
+        'clientOptions', 'locationOptions', 'styleOptions',
         'basePath', 'cartCount'
     ));
 }
 
 /**
  * Shared by the full page render and /api/photos so the two can never
- * return different results for the same filters. Filters are AND'd
- * against a single photo_tags row (a bulk-tag action writes kart+driver+
- * class together in one row), not across a photo's tags independently.
+ * return different results for the same filters. Supports both legacy
+ * kart/driver/class filters (motorsport-specific) and tag-based filters
+ * (client, location, style, featured, date range).
  *
  * @return list<array<string, mixed>>
  */
@@ -144,8 +156,11 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
         $params[] = $sessionId;
     }
 
+    // Legacy motorsport filters (kart, driver, class) use photo_tags with specific columns
     $join = 'LEFT JOIN photo_tags pt ON pt.photo_id = p.id';
-    if ($filters['kart'] !== '' || $filters['driver'] !== '' || $filters['class'] !== '') {
+    $hasLegacyFilters = $filters['kart'] !== '' || $filters['driver'] !== '' || $filters['class'] !== '';
+
+    if ($hasLegacyFilters) {
         if ($filters['kart'] !== '') {
             $where[] = 'pt.kart_number = ?';
             $params[] = $filters['kart'];
@@ -160,13 +175,43 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
         }
     }
 
-    $sql = "
-        SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order,
+    // Tag-based filters (client, location, style, featured)
+    $tagJoins = [];
+    $tagIndex = 0;
+    foreach (['client', 'location', 'style'] as $type) {
+        if (!empty($filters[$type])) {
+            $alias = "pt{$tagIndex}";
+            $tagJoins[] = "INNER JOIN photo_tags {$alias} ON {$alias}.photo_id = p.id AND {$alias}.tag_type = ? AND {$alias}.tag_value = ?";
+            $params[] = $type;
+            $params[] = $filters[$type];
+            $tagIndex++;
+        }
+    }
+
+    if ($filters['featured']) {
+        $alias = "pt{$tagIndex}";
+        $tagJoins[] = "INNER JOIN photo_tags {$alias} ON {$alias}.photo_id = p.id AND {$alias}.tag_type = 'featured' AND {$alias}.tag_value = '1'";
+        $tagIndex++;
+    }
+
+    if (!empty($filters['date_start'])) {
+        $where[] = 'DATE(p.created_at) >= ?';
+        $params[] = $filters['date_start'];
+    }
+    if (!empty($filters['date_end'])) {
+        $where[] = 'DATE(p.created_at) <= ?';
+        $params[] = $filters['date_end'];
+    }
+
+    $tagJoinStr = implode(' ', $tagJoins);
+    $select = "SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order,
                GROUP_CONCAT(pt.kart_number) as kart_tags,
                GROUP_CONCAT(pt.driver_name) as driver_tags,
-               GROUP_CONCAT(pt.class) as class_tags
+               GROUP_CONCAT(pt.class) as class_tags";
+
+    $sql = "{$select}
         FROM photos p
-        {$join}
+        {$join} {$tagJoinStr}
         WHERE " . implode(' AND ', $where) . "
         GROUP BY p.id
         ORDER BY p.sort_order ASC, p.id ASC

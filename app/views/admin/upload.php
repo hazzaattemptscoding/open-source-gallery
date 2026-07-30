@@ -1,17 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Upload photos: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Upload';
+$currentPage = 'upload';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <div class="dashboard">
   <h1>Upload photos</h1>
-  <p><a href="/admin/events">← Back to events</a></p>
+  <p><a href="/admin">← Back to dashboard</a></p>
 
   <div class="upload-zone" id="uploadZone" data-csrf-token="<?= e($csrfToken) ?>">
     <p>Drag photos here or <button type="button" id="chooseFileBtn" class="btn-choose">choose from folder</button></p>
@@ -34,6 +28,34 @@
     <button type="button" id="startUploadBtn" class="btn-start-upload">Start upload</button>
   </div>
 
+  <?php if ($recentBatch && !empty($recentFiles)): ?>
+    <div class="recent-uploads">
+      <h3>Recent upload</h3>
+      <p class="upload-timestamp">
+        <?= e(date('M d, Y H:i:s', strtotime($recentBatch['created_at']))) ?>
+      </p>
+      <ul class="upload-files-list">
+        <?php foreach ($recentFiles as $file): ?>
+          <li class="upload-file">
+            <span class="filename"><?= e($file['original_filename']) ?></span>
+            <span class="status status-<?= e($file['status']) ?>">
+              <?php
+                $statusLabels = [
+                    'pending' => 'Pending',
+                    'uploaded' => 'Uploaded',
+                    'processing' => 'Processing',
+                    'live' => 'Live',
+                    'failed' => 'Failed',
+                ];
+                echo isset($statusLabels[$file['status']]) ? $statusLabels[$file['status']] : ucfirst($file['status']);
+              ?>
+            </span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  <?php endif; ?>
+
   <ul class="upload-files-list" id="filesList"></ul>
 
   <p id="jobDrain" class="job-drain-notice">
@@ -41,5 +63,5 @@
   </p>
 </div>
 <script src="/assets/js/admin-upload.js" defer></script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

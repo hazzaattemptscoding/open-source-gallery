@@ -1,22 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orders — <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-
-<header class="site-header">
-  <a href="/admin" class="site-title"><?= e($siteName) ?></a>
-  <form method="post" action="/admin/logout" class="logout-form">
-    <button type="submit">Log out</button>
-  </form>
-</header>
-
+<?php
+$pageTitle = 'Orders';
+$currentPage = 'orders';
+require_once __DIR__ . '/partials/layout_header.php';
+?>
 <main class="dashboard">
   <h1>Orders</h1>
   <p><?= e($totalOrders) ?> orders total</p>
@@ -78,12 +64,12 @@
 
     <?php if ($totalPages > 1): ?>
       <div style="margin-top: 2rem; text-align: center;">
-        <?php if ($currentPage > 1): ?>
-          <a href="?page=<?= max(1, $currentPage - 1) ?>" style="margin-right: 1rem;">← Previous</a>
+        <?php if ($paginationPage > 1): ?>
+          <a href="?page=<?= max(1, $paginationPage - 1) ?>" style="margin-right: 1rem;">← Previous</a>
         <?php endif; ?>
-        Page <?= $currentPage ?> of <?= $totalPages ?>
-        <?php if ($currentPage < $totalPages): ?>
-          <a href="?page=<?= min($totalPages, $currentPage + 1) ?>" style="margin-left: 1rem;">Next →</a>
+        Page <?= $paginationPage ?> of <?= $totalPages ?>
+        <?php if ($paginationPage < $totalPages): ?>
+          <a href="?page=<?= min($totalPages, $paginationPage + 1) ?>" style="margin-left: 1rem;">Next →</a>
         <?php endif; ?>
       </div>
     <?php endif; ?>
@@ -91,5 +77,5 @@
 
 </main>
 
-</body>
-</html>
+
+<?php require_once __DIR__ . '/partials/layout_footer.php'; ?>
