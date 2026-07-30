@@ -14,8 +14,8 @@
 
 declare(strict_types=1);
 
-echo "PowerMedia Gallery - Shared Hosting Setup Helper\n";
-echo "================================================\n\n";
+echo "Gallery - Shared Hosting Setup Helper\n";
+echo "======================================\n\n";
 
 // Check PHP version
 echo "1. Checking PHP version... ";

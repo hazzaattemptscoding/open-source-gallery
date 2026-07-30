@@ -1,6 +1,6 @@
 <?php
 /**
- * PowerMedia Gallery - Universal Installer
+ * Gallery - Universal Installer
  *
  * Works on: Windows, Mac, Linux, shared hosting, VPS, Docker
  * Run once: php install.php
@@ -65,7 +65,7 @@ function ask($question, $default = '') {
 // START INSTALLATION
 // ============================================================================
 
-echo color("PowerMedia Gallery Installer v$GALLERY_VERSION", 'bold') . NEWLINE;
+echo color("Gallery Installer v$GALLERY_VERSION", 'bold') . NEWLINE;
 echo "Universal installation for any environment (Docker, Mac, Linux, Windows, hosting)" . NEWLINE;
 
 // Check PHP version

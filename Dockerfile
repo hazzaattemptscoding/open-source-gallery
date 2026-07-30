@@ -20,7 +20,7 @@ RUN chmod -R 755 /var/www/html/storage /var/www/html/public/media
 RUN echo '<VirtualHost *:80>\n  DocumentRoot /var/www/html/public\n  <Directory /var/www/html/public>\n    Options -MultiViews\n    RewriteEngine On\n    RewriteCond %{REQUEST_FILENAME} !-f\n    RewriteCond %{REQUEST_FILENAME} !-d\n    RewriteRule ^ index.php [QSA,L]\n  </Directory>\n</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Startup script: initialize config and database, then start Apache
-RUN echo '#!/bin/bash\nset -e\necho "PowerMedia Gallery - Initializing..."\nphp /var/www/html/cron/init-db.php\necho "Starting Apache..."\napache2-foreground' > /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
+RUN echo '#!/bin/bash\nset -e\necho "Gallery - Initializing..."\nphp /var/www/html/cron/init-db.php\necho "Starting Apache..."\napache2-foreground' > /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
 ENTRYPOINT ["/docker-entrypoint.sh"]

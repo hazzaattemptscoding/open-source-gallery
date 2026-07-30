@@ -29,7 +29,7 @@ cd open-source-gallery
 docker-compose up
 ```
 
-Wait for "PowerMedia Gallery - Initializing..." message, then visit `http://localhost:8080/admin/setup`.
+Wait for "Gallery - Initializing..." message, then visit `http://localhost:8080/admin/setup`.
 
 ---
 
