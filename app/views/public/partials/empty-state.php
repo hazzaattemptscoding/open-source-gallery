@@ -3,7 +3,7 @@
  * Reusable empty state component.
  * Usage: include 'path/to/empty-state.php' after setting $emptyState array
  * $emptyState = [
- *   'icon' => '📸',
+ *   'icon' => '●',
  *   'title' => 'No photos yet',
  *   'message' => 'This gallery is still being populated...',
  *   'action' => ['label' => 'Browse other events', 'href' => '/'],

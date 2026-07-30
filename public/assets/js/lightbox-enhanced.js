@@ -41,29 +41,63 @@ class EnhancedLightbox {
 
   render() {
     const photo = this.photos[this.currentIndex];
-    const html = `
-      <div id="enhanced-lightbox" class="lightbox">
-        <button class="lightbox-close" aria-label="Close lightbox">&times;</button>
-        <div class="lightbox-content">
-          <img src="/media/d/${photo.token}-1600.jpg"
-               alt="${photo.title}"
-               class="lightbox-image"
-               loading="lazy">
-          <div class="lightbox-metadata">
-            <strong>${photo.title}</strong>
-            <p>${this.currentIndex + 1} / ${this.photos.length}</p>
-          </div>
-          <div class="lightbox-controls">
-            <button class="prev" aria-label="Previous photo">← Prev</button>
-            <button class="share" aria-label="Share">Share</button>
-            <button class="heart" aria-label="Add to wishlist">♥</button>
-            <button class="next" aria-label="Next photo">Next →</button>
-          </div>
-        </div>
-      </div>
-    `;
+    const lightbox = document.createElement('div');
+    lightbox.id = 'enhanced-lightbox';
+    lightbox.className = 'lightbox';
 
-    document.body.insertAdjacentHTML('beforeend', html);
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'lightbox-close';
+    closeBtn.setAttribute('aria-label', 'Close lightbox');
+    closeBtn.textContent = '×';
+
+    const content = document.createElement('div');
+    content.className = 'lightbox-content';
+
+    const img = document.createElement('img');
+    img.src = `/media/d/${photo.token}-1600.jpg`;
+    img.alt = photo.title;
+    img.className = 'lightbox-image';
+    img.loading = 'lazy';
+
+    const metadata = document.createElement('div');
+    metadata.className = 'lightbox-metadata';
+    const title = document.createElement('strong');
+    title.textContent = photo.title;
+    const count = document.createElement('p');
+    count.textContent = `${this.currentIndex + 1} / ${this.photos.length}`;
+    metadata.appendChild(title);
+    metadata.appendChild(count);
+
+    const controls = document.createElement('div');
+    controls.className = 'lightbox-controls';
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'prev';
+    prevBtn.setAttribute('aria-label', 'Previous photo');
+    prevBtn.textContent = '← Prev';
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share';
+    shareBtn.setAttribute('aria-label', 'Share');
+    shareBtn.textContent = 'Share';
+    const heartBtn = document.createElement('button');
+    heartBtn.className = 'heart';
+    heartBtn.setAttribute('aria-label', 'Add to wishlist');
+    heartBtn.textContent = '◆';
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'next';
+    nextBtn.setAttribute('aria-label', 'Next photo');
+    nextBtn.textContent = 'Next →';
+    controls.appendChild(prevBtn);
+    controls.appendChild(shareBtn);
+    controls.appendChild(heartBtn);
+    controls.appendChild(nextBtn);
+
+    content.appendChild(closeBtn);
+    content.appendChild(img);
+    content.appendChild(metadata);
+    content.appendChild(controls);
+    lightbox.appendChild(content);
+
+    document.body.appendChild(lightbox);
     this.attachEventListeners();
   }
 
@@ -119,7 +153,7 @@ class EnhancedLightbox {
       const btn = document.querySelector('.lightbox-controls .heart');
       if (btn) {
         btn.classList.toggle('active', isActive);
-        btn.textContent = isActive ? '♥' : '♡';
+        btn.textContent = isActive ? '●' : '○';
       }
     }
   }
