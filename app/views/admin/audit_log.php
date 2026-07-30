@@ -308,11 +308,6 @@ function get_action_class(string $action): string {
     return 'default';
 }
 
-function describe_action(string $action): string {
-    require_once __DIR__ . '/../../controllers/admin/audit_log.php';
-    return describe_action($action);
-}
-
 function build_filter_params(array $filters): string {
     $params = [];
     if (!empty($filters['action'])) $params[] = 'action=' . urlencode($filters['action']);

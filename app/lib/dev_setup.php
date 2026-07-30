@@ -173,16 +173,17 @@ function dev_connect_db(array $config): PDO {
  */
 function dev_reset_schema(PDO $pdo): void {
     echo "[*] Resetting database schema...\n";
-
     try {
-        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
-            // SQLite: drop all tables
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'sqlite') {
             $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);
             foreach ($tables as $table) {
-                $pdo->exec("DROP TABLE IF EXISTS " . $table);
+                if ($table !== 'sqlite_sequence') {
+                    $pdo->exec("DROP TABLE IF EXISTS " . $table);
+                }
             }
         } else {
-            // MySQL: disable FK checks, drop all tables
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
             $tables = $pdo->query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE()")->fetchAll(PDO::FETCH_COLUMN);
             foreach ($tables as $table) {
@@ -191,13 +192,26 @@ function dev_reset_schema(PDO $pdo): void {
             $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
         }
 
-        // Run migrations
         require_once __DIR__ . '/migrations.php';
-        $pending = migrations_pending($pdo);
-        if (!empty($pending)) {
-            migrations_apply($pdo, $pending);
-            echo "[✓] Schema created with " . count($pending) . " migrations\n";
+        $migrationsDir = __DIR__ . '/../../migrations';
+        $initial001 = $driver === 'sqlite' ? '001_initial_schema.sqlite.sql' : '001_initial_schema.sql';
+
+        try {
+            migrations_apply($pdo, $migrationsDir, $initial001);
+        } catch (PDOException $e) {
+            if (strpos($e->getMessage(), 'UNIQUE constraint failed') === false && strpos($e->getMessage(), 'Duplicate entry') === false) {
+                throw $e;
+            }
         }
+
+        // In dev mode with SQLite, only run 001 (002+ are MySQL-specific)
+        if ($driver !== 'sqlite') {
+            $pending = migrations_pending($pdo, $migrationsDir);
+            foreach ($pending as $filename) {
+                migrations_apply($pdo, $migrationsDir, $filename);
+            }
+        }
+        echo "[✓] Schema created\n";
     } catch (Exception $e) {
         fwrite(STDERR, "[✗] Schema reset failed: " . $e->getMessage() . "\n");
         exit(1);
@@ -237,12 +251,12 @@ function dev_seed_dummy_data(PDO $pdo): void {
             $stmt->execute([$eventId, $sessionId, $token, "test-photo-$i.jpg"]);
             $photoId = (int)$pdo->lastInsertId();
 
-            // Add tags to photos
-            $tags = ['motorsport', 'kart', 'racing', 'outdoor', 'action'];
-            foreach (array_slice($tags, 0, rand(2, 3)) as $tag) {
-                $stmt = $pdo->prepare('INSERT INTO photo_tags (photo_id, tag) VALUES (?, ?)');
-                $stmt->execute([$photoId, $tag]);
-            }
+            // Add kart metadata to photos
+            $kartNumber = 100 + $i;
+            $drivers = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'];
+            $driver = $drivers[$i % count($drivers)];
+            $stmt = $pdo->prepare('INSERT INTO photo_tags (photo_id, kart_number, driver_name) VALUES (?, ?, ?)');
+            $stmt->execute([$photoId, (string)$kartNumber, $driver]);
         }
 
         echo "[✓] Seeded 1 event, 1 session, 10 photos with tags\n";
