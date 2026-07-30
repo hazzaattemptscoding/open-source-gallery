@@ -41,3 +41,20 @@ function csrf_verify(?string $submitted): bool
 
     return true;
 }
+
+/**
+ * Same check as csrf_verify() but does not invalidate the token — for a
+ * multi-request flow under one page load (chunked upload: init, N chunks,
+ * then finalize) where the page embeds one token and every request needs
+ * to keep verifying against it. One-time-use semantics would break the
+ * second request in the sequence. Still constant-time (hash_equals);
+ * still requires a live session token.
+ */
+function csrf_verify_reusable(?string $submitted): bool
+{
+    if (empty($_SESSION['csrf_token']) || $submitted === null) {
+        return false;
+    }
+
+    return hash_equals($_SESSION['csrf_token'], $submitted);
+}

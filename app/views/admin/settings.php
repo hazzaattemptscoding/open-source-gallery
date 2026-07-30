@@ -384,6 +384,7 @@ button.submit:active {
     </div>
 
     <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <div class="settings-section">
         <div class="settings-section-title">
           <h3><?= e(get_category_label($category)) ?></h3>

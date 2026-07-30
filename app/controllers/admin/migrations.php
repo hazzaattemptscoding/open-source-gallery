@@ -25,7 +25,11 @@ function admin_migrations_controller(PDO $pdo, array $config): void {
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method === 'POST') {
-        csrf_verify($_POST['csrf_token'] ?? '');
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'CSRF verification failed.';
+            return;
+        }
         $applied = [];
         $error = '';
 

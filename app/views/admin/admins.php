@@ -234,6 +234,7 @@
   <div class="admin-form">
     <h2>Create New Admin</h2>
     <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <input type="hidden" name="action" value="create">
 
       <div class="form-group">
@@ -284,6 +285,7 @@
         <div>
           <?php if ($admin['id'] != $currentAdminId): ?>
             <form method="post" style="display: inline;">
+              <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
               <input type="hidden" name="action" value="update_role">
               <input type="hidden" name="admin_id" value="<?= e($admin['id']) ?>">
               <select name="role_id" class="admin-role-select" onchange="this.form.submit()">
@@ -304,6 +306,7 @@
         <div class="admin-actions">
           <?php if ($admin['id'] != $currentAdminId): ?>
             <form method="post" style="display: inline;" onsubmit="return confirm('Delete this admin?');">
+              <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="admin_id" value="<?= e($admin['id']) ?>">
               <button type="submit" class="btn-danger">Delete</button>

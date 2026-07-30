@@ -227,6 +227,7 @@ button:active {
     </div>
 
     <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <div class="form-group">
         <label>Photo IDs (comma-separated):</label>
         <textarea name="photo_ids" placeholder="1,2,3,4,5" required></textarea>

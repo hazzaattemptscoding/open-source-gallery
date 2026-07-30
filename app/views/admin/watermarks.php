@@ -29,6 +29,7 @@ button[type="submit"]:active { transform: scale(0.98); transition: transform 160
   <p>Configure how watermarks appear on your gallery photos (800px and larger).</p>
 
   <form method="post">
+    <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
     <div class="form-group">
       <label>Position:</label>
       <select name="position">

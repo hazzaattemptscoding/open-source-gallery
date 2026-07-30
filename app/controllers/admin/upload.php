@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/upload.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_upload_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -12,6 +13,16 @@ function admin_upload_controller(PDO $pdo, array $config): void {
 
     $path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/', '/');
     $method = $_SERVER['REQUEST_METHOD'];
+
+    // Reusable (non-invalidating) check: the upload page embeds one token
+    // and makes many sequential requests (init, N chunks, finalize) under
+    // it -- csrf_verify()'s one-time-use semantics would break the second
+    // request in the sequence.
+    if ($method === 'POST' && !csrf_verify_reusable($_POST['csrf_token'] ?? null)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'CSRF verification failed']);
+        return;
+    }
 
     if ($path === '/admin/upload/init' && $method === 'POST') {
         handle_init($pdo, $adminId, $ip);

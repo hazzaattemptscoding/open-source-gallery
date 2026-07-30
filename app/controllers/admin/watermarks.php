@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_watermarks_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -23,6 +24,11 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
     $success = $_GET['success'] ?? false;
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'CSRF verification failed.';
+            return;
+        }
         try {
             $stmt = $pdo->prepare(<<<'SQL'
                 UPDATE watermark_settings
@@ -55,6 +61,7 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
 
     render(__DIR__ . '/../../views/admin/watermarks.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
+        'csrfToken' => csrf_token(),
         'settings' => $settings,
         'errors' => $errors,
         'success' => $success,

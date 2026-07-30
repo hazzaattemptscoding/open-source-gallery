@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/bulk.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_bulk_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -20,12 +21,18 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
         exit;
     }
 
+    $csrfToken = csrf_token();
     $action = $_GET['action'] ?? 'select';
     $errors = [];
     $success = $_GET['success'] ?? false;
     $limits = get_bulk_limits($pdo);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+            http_response_code(403);
+            echo 'CSRF verification failed.';
+            return;
+        }
         $action = $_POST['action'] ?? 'select';
         $photoIds = array_map('intval', explode(',', $_POST['photo_ids'] ?? ''));
         $photoIds = array_filter($photoIds);
@@ -84,6 +91,7 @@ function admin_bulk_controller(PDO $pdo, array $config): void {
 
     render(__DIR__ . '/../../views/admin/bulk.php', [
         'siteName' => $config['site']['name'] ?? 'Gallery',
+        'csrfToken' => csrf_token(),
         'action' => $action,
         'limits' => $limits,
         'errors' => $errors,

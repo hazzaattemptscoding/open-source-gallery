@@ -67,7 +67,11 @@ function show_event_form(PDO $pdo, string $siteName, string $currencyCode, strin
 }
 
 function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, string $currencyCode, string $csrfToken): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
     $isNew = true;
 
     $slug = (string)($_POST['slug'] ?? '');
@@ -108,7 +112,11 @@ function create_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
 }
 
 function update_event(PDO $pdo, int $adminId, string $ip, string $siteName, string $currencyCode, string $csrfToken, int $eventId): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
     $isNew = false;
 
     $stmt = $pdo->prepare('SELECT slug FROM events WHERE id = ?');
@@ -158,7 +166,11 @@ function update_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
 }
 
 function delete_event(PDO $pdo, int $adminId, string $ip, int $eventId): void {
-    csrf_verify($_POST['csrf_token'] ?? '');
+    if (!csrf_verify($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo 'CSRF verification failed.';
+        return;
+    }
 
     $stmt = $pdo->prepare('SELECT id FROM events WHERE id = ?');
     $stmt->execute([$eventId]);

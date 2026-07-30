@@ -86,7 +86,7 @@ function api_get_photos(PDO $pdo, int $page = 1, int $perPage = 50): array {
                    p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model
             FROM photos p
             JOIN events e ON p.event_id = e.id
-            WHERE p.status = 'live'
+            WHERE p.status = 'live' AND e.is_published = 1
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
         SQL);
@@ -105,10 +105,10 @@ function api_get_photo(PDO $pdo, int $photoId): ?array {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT p.id, p.public_token, p.original_filename,
                    COALESCE(p.price_pence, e.price_single_pence) AS price_pence,
-                   p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model, p.description
+                   p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model
             FROM photos p
             JOIN events e ON p.event_id = e.id
-            WHERE p.id = ? AND p.status = 'live'
+            WHERE p.id = ? AND p.status = 'live' AND e.is_published = 1
         SQL);
         $stmt->execute([$photoId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
