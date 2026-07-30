@@ -14,7 +14,7 @@
   --bg: #ffffff;
   --bg-alt: #f7f6f3;
   --text: #111111;
-  --text-muted: #787774;
+  --text-muted: #5c5a56;
   --border: #eaeaea;
   --error: #9f2f2d;
   --success: #346538;
@@ -62,6 +62,21 @@ body {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Vertical rhythm: standard section spacing */
+main {
+  padding: var(--space-8) var(--space-4);
+}
+
+section {
+  padding: var(--space-8) var(--space-4);
+}
+
+@media (min-width: 768px) {
+  main, section {
+    padding: var(--space-8) var(--space-6);
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -303,7 +318,7 @@ button:disabled,
 /* Dashboard */
 
 .dashboard {
-  max-width: 56rem;
+  max-width: 64rem;
   margin: 0 auto;
   padding: 3rem 2rem;
 }
@@ -693,7 +708,7 @@ body.lightbox-open {
 /* Search results page */
 
 .search-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: var(--space-5) auto;
   padding: 0 var(--space-4);
 }

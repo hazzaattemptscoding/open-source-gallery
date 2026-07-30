@@ -91,10 +91,22 @@ class EnhancedLightbox {
     controls.appendChild(heartBtn);
     controls.appendChild(nextBtn);
 
+    // Keyboard shortcuts hint
+    const keyboardHint = document.createElement('div');
+    keyboardHint.className = 'keyboard-hint';
+    const hintTitle = document.createElement('strong');
+    hintTitle.textContent = 'Keyboard:';
+    const hintText = document.createElement('span');
+    hintText.textContent = '← → to navigate, h for heart, s to share, esc to close';
+    keyboardHint.appendChild(hintTitle);
+    keyboardHint.appendChild(document.createElement('br'));
+    keyboardHint.appendChild(hintText);
+
     content.appendChild(closeBtn);
     content.appendChild(img);
     content.appendChild(metadata);
     content.appendChild(controls);
+    content.appendChild(keyboardHint);
     lightbox.appendChild(content);
 
     document.body.appendChild(lightbox);
