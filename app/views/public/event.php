@@ -129,10 +129,17 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasCli
     <?php if (!empty($photos)): ?>
       <?php require __DIR__ . '/_photo_grid_items.php'; ?>
     <?php else: ?>
-      <div class="empty-state" style="grid-column: 1 / -1;">
-        <p>No photos match your filters.</p>
-        <button type="button" class="clear-filters" onclick="location.href='<?= e($basePath) ?>'">Clear filters</button>
-      </div>
+      <?php
+        $emptyState = [
+          'title' => 'No photos match your filters',
+          'message' => 'Try adjusting your search or filters to find what you\'re looking for.',
+          'action' => [
+            'label' => 'Clear filters',
+            'href' => e($basePath),
+          ],
+        ];
+        require __DIR__ . '/partials/empty-state.php';
+      ?>
     <?php endif; ?>
   </div>
 
@@ -164,6 +171,16 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter || $hasCli
   <button class="lightbox-cart" id="lightboxCart">Add to cart</button>
 </div>
 
+<script src="/assets/js/ui-feedback.js" defer></script>
+<script src="/assets/js/accessibility.js" defer></script>
 <script src="/assets/js/event.js" defer></script>
+<script>
+  // Initialize accessibility on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof A11y !== 'undefined') {
+      A11y.init(document);
+    }
+  });
+</script>
 </body>
 </html>

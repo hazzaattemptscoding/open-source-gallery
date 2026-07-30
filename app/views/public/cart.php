@@ -15,7 +15,17 @@
   <h1>Your cart</h1>
 
   <?php if (empty($lines)): ?>
-    <p class="empty-state">Your cart is empty. <a href="/">Browse events</a>.</p>
+    <?php
+      $emptyState = [
+        'title' => 'Your cart is empty',
+        'message' => 'Start adding photos from the gallery to your cart.',
+        'action' => [
+          'label' => 'Browse events',
+          'href' => '/',
+        ],
+      ];
+      require __DIR__ . '/partials/empty-state.php';
+    ?>
   <?php else: ?>
     <ul class="cart-lines">
       <?php foreach ($lines as $line): ?>
@@ -44,15 +54,52 @@
       <span><?= e(format_pence($totalPence, $currencyCode)) ?></span>
     </div>
 
-    <form id="checkout-form" class="checkout-form">
-      <label for="checkout-email" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
-      <input type="email" id="checkout-email" name="email" placeholder="your@email.com" required>
-      <button type="submit" class="checkout-button">Checkout</button>
+    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" novalidate>
+      <div class="form-group">
+        <label for="checkout-email" class="form-label">Email address</label>
+        <input
+          type="email"
+          id="checkout-email"
+          name="email"
+          class="form-input"
+          placeholder="your@email.com"
+          required
+          aria-required="true"
+          aria-describedby="email-helper">
+        <span id="email-helper" class="form-helper">Your receipt will be sent to this email</span>
+      </div>
+      <button type="submit" class="checkout-button" id="checkout-submit">Checkout</button>
       <div id="checkout-error" class="error-message" style="display: none;"></div>
     </form>
   <?php endif; ?>
 </main>
 
+<script src="/assets/js/ui-feedback.js" defer></script>
+<script src="/assets/js/accessibility.js" defer></script>
 <script src="/assets/js/cart.js" defer></script>
+<script>
+  // Initialize form validation
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('checkout-form');
+    if (form && typeof UIFeedback !== 'undefined') {
+      UIFeedback.enableRealtimeValidation(form, {
+        email: {
+          required: true,
+          email: true,
+          requiredMessage: 'Email is required',
+          emailMessage: 'Please enter a valid email address',
+        },
+      });
+
+      // Auto-focus first field
+      UIFeedback.autoFocusForm(form);
+    }
+
+    // Initialize accessibility
+    if (typeof A11y !== 'undefined') {
+      A11y.init(document);
+    }
+  });
+</script>
 </body>
 </html>

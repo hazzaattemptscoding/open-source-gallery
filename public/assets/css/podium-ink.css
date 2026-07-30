@@ -1814,6 +1814,237 @@ body.lightbox-open {
   line-height: 1.4;
 }
 
+/* Phase 4: Empty States */
+.empty-state {
+  grid-column: 1 / -1;
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: var(--space-6) 0;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+  display: block;
+}
+
+.empty-state-title {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: var(--text-xl);
+  margin: 0 0 var(--space-3);
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.empty-state-message {
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  margin: 0 0 var(--space-6);
+  line-height: 1.6;
+}
+
+.empty-state-action {
+  display: inline-block;
+  margin: 0;
+}
+
+/* Phase 4: Loading Skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-alt) 25%, #f0ede8 50%, var(--bg-alt) 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 6px;
+}
+
+.skeleton-photo {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  height: auto;
+}
+
+.skeleton-text {
+  height: 1em;
+  margin-bottom: var(--space-3);
+}
+
+.skeleton-text-sm {
+  height: 0.75em;
+  margin-bottom: var(--space-2);
+  max-width: 60%;
+}
+
+/* Phase 4: Form Validation & Feedback */
+.form-group {
+  margin-bottom: var(--space-5);
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+  color: var(--text);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: var(--text-base);
+  font-family: inherit;
+  transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.1);
+}
+
+.form-input:invalid,
+.form-textarea:invalid {
+  border-color: var(--error);
+}
+
+.form-helper {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-2);
+  display: block;
+}
+
+.form-error {
+  font-size: var(--text-sm);
+  color: var(--error);
+  margin-top: var(--space-2);
+  display: block;
+  font-weight: 500;
+}
+
+.form-success {
+  font-size: var(--text-sm);
+  color: var(--success);
+  margin-top: var(--space-2);
+  display: block;
+  font-weight: 500;
+}
+
+/* Phase 4: Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  background: var(--text);
+  color: var(--bg);
+  padding: var(--space-4) var(--space-5);
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideUpIn 400ms var(--ease-out);
+}
+
+.toast.success {
+  background: var(--success);
+}
+
+.toast.error {
+  background: var(--error);
+}
+
+@keyframes slideUpIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Phase 4: Progress Bar */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--text);
+  transition: width 300ms ease-out;
+  z-index: 10000;
+}
+
+/* Phase 4: Accessibility */
+/* Skip to content link (visible on focus) */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--text);
+  color: var(--bg);
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  z-index: 10001;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Focus styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  :root {
+    --text: #000000;
+    --border: #333333;
+  }
+}
+
+/* Mobile optimization enhancements */
 @media (max-width: 640px) {
   .filter-bar {
     padding: var(--space-3);
@@ -1834,5 +2065,86 @@ body.lightbox-open {
 
   .keyboard-hint {
     display: none;
+  }
+
+  /* Sticky cart button on mobile */
+  .cart-badge {
+    position: fixed;
+    bottom: var(--space-4);
+    right: var(--space-4);
+    z-index: 100;
+    background: var(--text);
+    color: var(--bg);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: var(--text-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 160ms ease-out, box-shadow 160ms ease-out;
+  }
+
+  .cart-badge:active {
+    transform: scale(0.97);
+  }
+
+  /* Full-screen hero on mobile */
+  .hero {
+    min-height: 50vh;
+  }
+
+  /* Single-column form layout on mobile */
+  .form-row {
+    display: block;
+  }
+
+  .form-col {
+    width: 100%;
+    margin-bottom: var(--space-4);
+  }
+
+  /* Larger touch targets */
+  button,
+  input[type="button"],
+  input[type="submit"],
+  a.button {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Mobile-friendly filter dropdown */
+  .filter-bar select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  /* Hide keyboard hints on mobile */
+  .keyboard-hint {
+    display: none;
+  }
+
+  /* Empty state on mobile */
+  .empty-state {
+    padding: var(--space-6);
+  }
+
+  .empty-state-icon {
+    font-size: 2rem;
+  }
+
+  /* Sticky progress bar visible on mobile */
+  .progress-bar {
+    height: 2px;
+  }
+
+  /* Toast positioning on mobile */
+  .toast {
+    bottom: var(--space-4);
+    right: var(--space-4);
+    left: var(--space-4);
+    max-width: none;
+    border-radius: 6px;
   }
 }

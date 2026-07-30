@@ -91,11 +91,26 @@
   <?php endif; ?>
 
   <!-- Footer -->
-  <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 0.875rem;">
+  <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #eee; text-align: center; color: #787774; font-size: 0.875rem;">
     <p style="margin: 0;">Order #<?= e(substr($orderToken, 0, 8)) ?> • <?= e($email) ?></p>
     <p style="margin: 0.5rem 0 0;">Questions? Contact us directly.</p>
   </div>
 </main>
 
+<script src="/assets/js/accessibility.js" defer></script>
+<script>
+  // Initialize accessibility
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof A11y !== 'undefined') {
+      A11y.init(document);
+      // Mark download section as live region for status
+      const downloadSection = document.querySelector('[style*="Download Your Files"]');
+      if (downloadSection) {
+        downloadSection.setAttribute('role', 'region');
+        downloadSection.setAttribute('aria-label', 'Download files section');
+      }
+    }
+  });
+</script>
 </body>
 </html>
