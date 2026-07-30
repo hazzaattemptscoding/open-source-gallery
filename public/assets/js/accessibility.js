@@ -17,6 +17,9 @@ const A11y = {
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
+    // Guard against modals with no focusable elements
+    if (!firstElement || !lastElement) return { destroy() {} };
+
     // Close on Escape
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -61,7 +64,7 @@ const A11y = {
     skipLink.href = `#${contentId}`;
     skipLink.className = 'skip-to-content';
     skipLink.textContent = 'Skip to main content';
-    skipLink.setAttribute('role', 'menuitem');
+    // Implicit link role from <a> element; no need to set role
 
     document.body.insertBefore(skipLink, document.body.firstChild);
   },
@@ -84,7 +87,7 @@ const A11y = {
     iconButtons.forEach((btn) => {
       const icon = btn.querySelector('svg') || btn.textContent.trim();
       for (const [keyword, label] of Object.entries(labelMap)) {
-        if (icon.includes && icon.includes(keyword)) {
+        if (typeof icon === 'string' && icon.includes(keyword)) {
           btn.setAttribute('aria-label', label);
           break;
         }
@@ -189,7 +192,7 @@ const A11y = {
       const bg = this.hexColor(style.backgroundColor || '#ffffff');
 
       const ratio = this.getContrastRatio(fg, bg);
-      const isLarge = parseInt(style.fontSize) >= 18;
+      const isLarge = parseFloat(style.fontSize) >= 18;
       const minRatio = isLarge ? 3 : 4.5;
 
       if (ratio < minRatio) {
@@ -260,7 +263,7 @@ const A11y = {
     this.addKeyboardHints();
     this.addIconButtonLabels(container);
 
-    if (process.env.NODE_ENV === 'development') {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
       this.verifyContrast(container);
     }
   },

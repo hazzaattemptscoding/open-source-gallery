@@ -16,7 +16,7 @@
   <p style="color: #787774; margin: 0 0 2rem; font-size: 0.9rem;">Order #<?= e(substr($orderToken, 0, 8)) ?></p>
 
   <div style="background: #f7f6f3; padding: 2rem; border-radius: 8px;">
-    <form id="order-verify-form" method="get" aria-label="Order verification form" novalidate>
+    <form id="order-verify-form" method="post" aria-label="Order verification form">
       <input type="hidden" name="order_token" value="<?= e($orderToken) ?>">
 
       <div class="form-group">

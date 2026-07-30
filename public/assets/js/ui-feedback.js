@@ -139,6 +139,10 @@ const UIFeedback = {
    * @param {Object} rules - Validation rules
    */
   enableRealtimeValidation(form, rules = {}) {
+    // Prevent duplicate listener registration on same form
+    if (form._validationEnabled) return;
+    form._validationEnabled = true;
+
     const fields = form.querySelectorAll('[name]');
     fields.forEach(field => {
       field.addEventListener('blur', () => {
@@ -197,6 +201,9 @@ const UIFeedback = {
    */
   optimisticRemove(element, undoCallback) {
     const clone = element.cloneNode(true);
+    const parent = element.parentElement;
+    let undoAvailable = true;
+
     element.style.opacity = '0';
     element.style.transition = 'opacity 200ms ease-out';
 
@@ -208,8 +215,10 @@ const UIFeedback = {
       undo.style.marginLeft = '8px';
 
       undo.addEventListener('click', () => {
-        element.style.opacity = '1';
-        undo.remove();
+        if (!undoAvailable) return;
+        // Restore using clone instead of trying to restore deleted element
+        parent.replaceChild(clone, element);
+        undoContainer.remove();
         undoCallback();
       });
 
@@ -217,13 +226,15 @@ const UIFeedback = {
       undoContainer.style.marginTop = '8px';
       undoContainer.appendChild(undo);
 
-      const parent = element.parentElement;
       parent.insertBefore(undoContainer, element.nextSibling);
 
       setTimeout(() => {
+        undoAvailable = false;
         element.remove();
+        undo.disabled = true;
+        undo.style.opacity = '0.5';
+        undo.style.cursor = 'not-allowed';
         setTimeout(() => {
-          undo.remove();
           undoContainer.remove();
         }, 5000);
       }, 5000);

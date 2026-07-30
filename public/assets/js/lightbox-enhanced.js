@@ -79,10 +79,10 @@ class EnhancedLightbox {
     setTimeout(() => {
       img.src = `/media/d/${photo.token}-1600.jpg`;
       img.alt = photo.title;
-      metadata.innerHTML = `
-        <strong>${photo.title}</strong>
-        <p>${this.currentIndex + 1} / ${this.photos.length}</p>
-      `;
+      const titleEl = metadata.querySelector('strong');
+      if (titleEl) titleEl.textContent = photo.title;
+      const countEl = metadata.querySelector('p');
+      if (countEl) countEl.textContent = `${this.currentIndex + 1} / ${this.photos.length}`;
       img.style.opacity = '1';
     }, 100);
   }

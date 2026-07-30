@@ -54,7 +54,7 @@
       <span><?= e(format_pence($totalPence, $currencyCode)) ?></span>
     </div>
 
-    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" novalidate>
+    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" method="post">
       <div class="form-group">
         <label for="checkout-email" class="form-label">Email address</label>
         <input
