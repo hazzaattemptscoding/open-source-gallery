@@ -9,6 +9,11 @@ require_once __DIR__ . '/../../lib/stripe.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
 require_once __DIR__ . '/../../lib/audit.php';
 
+/** Rate-limit key for the checkout bucket — see public_checkout_controller(). */
+function checkout_rate_limit_key(string $email, string $ip): string {
+    return $email . ':' . $ip;
+}
+
 /**
  * POST /checkout {email} — validates cart, creates an order, initiates
  * Stripe Checkout session, and redirects to Stripe Checkout.
@@ -25,14 +30,17 @@ function public_checkout_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    // Rate limit per email (5 attempts per hour)
-    if (!check_rate_limit($pdo, 'checkout', $email, 3600, 5)) {
+    $ip = get_client_ip();
+
+    // Rate limit per email+IP (5 attempts per hour). Keying on the bare
+    // email alone would let an attacker who merely knows a victim's email
+    // address exhaust their checkout budget from any IP, or let one victim
+    // sharing their own email across devices/networks lock themselves out.
+    if (!check_rate_limit($pdo, 'checkout', checkout_rate_limit_key($email, $ip), 3600, 5)) {
         http_response_code(429);
         echo json_encode(['error' => 'Too many checkout attempts. Try again later.']);
         return;
     }
-
-    $ip = get_client_ip();
 
     $items = cart_get($config);
     if (empty($items)) {
