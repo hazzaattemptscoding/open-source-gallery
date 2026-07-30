@@ -59,22 +59,7 @@ function public_download_controller(PDO $pdo, array $config, string $rawToken): 
     $files = [];
 
     foreach ($items as $item) {
-        $photoId = (int)($item['photo_id'] ?? 0);
-        $sessionId = (int)($item['session_id'] ?? 0);
-        $eventId = (int)($item['event_id'] ?? 0);
-
-        $photoIds = [];
-        if ($photoId) {
-            $photoIds = [$photoId];
-        } elseif ($sessionId) {
-            $stmt = $pdo->prepare('SELECT DISTINCT photo_id FROM session_photos WHERE session_id = ?');
-            $stmt->execute([$sessionId]);
-            $photoIds = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'photo_id');
-        } elseif ($eventId) {
-            $stmt = $pdo->prepare('SELECT id FROM photos WHERE event_id = ? AND status = ?');
-            $stmt->execute([$eventId, 'live']);
-            $photoIds = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id');
-        }
+        $photoIds = resolve_order_item_photo_ids($pdo, $item);
 
         foreach ($photoIds as $pid) {
             $stmt = $pdo->prepare('

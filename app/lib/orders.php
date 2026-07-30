@@ -71,6 +71,37 @@ function get_order_items(PDO $pdo, int $orderId): array {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+/**
+ * Expand one order_items row into the photo IDs it actually entitles the
+ * customer to. A row has exactly one of photo_id/session_id/event_id set
+ * (single photo, session bundle, event bundle); bundle entitlement is
+ * evaluated at download time against currently-live photos rather than a
+ * snapshot, so photos uploaded after purchase are included, per
+ * docs/architecture.md's schema notes.
+ */
+function resolve_order_item_photo_ids(PDO $pdo, array $item): array {
+    $photoId = (int)($item['photo_id'] ?? 0);
+    if ($photoId) {
+        return [$photoId];
+    }
+
+    $sessionId = (int)($item['session_id'] ?? 0);
+    if ($sessionId) {
+        $stmt = $pdo->prepare('SELECT id FROM photos WHERE session_id = ? AND status = ?');
+        $stmt->execute([$sessionId, 'live']);
+        return array_map('intval', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id'));
+    }
+
+    $eventId = (int)($item['event_id'] ?? 0);
+    if ($eventId) {
+        $stmt = $pdo->prepare('SELECT id FROM photos WHERE event_id = ? AND status = ?');
+        $stmt->execute([$eventId, 'live']);
+        return array_map('intval', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id'));
+    }
+
+    return [];
+}
+
 function update_order_stripe_ids(PDO $pdo, int $orderId, string $checkoutId, ?string $paymentIntentId = null): void {
     $stmt = $pdo->prepare('UPDATE orders SET stripe_checkout_id = ?, stripe_payment_intent = ? WHERE id = ?');
     $stmt->execute([$checkoutId, $paymentIntentId, $orderId]);
@@ -126,6 +157,30 @@ function create_download_link(PDO $pdo, int $orderId, array $config, int $expiry
     return "{$config['site']['base_url']}/download/{$rawToken}";
 }
 
+/**
+ * Returns the order's one and only download URL, creating it on first call.
+ * Must not call create_download_link() more than once per order: each call
+ * mints a brand-new download_links row with its own download-count budget,
+ * and the previous raw token becomes unrecoverable the moment it's not the
+ * one returned (only its hash persists). Both the checkout success page and
+ * the receipt email need to show the same URL, so the URL itself — not just
+ * the fact that a link exists — is persisted on the order row. See
+ * migrations/010_add_order_download_url.sql for why that's an acceptable
+ * exception to "only store hashes."
+ */
 function get_or_create_download_link(PDO $pdo, int $orderId, array $config): string {
-    return create_download_link($pdo, $orderId, $config);
+    $stmt = $pdo->prepare('SELECT download_url FROM orders WHERE id = ?');
+    $stmt->execute([$orderId]);
+    $existing = $stmt->fetchColumn();
+
+    if (is_string($existing) && $existing !== '') {
+        return $existing;
+    }
+
+    $url = create_download_link($pdo, $orderId, $config);
+
+    $stmt = $pdo->prepare('UPDATE orders SET download_url = ? WHERE id = ?');
+    $stmt->execute([$url, $orderId]);
+
+    return $url;
 }
