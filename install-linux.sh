@@ -1,124 +1,109 @@
 #!/bin/bash
-
-# Photo Gallery Auto-Installer for Linux
-# This script checks for dependencies, installs if needed, and starts the app
-
 set -e
 
-echo "📸 Photo Gallery Installer for Linux"
-echo "====================================="
-echo ""
+# Local development install for Linux (zero manual steps)
+# This is for local development only. Production install uses php install.php
 
-# Color codes
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Open Source Gallery - Local Dev Setup"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Detect package manager
-if command -v apt-get &> /dev/null; then
-    PKG_MANAGER="apt-get"
-    INSTALLER="sudo apt-get install -y"
-    UPDATE="sudo apt-get update"
-elif command -v yum &> /dev/null; then
-    PKG_MANAGER="yum"
-    INSTALLER="sudo yum install -y"
-    UPDATE="sudo yum check-update"
-elif command -v pacman &> /dev/null; then
-    PKG_MANAGER="pacman"
-    INSTALLER="sudo pacman -S --noconfirm"
-    UPDATE="sudo pacman -Sy"
-else
-    echo -e "${RED}❌ Unsupported package manager. Please install PHP 8.1+ and MySQL manually.${NC}"
+# Check PHP
+if ! command -v php &> /dev/null; then
+    echo "[✗] PHP not found. Install via apt: sudo apt-get install php"
     exit 1
 fi
 
-echo "Using package manager: $PKG_MANAGER"
-echo ""
+PHP_VERSION=$(php -v | head -n 1)
+echo "[✓] $PHP_VERSION"
 
-# Update package lists
-echo -e "${YELLOW}Updating package lists...${NC}"
-$UPDATE || true
-
-# Check and install PHP
-if ! command -v php &> /dev/null; then
-    echo -e "${YELLOW}Installing PHP 8.2 and extensions...${NC}"
-    if [ "$PKG_MANAGER" = "apt-get" ]; then
-        sudo add-apt-repository ppa:ondrej/php -y 2>/dev/null || true
-        $UPDATE
-        $INSTALLER php8.2 php8.2-cli php8.2-mysql php8.2-curl php8.2-gd
-    elif [ "$PKG_MANAGER" = "yum" ]; then
-        $INSTALLER php php-cli php-mysql php-curl php-gd
-    elif [ "$PKG_MANAGER" = "pacman" ]; then
-        $INSTALLER php php-sqlite
+# Check for required extensions
+for ext in pdo pdo_sqlite json; do
+    if ! php -m | grep -q "^$ext$"; then
+        echo "[✗] PHP extension '$ext' not found. Install with: sudo apt-get install php-sqlite3"
+        exit 1
     fi
-else
-    echo -e "${GREEN}✓ PHP already installed${NC}"
+done
+
+# Check if in project root
+if [ ! -f "public/index.php" ] || [ ! -d "app/lib" ]; then
+    echo "[✗] Not in project root. Run this script from the gallery directory."
+    exit 1
 fi
 
-# Check and install MySQL
-if ! command -v mysql &> /dev/null; then
-    echo -e "${YELLOW}Installing MySQL Server...${NC}"
-    if [ "$PKG_MANAGER" = "apt-get" ]; then
-        $INSTALLER mysql-server
-        sudo systemctl start mysql
-    elif [ "$PKG_MANAGER" = "yum" ]; then
-        $INSTALLER mysql-server
-        sudo systemctl start mysqld
-    elif [ "$PKG_MANAGER" = "pacman" ]; then
-        $INSTALLER mysql
-        sudo systemctl start mysqld
-    fi
-else
-    echo -e "${GREEN}✓ MySQL already installed${NC}"
-    # Ensure MySQL is running
-    sudo systemctl start mysql 2>/dev/null || sudo systemctl start mysqld 2>/dev/null || true
+echo "[✓] Project structure found"
+
+# Create storage directory
+mkdir -p storage
+chmod 755 storage
+
+# Run setup via PHP to use shared setup functions
+php <<'PHPEOF'
+<?php
+// Load setup helpers
+require_once __DIR__ . '/app/lib/dev_setup.php';
+
+echo "\n[*] Detecting database...\n";
+$dbConfig = dev_detect_database();
+
+echo "[*] Generating configuration...\n";
+$result = dev_generate_config($dbConfig);
+$config = $result['config'];
+$adminPassword = $result['adminPassword'];
+
+echo "[*] Writing config/config.php\n";
+dev_write_config($config);
+echo "[✓] Config written\n";
+
+echo "[*] Connecting to database...\n";
+$pdo = dev_connect_db($config);
+
+// Reset schema (local dev, safe to drop)
+dev_reset_schema($pdo);
+
+// Seed dummy data
+dev_seed_dummy_data($pdo);
+
+// Store credentials for later display
+file_put_contents('/tmp/gallery_setup_creds.txt', json_encode([
+    'url' => $config['site']['base_url'],
+    'email' => 'admin@localhost',
+    'password' => $adminPassword,
+]));
+
+echo "\n[✓] Setup complete!\n";
+PHPEOF
+
+if [ $? -ne 0 ]; then
+    echo "[✗] Setup failed. See errors above."
+    exit 1
 fi
 
-# Check and install Git
-if ! command -v git &> /dev/null; then
-    echo -e "${YELLOW}Installing Git...${NC}"
-    $INSTALLER git
-else
-    echo -e "${GREEN}✓ Git already installed${NC}"
-fi
+# Read credentials
+CREDS=$(cat /tmp/gallery_setup_creds.txt)
+URL=$(echo $CREDS | php -r "echo json_decode(file_get_contents('php://stdin'), true)['url'];")
+EMAIL=$(echo $CREDS | php -r "echo json_decode(file_get_contents('php://stdin'), true)['email'];")
+PASSWORD=$(echo $CREDS | php -r "echo json_decode(file_get_contents('php://stdin'), true)['password'];")
+rm -f /tmp/gallery_setup_creds.txt
 
 echo ""
-echo -e "${GREEN}✓ All dependencies installed${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Starting development server..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Access the gallery:"
+echo "  URL: http://localhost:8000"
+echo ""
+echo "Admin login:"
+echo "  Email:    $EMAIL"
+echo "  Password: $PASSWORD"
+echo ""
+echo "Notes:"
+echo "  - Change password in /admin/settings after login"
+echo "  - Add real Stripe keys: Settings → Payment Gateway"
+echo "  - Configure email: Settings → Email"
+echo "  - Press Ctrl+C to stop the server"
 echo ""
 
-# Get the directory where the script is located
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$DIR"
-
-# Run the PHP installer
-echo -e "${YELLOW}Running PHP installer...${NC}"
-php install.php
-
-echo ""
-echo -e "${GREEN}✓ Installation complete!${NC}"
-echo ""
-echo "Starting Photo Gallery..."
-echo ""
-
-# Start PHP development server
-php -S localhost:8080 &
-PHP_PID=$!
-
-echo -e "${GREEN}✓ Server started on http://localhost:8080${NC}"
-echo ""
-echo "Opening browser in 2 seconds..."
-sleep 2
-
-# Open in default browser
-if command -v xdg-open &> /dev/null; then
-    xdg-open "http://localhost:8080/admin/setup"
-elif command -v gnome-open &> /dev/null; then
-    gnome-open "http://localhost:8080/admin/setup"
-else
-    echo "Please open http://localhost:8080/admin/setup in your browser"
-fi
-
-echo ""
-echo "Press Ctrl+C to stop the server"
-wait $PHP_PID
+cd public
+php -S localhost:8000

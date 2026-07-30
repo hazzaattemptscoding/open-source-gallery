@@ -1,98 +1,112 @@
-# Photo Gallery Auto-Installer for Windows (PowerShell)
-# This script checks for dependencies, installs if needed, and starts the app
+# Local development install for Windows (zero manual steps)
+# This is for local development only. Production install uses php install.php
 
-# Check if running as admin
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "This script requires administrator privileges."
-    Write-Host "Please run PowerShell as Administrator and execute this script again."
+Write-Host ""
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+Write-Host "Open Source Gallery - Local Dev Setup" -ForegroundColor Cyan
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+Write-Host ""
+
+# Check PHP
+if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
+    Write-Host "[X] PHP not found. Download from https://windows.php.net/" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
 
-Write-Host ""
-Write-Host "📸 Photo Gallery Installer for Windows" -ForegroundColor Green
-Write-Host "======================================" -ForegroundColor Green
-Write-Host ""
+$phpVersion = php -v | Select-Object -First 1
+Write-Host "[+] $phpVersion" -ForegroundColor Green
 
-# Set execution policy for this session
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-
-# Check and install Chocolatey
-if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing Chocolatey package manager..." -ForegroundColor Yellow
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+# Check for required extensions
+$extensions = @('pdo', 'pdo_sqlite', 'json')
+foreach ($ext in $extensions) {
+    $found = php -m | Select-String "^$ext$"
+    if (-not $found) {
+        Write-Host "[X] PHP extension '$ext' not found. Verify PHP installation." -ForegroundColor Red
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
 }
 
-# Check and install PHP
-if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing PHP 8.2..." -ForegroundColor Yellow
-    choco install php --version=8.2.0 -y
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-} else {
-    Write-Host "✓ PHP already installed" -ForegroundColor Green
+# Check if in project root
+if (-not (Test-Path "public\index.php") -or -not (Test-Path "app\lib")) {
+    Write-Host "[X] Not in project root. Run this script from the gallery directory." -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit 1
 }
 
-# Check and install MySQL
-if (-not (Get-Command mysql -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing MySQL Server..." -ForegroundColor Yellow
-    choco install mysql -y
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-} else {
-    Write-Host "✓ MySQL already installed" -ForegroundColor Green
+Write-Host "[+] Project structure found" -ForegroundColor Green
+
+# Create storage directory
+if (-not (Test-Path "storage")) {
+    New-Item -ItemType Directory -Path "storage" | Out-Null
 }
 
-# Check and install Git
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing Git..." -ForegroundColor Yellow
-    choco install git -y
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-} else {
-    Write-Host "✓ Git already installed" -ForegroundColor Green
-}
+# Run setup via PHP to use shared setup functions
+$setupScript = @'
+<?php
+require_once __DIR__ . '/app/lib/dev_setup.php';
 
-Write-Host ""
-Write-Host "✓ All dependencies installed" -ForegroundColor Green
-Write-Host ""
+echo "\n[*] Detecting database...\n";
+$dbConfig = dev_detect_database();
 
-# Get the directory where the script is located
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $ScriptDir
+echo "[*] Generating configuration...\n";
+$result = dev_generate_config($dbConfig);
+$config = $result['config'];
+$adminPassword = $result['adminPassword'];
 
-# Run the PHP installer
-Write-Host "Running PHP installer..." -ForegroundColor Yellow
-Write-Host ""
-php install.php
+echo "[*] Writing config/config.php\n";
+dev_write_config($config);
+echo "[+] Config written\n";
+
+echo "[*] Connecting to database...\n";
+$pdo = dev_connect_db($config);
+
+dev_reset_schema($pdo);
+dev_seed_dummy_data($pdo);
+
+file_put_contents('storage\dev_setup_creds.txt', json_encode([
+    'url' => $config['site']['base_url'],
+    'email' => 'admin@localhost',
+    'password' => $adminPassword,
+]));
+
+echo "\n[+] Setup complete!\n";
+'@
+
+$setupScript | php
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host ""
-    Write-Host "❌ Installer failed. Check the errors above." -ForegroundColor Red
+    Write-Host "[X] Setup failed. See errors above." -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
 
-Write-Host ""
-Write-Host "✓ Installation complete!" -ForegroundColor Green
-Write-Host ""
-Write-Host "Starting Photo Gallery..." -ForegroundColor Green
-Write-Host ""
-
-# Start PHP development server
-$Process = Start-Process -FilePath "php" -ArgumentList "-S", "localhost:8080" -PassThru -WindowStyle Normal
-
-Write-Host "✓ Server started on http://localhost:8080" -ForegroundColor Green
-Write-Host ""
-Write-Host "Opening browser in 2 seconds..." -ForegroundColor Yellow
-Start-Sleep -Seconds 2
-
-# Open browser
-Start-Process "http://localhost:8080/admin/setup"
+# Read credentials
+$credsJson = Get-Content "storage\dev_setup_creds.txt" -Raw
+$creds = $credsJson | ConvertFrom-Json
+$email = $creds.email
+$password = $creds.password
+Remove-Item "storage\dev_setup_creds.txt"
 
 Write-Host ""
-Write-Host "The server is running. Close the server window to stop." -ForegroundColor Yellow
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+Write-Host "Starting development server..." -ForegroundColor Cyan
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
 Write-Host ""
-Read-Host "Press Enter to exit"
+Write-Host "Access the gallery:" -ForegroundColor Yellow
+Write-Host "  URL: http://localhost:8000" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Admin login:" -ForegroundColor Yellow
+Write-Host "  Email:    $email" -ForegroundColor Cyan
+Write-Host "  Password: $password" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Notes:" -ForegroundColor Yellow
+Write-Host "  - Change password in /admin/settings after login"
+Write-Host "  - Add real Stripe keys: Settings > Payment Gateway"
+Write-Host "  - Configure email: Settings > Email"
+Write-Host "  - Press Ctrl+C to stop the server"
+Write-Host ""
 
-# Clean up the process
-Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+Set-Location public
+php -S localhost:8000
