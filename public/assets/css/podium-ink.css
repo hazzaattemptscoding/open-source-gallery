@@ -102,6 +102,7 @@
 
   /* ---- Semantic: hue-shifted toward the family so they belong here ---- */
   --error:   oklch(0.505 0.170 22);
+  --error-bg: rgba(159, 47, 45, 0.08);
   --success: oklch(0.510 0.105 155);
 
   /* Derived: hover shade of --text, used on solid black/white buttons.
@@ -181,6 +182,9 @@
     --accent-hover: oklch(0.740 0.170 318);
     --accent-quiet: oklch(0.260 0.045 318);
     --accent-text:  oklch(0.145 0.020 315);
+
+    /* Error background needs higher opacity in dark mode for adequate contrast */
+    --error-bg: rgba(214, 88, 84, 0.15);
 
     /* Shadows need markedly more opacity here to read against a dark surface.
        They stay subtle on purpose: elevation is carried by --bg-alt being
@@ -396,7 +400,7 @@ button:disabled,
 
 .error-message,
 .error {
-  background: rgba(159, 47, 45, 0.08);
+  background: var(--error-bg);
   border: 1px solid var(--error);
   color: var(--error);
   padding: 1.5rem;
@@ -431,7 +435,7 @@ button:disabled,
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%);
+  background: var(--bg);
 }
 
 .auth-card {
