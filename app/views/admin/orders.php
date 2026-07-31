@@ -10,50 +10,39 @@ require_once __DIR__ . '/partials/layout_header.php';
   <?php if (empty($orders)): ?>
     <p class="empty-state">No orders yet.</p>
   <?php else: ?>
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse;">
+    <div class="table-wrapper">
+      <table class="admin-table">
         <thead>
-          <tr style="background: var(--bg-alt); border-bottom: 1px solid var(--border);">
-            <th style="padding: 1rem; text-align: left; font-weight: 600;">Order #</th>
-            <th style="padding: 1rem; text-align: left; font-weight: 600;">Customer</th>
-            <th style="padding: 1rem; text-align: left; font-weight: 600;">Total</th>
-            <th style="padding: 1rem; text-align: left; font-weight: 600;">Items</th>
-            <th style="padding: 1rem; text-align: left; font-weight: 600;">Status</th>
-            <th style="padding: 1rem; text-align: left; font-weight: 600;">Date</th>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Total</th>
+            <th>Items</th>
+            <th>Status</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody>
           <?php foreach ($orders as $order): ?>
-            <tr style="border-bottom: 1px solid var(--border);">
-              <td style="padding: 1rem;">
-                <code style="font-size: 0.85rem;"><?= e(substr($order['public_token'], 0, 8)) ?></code>
+            <tr>
+              <td>
+                <code class="table-order-id"><?= e(substr($order['public_token'], 0, 8)) ?></code>
               </td>
-              <td style="padding: 1rem;">
+              <td>
                 <span title="<?= e($order['email']) ?>"><?= e(substr($order['email'], 0, 24)) ?></span>
               </td>
-              <td style="padding: 1rem;">
+              <td>
                 <?= e(format_pence((int)$order['total_pence'], $currencyCode)) ?>
               </td>
-              <td style="padding: 1rem;">
+              <td>
                 <?= (int)$order['item_count'] ?>
               </td>
-              <td style="padding: 1rem;">
-                <span style="
-                  display: inline-block;
-                  padding: 0.25rem 0.75rem;
-                  border-radius: 3px;
-                  font-size: 0.85rem;
-                  font-weight: 500;
-                  background: <?=
-                    ($order['status'] === 'paid' ? 'rgba(81, 207, 102, 0.2); color: #51cf66;' :
-                    ($order['status'] === 'refunded' ? 'rgba(255, 107, 107, 0.2); color: #ff6b6b;' :
-                    ($order['status'] === 'partial_refund' ? 'rgba(255, 159, 64, 0.2); color: #ff9f40;' :
-                    'rgba(153, 153, 153, 0.2); color: #999999;')))
-                  ?>">
+              <td>
+                <span class="table-status <?= e($order['status']) ?>">
                   <?= e($order['status']) ?>
                 </span>
               </td>
-              <td style="padding: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+              <td class="table-date">
                 <?= $order['paid_at'] ? date('Y-m-d', strtotime($order['paid_at'])) : '—' ?>
               </td>
             </tr>
@@ -63,13 +52,13 @@ require_once __DIR__ . '/partials/layout_header.php';
     </div>
 
     <?php if ($totalPages > 1): ?>
-      <div style="margin-top: 2rem; text-align: center;">
+      <div class="table-pagination">
         <?php if ($paginationPage > 1): ?>
-          <a href="?page=<?= max(1, $paginationPage - 1) ?>" style="margin-right: 1rem;">← Previous</a>
+          <a href="?page=<?= max(1, $paginationPage - 1) ?>">← Previous</a>
         <?php endif; ?>
         Page <?= $paginationPage ?> of <?= $totalPages ?>
         <?php if ($paginationPage < $totalPages): ?>
-          <a href="?page=<?= min($totalPages, $paginationPage + 1) ?>" style="margin-left: 1rem;">Next →</a>
+          <a href="?page=<?= min($totalPages, $paginationPage + 1) ?>">Next →</a>
         <?php endif; ?>
       </div>
     <?php endif; ?>
