@@ -102,6 +102,7 @@
 
   /* ---- Semantic: hue-shifted toward the family so they belong here ---- */
   --error:   oklch(0.505 0.170 22);
+  --error-bg: rgba(159, 47, 45, 0.08);
   --success: oklch(0.510 0.105 155);
 
   /* Derived: hover shade of --text, used on solid black/white buttons.
@@ -181,6 +182,9 @@
     --accent-hover: oklch(0.740 0.170 318);
     --accent-quiet: oklch(0.260 0.045 318);
     --accent-text:  oklch(0.145 0.020 315);
+
+    /* Error background needs higher opacity in dark mode for adequate contrast */
+    --error-bg: rgba(214, 88, 84, 0.15);
 
     /* Shadows need markedly more opacity here to read against a dark surface.
        They stay subtle on purpose: elevation is carried by --bg-alt being
@@ -396,7 +400,7 @@ button:disabled,
 
 .error-message,
 .error {
-  background: rgba(159, 47, 45, 0.08);
+  background: var(--error-bg);
   border: 1px solid var(--error);
   color: var(--error);
   padding: 1.5rem;
@@ -431,7 +435,7 @@ button:disabled,
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%);
+  background: var(--bg);
 }
 
 .auth-card {
@@ -633,10 +637,78 @@ button:disabled,
   font-size: 1.1rem;
 }
 
+.event-card-body h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
 .event-card-meta {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+
+/* Home page sections */
+
+.home-section + .home-section {
+  margin-top: var(--space-8);
+}
+
+.home-section-title {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * Recent galleries: a scroll-snapped rail, not a carousel widget. The site
+ * ships no JavaScript bundler and no third-party libraries, so the browser's
+ * own overflow scrolling does the work — it keeps keyboard and trackpad
+ * scrolling, momentum, and screen-reader order for free, which a hand-rolled
+ * transform carousel would each have to reimplement.
+ *
+ * Where three cards fit, this is indistinguishable from a row.
+ */
+.event-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(280px, 1fr);
+  gap: var(--space-5);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* Room for the card's focus ring and hover lift, which a tight overflow
+     box would otherwise clip. */
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
+}
+
+.event-rail > .event-card {
+  scroll-snap-align: start;
+}
+
+/* Above three-card width the rail has nothing to scroll, so let the cards
+   spread into the available space instead of leaving a gap on the right. */
+@media (min-width: 1100px) {
+  .event-rail {
+    grid-auto-columns: 1fr;
+    overflow-x: visible;
+  }
+}
+
+.archive-year + .archive-year {
+  margin-top: var(--space-7);
+}
+
+.archive-year-title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Hero */

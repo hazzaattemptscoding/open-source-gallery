@@ -63,22 +63,9 @@ require_once __DIR__ . '/partials/layout_header.php';
     <button type="submit">Update Settings</button>
   </form>
 
-  <div class="preset-section">
-    <h2>Save Current Settings as Preset</h2>
-    <form method="post" class="preset-form">
-      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
-      <input type="hidden" name="action" value="save_preset">
-      <div class="form-group">
-        <label for="preset_name">Preset Name:</label>
-        <input type="text" id="preset_name" name="preset_name" placeholder="e.g., Subtle, Prominent, etc." required>
-      </div>
-      <button type="submit">Save as Preset</button>
-    </form>
-  </div>
-
   <?php if (!empty($presets)): ?>
     <div class="preset-section">
-      <h2>Saved Presets</h2>
+      <h2>Saved presets</h2>
       <div class="preset-list">
         <?php foreach ($presets as $preset): ?>
           <div class="preset-item">
@@ -97,7 +84,10 @@ require_once __DIR__ . '/partials/layout_header.php';
                 <input type="hidden" name="preset_name" value="<?= e($preset['name']) ?>">
                 <button type="submit" class="btn-secondary">Load</button>
               </form>
-              <form method="post" class="preset-action-form" onsubmit="return confirm('Delete this preset?');">
+              <?php /* data-confirm, not onsubmit: the admin CSP is default-src 'self',
+                        which blocks inline handlers outright, so an onsubmit confirm
+                        never ran and Delete fired on the first click. */ ?>
+              <form method="post" class="preset-action-form" data-confirm="Delete the preset &quot;<?= e($preset['name']) ?>&quot;?">
                 <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
                 <input type="hidden" name="action" value="delete_preset">
                 <input type="hidden" name="preset_name" value="<?= e($preset['name']) ?>">
@@ -110,11 +100,26 @@ require_once __DIR__ . '/partials/layout_header.php';
     </div>
   <?php endif; ?>
 
-  <h2>Preview</h2>
-  <div class="preview">
-    <div class="watermark-preview" style="bottom: 1rem; right: 1rem;">Sample Photo © 2024</div>
-    <p style="text-align: center; padding: 5rem 1rem; color: #999;">Photo will appear here</p>
-  </div>
+  <details class="admin-disclosure">
+    <summary>Save these settings as a preset</summary>
+    <form method="post" class="preset-form">
+      <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+      <input type="hidden" name="action" value="save_preset">
+      <div class="form-group">
+        <label for="preset_name">Preset name</label>
+        <input type="text" id="preset_name" name="preset_name" placeholder="Subtle, Prominent, Corner mark" required>
+      </div>
+      <button type="submit">Save as preset</button>
+    </form>
+  </details>
+
+  <details class="admin-disclosure">
+    <summary>Preview</summary>
+    <div class="preview">
+      <div class="watermark-preview">Sample Photo © <?= date('Y') ?></div>
+      <p class="watermark-preview-placeholder">Photo will appear here</p>
+    </div>
+  </details>
 </div>
 
 

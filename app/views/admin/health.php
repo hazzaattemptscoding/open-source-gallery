@@ -133,7 +133,7 @@ require_once __DIR__ . '/partials/layout_header.php';
         <div class="status-message">Email</div>
         <div class="status-details">
           <?= e($health['email']['message']) ?><br>
-          <span style="font-size: 0.85rem; color: #999;">Method: <?= e($health['email']['method'] ?? '—') ?></span>
+          <span class="status-submeta">Method: <?= e($health['email']['method'] ?? '—') ?></span>
         </div>
       </div>
     </div>
@@ -191,7 +191,7 @@ require_once __DIR__ . '/partials/layout_header.php';
 
   <!-- Recent Activity -->
   <div class="health-card">
-    <h2 style="margin-top: 0;">Last 24 Hours</h2>
+    <h2>Last 24 Hours</h2>
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-value"><?= e($health['stats']['orders_24h'] ?? 0) ?></div>
@@ -207,30 +207,32 @@ require_once __DIR__ . '/partials/layout_header.php';
   <!-- Recent Errors -->
   <?php if (!empty($health['recent_errors'])): ?>
     <div class="health-card">
-      <h2 style="margin-top: 0; margin-bottom: 1rem;">Recent Errors</h2>
+      <h2>Recent Errors</h2>
       <div class="error-log">
         <?php foreach ($health['recent_errors'] as $error): ?>
           <div class="error-item">
             <strong><?= e($error['action']) ?></strong>
-            <div style="color: #666;"><?= e(substr($error['details'] ?? '', 0, 80)) ?></div>
+            <div class="error-detail"><?= e(substr($error['details'] ?? '', 0, 80)) ?></div>
             <div class="error-time"><?= e(date('M d H:i:s', strtotime($error['created_at']))) ?></div>
           </div>
         <?php endforeach; ?>
       </div>
-      <p style="margin: 1rem 0 0 0; text-align: center;">
+      <p class="error-log-more">
         <a href="/admin/audit-log?action=failed">View all errors →</a>
       </p>
     </div>
   <?php endif; ?>
 
-  <div style="margin-top: 2rem; padding: 1.5rem; background-color: #f9f9f9; border-radius: 4px;">
-    <h3 style="margin-top: 0;">Status Legend</h3>
-    <ul style="margin: 1rem 0 0 0;">
-      <li><span style="color: #4caf50;">✓</span> <strong>OK</strong> — System working normally</li>
-      <li><span style="color: #ff9800;">⚠</span> <strong>Warning</strong> — Minor issue, may need attention</li>
-      <li><span style="color: #f44336;">✗</span> <strong>Error</strong> — Critical issue, requires action</li>
+  <?php /* Reference material, not status: collapsed so the actual health cards
+           above it are what the page shows on open. */ ?>
+  <details class="admin-disclosure">
+    <summary>What the status indicators mean</summary>
+    <ul class="status-legend">
+      <li><span class="legend-mark legend-ok">✓</span> <strong>OK</strong> — working normally</li>
+      <li><span class="legend-mark legend-warning">⚠</span> <strong>Warning</strong> — minor issue, may need attention</li>
+      <li><span class="legend-mark legend-error">✗</span> <strong>Error</strong> — critical issue, requires action</li>
     </ul>
-  </div>
+  </details>
 
 </main>
 

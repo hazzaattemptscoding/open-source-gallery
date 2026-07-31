@@ -11,6 +11,49 @@
 <link rel="stylesheet" href="/api/styles.css">
 <?= isset($extraStyles) ? $extraStyles : '' ?>
 </head>
+<?php
+/**
+ * Sidebar navigation, grouped by the job the admin is doing rather than by
+ * which controller happens to own the page. Declared as data so the active-page
+ * test and the markup are each written once instead of once per link.
+ *
+ * Each entry is [$pageKey, $href, $label]. $pageKey matches the $currentPage
+ * the controller sets, which is what marks a link active and decides which
+ * group must stay expanded.
+ */
+$navGroups = [
+    'Photo Management' => [
+        ['upload', '/admin/upload', 'Upload photos'],
+        ['bulk', '/admin/bulk', 'Bulk operations'],
+        ['watermarks', '/admin/watermarks', 'Watermarks'],
+    ],
+    'Event Management' => [
+        ['events', '/admin/events', 'Events'],
+        ['migrations', '/admin/migrations', 'Migrations'],
+    ],
+    'Monitoring' => [
+        ['health', '/admin/health', 'System health'],
+        ['stats', '/admin/stats', 'Sales dashboard'],
+        ['analytics', '/admin/analytics', 'Analytics'],
+        ['orders', '/admin/orders', 'Order history'],
+        ['audit-log', '/admin/audit-log', 'Audit log'],
+    ],
+    'Configuration' => [
+        ['settings', '/admin/settings/site', 'Settings'],
+        ['emails', '/admin/emails', 'Email management'],
+        ['customize', '/admin/customize', 'Customization'],
+        ['print_orders', '/admin/print_orders', 'Print orders'],
+        ['export', '/admin/export', 'Export data'],
+    ],
+    'Security' => [
+        ['admins', '/admin/admins', 'Admin users'],
+    ],
+];
+
+// Views that never set $currentPage (or set it late) would otherwise emit an
+// undefined-variable warning on every link comparison below.
+$currentPage = $currentPage ?? '';
+?>
 <body>
 <div class="admin-shell">
   <aside class="admin-sidebar">
@@ -18,99 +61,37 @@
       <a href="/admin"><?= e($siteName) ?></a>
     </div>
 
-    <!-- Manage content -->
-    <nav class="admin-nav-group">
-      <span class="admin-nav-group-title">Manage content</span>
-      <a href="/admin/events" class="admin-nav-link <?= $currentPage === 'events' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Events</span>
-      </a>
-      <a href="/admin/upload" class="admin-nav-link <?= $currentPage === 'upload' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Upload photos</span>
-      </a>
-      <a href="/admin/bulk" class="admin-nav-link <?= $currentPage === 'bulk' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Bulk Operations</span>
-      </a>
-      <a href="/admin/migrations" class="admin-nav-link <?= $currentPage === 'migrations' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Migrations</span>
-      </a>
-    </nav>
+    <?php foreach ($navGroups as $groupTitle => $links): ?>
+      <?php
+      /*
+       * Groups render expanded so the sidebar looks and behaves exactly as it
+       * did before any JavaScript runs — no flash of collapsed navigation, and
+       * the whole menu still works with JS off. admin-common.js then re-applies
+       * whatever the admin last collapsed, except for the group holding the
+       * page they are on, which always stays open.
+       */
+      ?>
+      <details class="admin-nav-group" data-nav-group="<?= e($groupTitle) ?>" open>
+        <summary class="admin-nav-group-title"><?= e($groupTitle) ?></summary>
+        <nav>
+          <?php foreach ($links as [$pageKey, $href, $label]): ?>
+            <a href="<?= e($href) ?>" class="admin-nav-link <?= $currentPage === $pageKey ? 'active' : '' ?>"<?= $currentPage === $pageKey ? ' aria-current="page"' : '' ?>>
+              <span class="admin-nav-link-icon"></span>
+              <span><?= e($label) ?></span>
+            </a>
+          <?php endforeach; ?>
+        </nav>
+      </details>
+    <?php endforeach; ?>
 
-    <!-- Monitor -->
-    <nav class="admin-nav-group">
-      <span class="admin-nav-group-title">Monitor</span>
-      <a href="/admin/health" class="admin-nav-link <?= $currentPage === 'health' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>System health</span>
-      </a>
-      <a href="/admin/stats" class="admin-nav-link <?= $currentPage === 'stats' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Sales dashboard</span>
-      </a>
-      <a href="/admin/analytics" class="admin-nav-link <?= $currentPage === 'analytics' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Analytics</span>
-      </a>
-      <a href="/admin/orders" class="admin-nav-link <?= $currentPage === 'orders' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Order history</span>
-      </a>
-      <a href="/admin/audit-log" class="admin-nav-link <?= $currentPage === 'audit-log' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Audit log</span>
-      </a>
-    </nav>
-
-    <!-- Design & Configuration -->
-    <nav class="admin-nav-group">
-      <span class="admin-nav-group-title">Design & Configuration</span>
-      <a href="/admin/customize" class="admin-nav-link <?= $currentPage === 'customize' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Customization</span>
-      </a>
-      <a href="/admin/settings/site" class="admin-nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Settings</span>
-      </a>
-      <a href="/admin/emails" class="admin-nav-link <?= $currentPage === 'emails' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Email Management</span>
-      </a>
-      <a href="/admin/watermarks" class="admin-nav-link <?= $currentPage === 'watermarks' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Watermarks</span>
-      </a>
-      <a href="/admin/print_orders" class="admin-nav-link <?= $currentPage === 'print_orders' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Print Orders</span>
-      </a>
-      <a href="/admin/export" class="admin-nav-link <?= $currentPage === 'export' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Export Data</span>
-      </a>
-    </nav>
-
-    <!-- Security -->
-    <nav class="admin-nav-group">
-      <span class="admin-nav-group-title">Security</span>
-      <a href="/admin/admins" class="admin-nav-link <?= $currentPage === 'admins' ? 'active' : '' ?>">
-        <span class="admin-nav-link-icon"></span>
-        <span>Admin users</span>
-      </a>
-    </nav>
-
-    <!-- Logout -->
-    <nav class="admin-nav-group admin-nav-group-logout">
+    <div class="admin-nav-group admin-nav-group-logout">
       <form method="post" action="/admin/logout" class="admin-logout-form">
         <button type="submit" class="admin-nav-link admin-logout-button">
           <span class="admin-nav-link-icon"></span>
           <span>Log out</span>
         </button>
       </form>
-    </nav>
+    </div>
   </aside>
 
   <div class="admin-content">

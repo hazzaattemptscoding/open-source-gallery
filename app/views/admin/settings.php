@@ -362,6 +362,4 @@ button.submit:active {
   </div>
 <?php endif; ?>
 
-<script src="/assets/js/admin-common.js" defer></script>
-
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

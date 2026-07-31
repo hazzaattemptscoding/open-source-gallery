@@ -40,9 +40,13 @@ function admin_emails_controller(PDO $pdo, array $config): void {
                     'enabled' => isset($_POST['enabled']) ? 1 : 0,
                 ])) {
                     audit_log($pdo, 'admin', 'update_email_template', 'email_template', $templateId, [], client_ip());
-                    header('Location: /admin/emails?action=templates&success=1');
+                    // saved={id} so the view reopens the template just edited:
+                    // templates are collapsed by default, and dropping the admin
+                    // back onto a closed list gives no sign the save worked.
+                    header('Location: /admin/emails?action=templates&success=1&saved=' . $templateId);
                     exit;
                 }
+                $errors[] = 'Could not save that template. Check the server error log for details.';
             }
         }
     }

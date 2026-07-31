@@ -2,9 +2,12 @@
 
 JSON API for programmatic access to system operations. All endpoints require admin authentication and return JSON responses.
 
+For the public REST API, the browsing endpoints, and the upload flow, see
+[API.md](API.md).
+
 ## Authentication
 
-All endpoints require admin authentication via session cookie (same as web admin panel). Make authenticated requests from your admin account or use API tokens if implemented.
+All endpoints require admin authentication via session cookie (same as web admin panel), so they are browser endpoints rather than integration surface. There is no token-based alternative: nothing here accepts an API key.
 
 ## Endpoints
 

@@ -61,3 +61,37 @@ document.querySelectorAll('select[data-reveal-group]').forEach(select => {
   select.addEventListener('change', sync);
   sync();
 });
+
+/**
+ * Sidebar groups remember what the admin collapsed.
+ *
+ * The server renders every group open, so navigation is complete without
+ * JavaScript and never flashes collapsed on load. This only ever closes groups
+ * the admin closed themselves. The group containing the current page is left
+ * alone: collapsing the section you are standing in hides where you are.
+ *
+ * localStorage access is wrapped because it throws outright in Safari's private
+ * mode, and losing a cosmetic preference must not take the sidebar down with it.
+ */
+document.querySelectorAll('details[data-nav-group]').forEach(group => {
+  const storageKey = 'adminNav:' + group.dataset.navGroup;
+  const holdsCurrentPage = group.querySelector('.admin-nav-link.active') !== null;
+
+  if (!holdsCurrentPage) {
+    try {
+      if (localStorage.getItem(storageKey) === 'closed') {
+        group.open = false;
+      }
+    } catch (e) {
+      /* storage unavailable: groups stay open, which is the safe default */
+    }
+  }
+
+  group.addEventListener('toggle', () => {
+    try {
+      localStorage.setItem(storageKey, group.open ? 'open' : 'closed');
+    } catch (e) {
+      /* preference simply won't persist */
+    }
+  });
+});
