@@ -2622,3 +2622,86 @@ textarea:focus-visible {
 .order-footer p:not(:first-child) {
   margin-top: 0.5rem;
 }
+
+/* Order verification page */
+
+.verify-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}
+
+.verify-title {
+  font-family: 'Newsreader', serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.verify-subtitle {
+  color: var(--text-muted);
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+}
+
+.verify-form-box {
+  background: var(--bg-alt);
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.verify-submit-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 160ms ease-out;
+  min-height: 44px;
+}
+
+.verify-submit-btn:hover {
+  background: var(--text-hover);
+}
+
+.verify-submit-btn:active {
+  transform: scale(0.97);
+}
+
+.verify-help-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.verify-help-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.verify-help-text {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+}
+
+.verify-help-link {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.verify-help-link:hover {
+  text-decoration: underline;
+}
