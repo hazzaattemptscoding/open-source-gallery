@@ -29,6 +29,7 @@ function extract_exif_metadata(string $filepath): ?array {
             'shutter_speed' => $exif['ExposureTime'] ?? null,
         ];
     } catch (Throwable $e) {
+        error_log('metadata: extract_exif_metadata() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -64,6 +65,7 @@ function save_photo_metadata(PDO $pdo, int $photoId, array $metadata): bool {
             $photoId,
         ]);
     } catch (Throwable $e) {
+        error_log('metadata: save_photo_metadata() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -81,6 +83,7 @@ function get_photo_metadata(PDO $pdo, int $photoId): ?array {
         $stmt->execute([$photoId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     } catch (Throwable $e) {
+        error_log('metadata: get_photo_metadata() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -99,6 +102,7 @@ function get_photos_by_camera(PDO $pdo, string $make, string $model): array {
         $stmt->execute([$make, $model]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('metadata: get_photos_by_camera() failed: ' . $e->getMessage());
         return [];
     }
 }

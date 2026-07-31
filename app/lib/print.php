@@ -20,6 +20,7 @@ function get_print_settings(PDO $pdo, int $providerId): ?array {
         $stmt->execute([$providerId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     } catch (Throwable $e) {
+        error_log('print: get_print_settings() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -32,6 +33,7 @@ function is_print_enabled(PDO $pdo): bool {
         $stmt = $pdo->query('SELECT COUNT(*) FROM print_settings WHERE enabled = 1 LIMIT 1');
         return (bool)$stmt->fetchColumn();
     } catch (Throwable $e) {
+        error_log('print: is_print_enabled() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -82,6 +84,7 @@ function submit_print_order(
 
         return true;
     } catch (Throwable $e) {
+        error_log('print: submit_print_order() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -160,6 +163,7 @@ function submit_to_printful(PDO $pdo, int $printOrderId, array $settings): bool 
 
         return false;
     } catch (Throwable $e) {
+        error_log('print: submit_to_printful() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -194,6 +198,7 @@ function get_print_order_status(PDO $pdo, int $printOrderId): ?array {
         $stmt->execute([$printOrderId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     } catch (Throwable $e) {
+        error_log('print: get_print_order_status() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -213,6 +218,7 @@ function get_print_orders_for_order(PDO $pdo, int $orderId): array {
         $stmt->execute([$orderId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('print: get_print_orders_for_order() failed: ' . $e->getMessage());
         return [];
     }
 }
@@ -230,6 +236,7 @@ function cancel_print_order(PDO $pdo, int $printOrderId): bool {
         $stmt->execute([$printOrderId]);
         return true;
     } catch (Throwable $e) {
+        error_log('print: cancel_print_order() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -246,6 +253,7 @@ function order_has_print_items(PDO $pdo, int $orderId): bool {
         $stmt->execute([$orderId]);
         return (bool)$stmt->fetchColumn();
     } catch (Throwable $e) {
+        error_log('print: order_has_print_items() failed: ' . $e->getMessage());
         return false;
     }
 }

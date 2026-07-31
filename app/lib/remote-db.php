@@ -38,6 +38,7 @@ function create_remote_db_connection(array $config): PDO {
 
         return $pdo;
     } catch (PDOException $e) {
+        error_log('remote-db: create_remote_db_connection() failed: ' . $e->getMessage());
         throw new RuntimeException(
             'Failed to connect to remote database: ' . $e->getMessage()
         );

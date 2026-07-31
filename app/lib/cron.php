@@ -54,6 +54,7 @@ function run_cron_drain(PDO $pdo): void {
             $attempts = (int)$job['attempts'];
 
             $success = false;
+            $lastError = null;
             try {
                 if ($type === 'derivative') {
                     $success = process_derivative_job($pdo, $payload);
@@ -65,20 +66,43 @@ function run_cron_drain(PDO $pdo): void {
                     $success = process_cleanup_job($pdo, $payload);
                 } elseif ($type === 'view_count') {
                     $success = process_view_count_job($pdo, $payload);
+                } else {
+                    $lastError = "Unknown job type \"{$type}\"";
                 }
             } catch (Throwable $e) {
                 $success = false;
+                // Class name included because the message alone is often
+                // ambiguous (an out-of-memory Error and a PDOException read
+                // very differently to whoever is debugging this later).
+                $lastError = get_class($e) . ': ' . $e->getMessage();
+            }
+
+            // A handler returning false without throwing is still a failure,
+            // and it used to leave no trace at all.
+            if (!$success && $lastError === null) {
+                $lastError = "Handler for \"{$type}\" reported failure without an exception";
             }
 
             if ($success) {
                 $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
-            } elseif ($attempts >= 3) {
-                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['failed', $jobId]);
             } else {
-                $backoff = min(3600, (2 ** $attempts) * 60);
-                $runAfter = (clone $now)->modify("+{$backoff} seconds")->format('Y-m-d H:i:s');
-                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = ? WHERE id = ?')
-                    ->execute(['pending', $runAfter, $jobId]);
+                // jobs.last_error exists and the health page reads it, but
+                // nothing ever wrote to it: the reason a job died was thrown
+                // away here, leaving "3 jobs failed" and no way to find out
+                // why. Persist it on both the give-up and retry paths, and
+                // log it too so the failure is visible even if the row is
+                // later cleaned up.
+                error_log("cron: job {$jobId} ({$type}) failed: {$lastError}");
+
+                if ($attempts >= 3) {
+                    $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, last_error = ? WHERE id = ?')
+                        ->execute(['failed', $lastError, $jobId]);
+                } else {
+                    $backoff = min(3600, (2 ** $attempts) * 60);
+                    $runAfter = (clone $now)->modify("+{$backoff} seconds")->format('Y-m-d H:i:s');
+                    $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = ?, last_error = ? WHERE id = ?')
+                        ->execute(['pending', $runAfter, $lastError, $jobId]);
+                }
             }
         }
     } finally {

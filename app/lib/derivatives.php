@@ -18,6 +18,7 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
     $stmt->execute([$photoId]);
     $photo = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$photo) {
+        error_log("derivatives: photo {$photoId} not found, cannot build derivatives");
         return false;
     }
 
@@ -27,6 +28,9 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
     $hiresPath = __DIR__ . "/../../storage/hires/{$eventId}/{$token}.{$ext}";
 
     if (!file_exists($hiresPath)) {
+        // Worth logging loudly: the original is the one file that cannot be
+        // regenerated, so a missing one is a storage problem, not a job problem.
+        error_log("derivatives: original missing for photo {$photoId} at {$hiresPath}");
         return false;
     }
 
@@ -53,6 +57,9 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
             }
         }
     } catch (Throwable $e) {
+        // The photo is flipped to failed either way; without this line the
+        // reason (usually GD exhausting memory on a large original) was lost.
+        error_log("derivatives: photo {$photoId} failed: " . get_class($e) . ': ' . $e->getMessage());
         $pdo->prepare('UPDATE photos SET status = ? WHERE id = ?')->execute(['failed', $photoId]);
         return false;
     }

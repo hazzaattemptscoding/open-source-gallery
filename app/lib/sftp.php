@@ -56,6 +56,7 @@ class RemoteSFTP {
                 throw new RuntimeException('SFTP authentication failed (key)');
             }
         } catch (Throwable $e) {
+            error_log('sftp: app/lib/sftp.php failed: ' . $e->getMessage());
             throw new RuntimeException('Failed to load private key: ' . $e->getMessage());
         }
     }

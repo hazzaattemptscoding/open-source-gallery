@@ -26,6 +26,7 @@ function get_customer_wishlist(PDO $pdo, string $customerToken): ?array {
 
         return $wishlist;
     } catch (Throwable $e) {
+        error_log('wishlist: get_customer_wishlist() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -46,6 +47,7 @@ function add_to_wishlist(PDO $pdo, string $customerToken, int $photoId, string $
         SQL);
         return $stmt->execute([$wishlist['id'], $photoId, $notes]);
     } catch (Throwable $e) {
+        error_log('wishlist: add_to_wishlist() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -63,6 +65,7 @@ function remove_from_wishlist(PDO $pdo, string $customerToken, int $photoId): bo
         $stmt = $pdo->prepare('DELETE FROM wishlist_items WHERE wishlist_id = ? AND photo_id = ?');
         return $stmt->execute([$wishlist['id'], $photoId]);
     } catch (Throwable $e) {
+        error_log('wishlist: remove_from_wishlist() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -87,6 +90,7 @@ function get_wishlist_items(PDO $pdo, string $customerToken, int $limit = 100): 
         $stmt->execute([$customerToken, $limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('wishlist: get_wishlist_items() failed: ' . $e->getMessage());
         return [];
     }
 }
@@ -104,6 +108,7 @@ function is_in_wishlist(PDO $pdo, string $customerToken, int $photoId): bool {
         $stmt->execute([$customerToken, $photoId]);
         return (bool)$stmt->fetchColumn();
     } catch (Throwable $e) {
+        error_log('wishlist: is_in_wishlist() failed: ' . $e->getMessage());
         return false;
     }
 }

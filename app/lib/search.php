@@ -222,6 +222,7 @@ function get_search_facets(PDO $pdo, array $currentFilters = []): array {
         cache_set($cacheKey, $facets, 900);
 
     } catch (Throwable $e) {
+        error_log('search: get_search_facets() failed: ' . $e->getMessage());
         // Silently fail (search not critical)
     }
 
@@ -260,6 +261,7 @@ function get_trending_photos(PDO $pdo, int $limit = 12): array {
 
         return $photos;
     } catch (Throwable $e) {
+        error_log('search: get_trending_photos() failed: ' . $e->getMessage());
         return [];
     }
 }
@@ -272,6 +274,7 @@ function increment_photo_views(PDO $pdo, int $photoId): void {
         $stmt = $pdo->prepare('UPDATE photos SET view_count = view_count + 1 WHERE id = ?');
         $stmt->execute([$photoId]);
     } catch (Throwable $e) {
+        error_log('search: increment_photo_views() failed: ' . $e->getMessage());
         // Silently fail (view count is not critical)
     }
 }

@@ -25,6 +25,7 @@ function get_all_settings(PDO $pdo, string $category = ''): array {
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('settings: get_all_settings() failed: ' . $e->getMessage());
         return [];
     }
 }
@@ -44,6 +45,7 @@ function get_setting(PDO $pdo, string $category, string $key, mixed $default = n
 
         return cast_setting_value($setting['value'], $setting['type']);
     } catch (Throwable $e) {
+        error_log('settings: get_setting() failed: ' . $e->getMessage());
         return $default;
     }
 }
@@ -61,6 +63,7 @@ function set_setting(PDO $pdo, string $category, string $key, mixed $value): boo
 
         return $stmt->execute([$stringValue, $category, $key]);
     } catch (Throwable $e) {
+        error_log('settings: set_setting() failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -94,6 +97,7 @@ function get_settings_by_category(PDO $pdo, bool $includeAdvanced = false): arra
 
         return $grouped;
     } catch (Throwable $e) {
+        error_log('settings: get_settings_by_category() failed: ' . $e->getMessage());
         return [];
     }
 }
@@ -143,6 +147,7 @@ function validate_setting(PDO $pdo, string $category, string $key, mixed $value)
                 break;
         }
     } catch (Throwable $e) {
+        error_log('settings: validate_setting() failed: ' . $e->getMessage());
         $errors[] = "Validation error";
     }
 
@@ -173,6 +178,7 @@ function get_setting_categories(PDO $pdo): array {
         $stmt = $pdo->query('SELECT DISTINCT category FROM settings_registry ORDER BY category');
         return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
     } catch (Throwable $e) {
+        error_log('settings: get_setting_categories() failed: ' . $e->getMessage());
         return [];
     }
 }
