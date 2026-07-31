@@ -64,6 +64,52 @@ function get_revenue_trend(PDO $pdo, int $days = 30): array {
 }
 
 /**
+ * Orders bucketed by hour of day, for spotting when buyers actually shop.
+ *
+ * The analytics view has always had an "Orders by Hour" panel, but nothing ever
+ * computed the data for it, so it rendered its empty state permanently.
+ *
+ * Returns all 24 hours including zero-count ones. A bar chart with gaps where
+ * quiet hours should be misreads badly — 03:00 having no orders is a finding,
+ * not a missing data point, and the x-axis has to stay evenly spaced to show it.
+ *
+ * @return list<array{hour:int, orders:int, revenue_pence:int}>
+ */
+function get_hourly_distribution(PDO $pdo): array {
+    require_once __DIR__ . '/db_compat.php';
+
+    // '%H' is one of the formats db_date_format_sql handles on both drivers:
+    // DATE_FORMAT(paid_at, '%H') on MySQL, strftime('%H', paid_at) on SQLite.
+    $hourExpr = db_date_format_sql($pdo, 'paid_at', '%H');
+
+    $stmt = $pdo->prepare("
+        SELECT {$hourExpr} as hour, COUNT(*) as orders, SUM(total_pence) as revenue_pence
+        FROM orders
+        WHERE status IN (?, ?) AND paid_at IS NOT NULL
+        GROUP BY {$hourExpr}
+    ");
+    $stmt->execute(['paid', 'partial_refund']);
+
+    $byHour = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $byHour[(int)$row['hour']] = [
+            'orders' => (int)$row['orders'],
+            'revenue_pence' => (int)$row['revenue_pence'],
+        ];
+    }
+
+    $out = [];
+    for ($hour = 0; $hour < 24; $hour++) {
+        $out[] = [
+            'hour' => $hour,
+            'orders' => $byHour[$hour]['orders'] ?? 0,
+            'revenue_pence' => $byHour[$hour]['revenue_pence'] ?? 0,
+        ];
+    }
+    return $out;
+}
+
+/**
  * Get customer cohorts: first-time, repeat (2-5x), loyal (5+x).
  */
 function get_customer_cohorts(PDO $pdo): array {

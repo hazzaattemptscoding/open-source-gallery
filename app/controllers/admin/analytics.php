@@ -24,6 +24,7 @@ function admin_analytics_controller(PDO $pdo, array $config): void {
     $analytics = [
         'summary' => get_dashboard_metrics($pdo),
         'revenue_trend' => get_revenue_trend($pdo, 30),
+        'hourly_distribution' => get_hourly_distribution($pdo),
         'top_photos' => get_top_photos($pdo, 'purchases', 10),
         'sales_by_event' => get_sales_by_event($pdo),
         'customer_cohorts' => get_customer_cohorts($pdo),
