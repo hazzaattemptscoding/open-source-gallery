@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php
-require_once __DIR__ . '/../../lib/seo.php';
+require_once __DIR__ . '/../../../lib/seo.php';
 
 // Default meta description if not provided
 if (!isset($metaDescription)) {
