@@ -365,8 +365,9 @@ function dev_seed_dummy_data(PDO $pdo): void {
 
         // No cohort-builder exists yet (get_cohort_analysis() only reads),
         // so these rows are hand-seeded rather than derived.
+        $anchor = strtotime(date('Y-m-01'));  // anchor to 1st to prevent day-31 overflow
         for ($m = 0; $m < 4; $m++) {
-            $month = date('Y-m-01', strtotime("-{$m} months"));
+            $month = date('Y-m-01', strtotime("-{$m} months", $anchor));
             $pdo->prepare(
                 'INSERT INTO cohorts (cohort_month, customers_acquired, revenue_pence, retention_month_1, retention_month_3, retention_month_6)
                  VALUES (?, ?, ?, ?, ?, ?)'
