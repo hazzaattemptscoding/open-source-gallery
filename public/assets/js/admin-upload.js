@@ -90,7 +90,7 @@ async function initBatch() {
     const data = await response.json();
     batchId = data.batch_id;
 
-    uploadFiles(data.files);
+    uploadFiles(data.accepted);
   } catch (err) {
     alert('Error: ' + err.message);
   }
