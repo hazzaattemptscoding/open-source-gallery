@@ -66,7 +66,62 @@ require_once __DIR__ . '/partials/layout_header.php';
         </div>
       </div>
     <?php endif; ?>
+
+    <?php if (!empty($health['job_queue'])): ?>
+      <h3 class="health-subhead">Queue by type</h3>
+      <div class="table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Type</th><th>Status</th><th class="numeric">Count</th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($health['job_queue'] as $row): ?>
+              <tr>
+                <td><code><?= e($row['type']) ?></code></td>
+                <td><span class="job-status job-status-<?= e($row['status']) ?>"><?= e($row['status']) ?></span></td>
+                <td class="numeric"><?= (int)$row['count'] ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
   </div>
+
+  <!-- Failed jobs, with the reason each one failed -->
+  <?php if (!empty($health['job_failures'])): ?>
+    <div class="health-card">
+      <h2 class="health-card-title">Failed jobs</h2>
+      <p class="health-card-note">
+        Most recent first. The error is what the worker reported when it gave up.
+      </p>
+      <ul class="job-failure-list">
+        <?php foreach ($health['job_failures'] as $job): ?>
+          <li class="job-failure">
+            <div class="job-failure-head">
+              <code class="job-failure-type"><?= e($job['type']) ?></code>
+              <span class="job-failure-meta">
+                job #<?= (int)$job['id'] ?> &middot;
+                <?= (int)$job['attempts'] ?> attempt<?= (int)$job['attempts'] === 1 ? '' : 's' ?> &middot;
+                <?= e(date('M d H:i', strtotime((string)$job['updated_at']))) ?>
+              </span>
+            </div>
+            <?php if (!empty($job['last_error'])): ?>
+              <p class="job-failure-error"><?= e($job['last_error']) ?></p>
+            <?php else: ?>
+              <p class="job-failure-error job-failure-error-empty">No error recorded.</p>
+            <?php endif; ?>
+            <?php if (!empty($job['payload'])): ?>
+              <details class="job-failure-payload">
+                <summary>Payload</summary>
+                <pre><?= e($job['payload']) ?></pre>
+              </details>
+            <?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  <?php endif; ?>
 
   <!-- Email -->
   <div class="health-card">

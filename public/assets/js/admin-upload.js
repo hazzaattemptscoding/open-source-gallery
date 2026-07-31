@@ -117,13 +117,15 @@ async function uploadFiles(fileInfo) {
 async function uploadFile(idx, file, fileInfo) {
   const fileId = fileInfo.file_id;
   const chunksTotal = fileInfo.chunks_total;
+  const chunksReceived = fileInfo.chunks_received || 0;
   const statusEl = document.getElementById(`status-${idx}`);
   const progressEl = document.getElementById(`progress-${idx}`);
 
-  statusEl.textContent = 'Uploading';
+  statusEl.textContent = chunksReceived > 0 ? 'Resuming...' : 'Uploading';
   statusEl.className = 'upload-file-status status-uploading';
 
-  for (let chunkIndex = 0; chunkIndex < chunksTotal; chunkIndex++) {
+  // Resume from where we left off, or start from 0 if this is a new upload
+  for (let chunkIndex = chunksReceived; chunkIndex < chunksTotal; chunkIndex++) {
     const start = chunkIndex * CHUNK_SIZE;
     const end = Math.min(start + CHUNK_SIZE, file.size);
     const chunk = file.slice(start, end);
@@ -156,7 +158,8 @@ async function uploadFile(idx, file, fileInfo) {
       }
     }
 
-    const progress = ((chunkIndex + 1) / chunksTotal) * 100;
+    const totalUploaded = chunkIndex + 1;
+    const progress = (totalUploaded / chunksTotal) * 100;
     progressEl.style.width = progress + '%';
 
     if (progressWidget) {

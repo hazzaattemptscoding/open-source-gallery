@@ -127,7 +127,12 @@ function generate_organization_schema(array $config): string {
 /**
  * Generate descriptive alt text for a photo.
  *
- * @param array $photo Photo data (id, title, description, kart, driver, class, event_name, session_name)
+ * Driver name is never included. Alt text ships in the public HTML and is
+ * read by search-engine crawlers, so putting a driver's name here would
+ * publish it more widely than any on-page label. Kart number, class, and
+ * event carry the descriptive weight instead.
+ *
+ * @param array $photo Photo data (id, title, description, kart, class, event_name, session_name)
  * @return string Alt text (max 125 chars for accessibility)
  */
 function generate_photo_alt_text(array $photo): string {
@@ -135,10 +140,6 @@ function generate_photo_alt_text(array $photo): string {
 
     if ($photo['title'] ?? '') {
         $parts[] = $photo['title'];
-    }
-
-    if ($photo['driver'] ?? '') {
-        $parts[] = 'driver ' . $photo['driver'];
     }
 
     if ($photo['kart'] ?? '') {
@@ -162,22 +163,18 @@ function generate_photo_alt_text(array $photo): string {
 }
 
 /**
- * Generate alt text from gallery photo tags (kart_tags, driver_tags, class_tags).
+ * Generate alt text from gallery photo tags (kart_tags, class_tags).
  * Used in grid views where photos are linked via tags.
  *
- * @param array $photo Photo data from fetch_gallery_media (kart_tags, driver_tags, class_tags)
+ * Driver names are deliberately excluded for the same reason as
+ * generate_photo_alt_text(): alt text is public, crawlable markup.
+ * fetch_gallery_media() no longer selects driver_tags at all.
+ *
+ * @param array $photo Photo data from fetch_gallery_media (kart_tags, class_tags)
  * @return string Alt text (max 125 chars)
  */
 function generate_gallery_photo_alt_text(array $photo): string {
     $parts = [];
-
-    if ($photo['driver_tags'] ?? '') {
-        $drivers = array_map('trim', explode(',', $photo['driver_tags']));
-        $drivers = array_filter($drivers);
-        if (!empty($drivers)) {
-            $parts[] = 'driver ' . implode(', ', $drivers);
-        }
-    }
 
     if ($photo['kart_tags'] ?? '') {
         $karts = array_map('trim', explode(',', $photo['kart_tags']));

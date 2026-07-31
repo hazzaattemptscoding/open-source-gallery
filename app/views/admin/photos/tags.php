@@ -1,14 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tag photos — <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<link rel="stylesheet" href="/assets/css/admin-refined.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Tag photos';
+$currentPage = 'events';
+require_once __DIR__ . '/../partials/layout_header.php';
+?>
 <div class="dashboard">
   <h1>Tag photos</h1>
   <p><a href="/admin/photos?session=<?= e($sessionId) ?>">← Back to photos</a></p>
@@ -41,7 +35,9 @@
   </div>
 
   <h3>Photos in this session</h3>
-  <div class="tag-photos-grid" id="photosGrid" data-event-entries="<?= e(json_encode($eventEntries ?? [])) ?>">
+  <div class="tag-photos-grid" id="photosGrid"
+       data-event-entries="<?= e(json_encode($eventEntries ?? [])) ?>"
+       data-csrf-token="<?= e($csrfToken) ?>">
     <?php foreach ($photos as $photo): ?>
       <div class="tag-photo-thumb" data-photo-id="<?= (int)$photo['id'] ?>">
         <img src="/media/d/<?= e($photo['public_token']) ?>-400.jpg" alt="">
@@ -51,5 +47,4 @@
   </div>
 </div>
 <script src="/assets/js/admin-tagging.js" defer></script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../partials/layout_footer.php'; ?>

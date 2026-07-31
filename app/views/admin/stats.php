@@ -49,29 +49,6 @@ require_once __DIR__ . '/partials/layout_header.php';
           <div class="event-metric-label">Revenue</div>
         </div>
       </div>
-
-      <?php if (!empty($stats['topPhotos'])): ?>
-        <h3>Top Selling Photos</h3>
-        <ul class="top-selling-list">
-          <?php foreach ($stats['topPhotos'] as $photo): ?>
-            <li>
-              <div class="top-selling-item">
-                <div>
-                  <strong><?= e($photo['public_token']) ?></strong>
-                  <div class="top-selling-meta">
-                    <?= (int)$photo['sales'] ?> sale<?= (int)$photo['sales'] !== 1 ? 's' : '' ?>
-                  </div>
-                </div>
-                <div>
-                  <?= e(format_pence((int)$photo['revenue'], $currencyCode)) ?>
-                </div>
-              </div>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      <?php else: ?>
-        <p class="empty-section">No sales yet.</p>
-      <?php endif; ?>
     </div>
   <?php endforeach; ?>
 

@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../lib/rate_limit.php';
 require_once __DIR__ . '/event.php';
 
 /**
- * GET /api/photos?event=slug&session=slug&kart=&driver=&class=
+ * GET /api/photos?event=slug&session=slug&kart=&class=
  * Returns just the grid HTML fragment for the JS-driven filter bar
  * (docs/architecture.md section 4, step 3). Reuses fetch_gallery_media()
  * from event.php so filtered results never drift from the full page.
@@ -53,7 +53,6 @@ function public_api_photos_controller(PDO $pdo, array $config): void {
 
     $filters = [
         'kart' => trim((string)($_GET['kart'] ?? '')),
-        'driver' => trim((string)($_GET['driver'] ?? '')),
         'class' => trim((string)($_GET['class'] ?? '')),
     ];
 

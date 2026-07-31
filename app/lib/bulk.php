@@ -46,6 +46,7 @@ function bulk_tag_photos(PDO $pdo, array $photoIds, array $tags): int {
                 ]);
                 $inserted += $stmt->rowCount();
             } catch (PDOException $e) {
+                error_log('bulk: bulk_tag_photos() failed: ' . $e->getMessage());
                 if (strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
                     continue;
                 }

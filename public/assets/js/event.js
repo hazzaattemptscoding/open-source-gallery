@@ -223,12 +223,12 @@ if (searchInput) {
     let visibleCount = 0;
 
     thumbs.forEach(thumb => {
+      // Kart and class only. Driver names are not present in the public
+      // markup, so there is nothing to match against and nothing to leak.
       const kart = (thumb.dataset.kartTags || '').toLowerCase();
-      const driver = (thumb.dataset.driverTags || '').toLowerCase();
       const classList = (thumb.dataset.classTags || '').toLowerCase();
       const matches = query === '' ||
                       kart.includes(query) ||
-                      driver.includes(query) ||
                       classList.includes(query);
       thumb.style.display = matches ? '' : 'none';
       if (matches) visibleCount++;

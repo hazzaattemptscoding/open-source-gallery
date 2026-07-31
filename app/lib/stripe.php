@@ -70,7 +70,11 @@ function stripe_verify_webhook_signature(string $payload, string $signature, str
     $timestampTime = (int)$timestamp;
     $timeTolerance = 300;
 
-    if ($currentTime - $timestampTime > $timeTolerance) {
+    // abs(), not a one-sided check: comparing only currentTime - timestamp
+    // rejects stale replays but accepts a timestamp arbitrarily far in the
+    // future, which is exactly what an attacker with a leaked signature would
+    // send to keep it valid indefinitely. The window is +/- 5 minutes.
+    if (abs($currentTime - $timestampTime) > $timeTolerance) {
         return false;
     }
 

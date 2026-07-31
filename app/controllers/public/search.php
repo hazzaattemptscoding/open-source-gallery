@@ -31,9 +31,7 @@ function public_search_controller(PDO $pdo, array $config): void {
     if (!empty($_GET['kart'])) {
         $filters['kart'] = (string)$_GET['kart'];
     }
-    if (!empty($_GET['driver'])) {
-        $filters['driver'] = (string)$_GET['driver'];
-    }
+    // ?driver= is deliberately not accepted: see app/lib/search.php.
     if (!empty($_GET['class'])) {
         $filters['class'] = (string)$_GET['class'];
     }
@@ -90,9 +88,6 @@ function public_search_api_controller(PDO $pdo, array $config): void {
     }
     if (!empty($_GET['kart'])) {
         $filters['kart'] = (string)$_GET['kart'];
-    }
-    if (!empty($_GET['driver'])) {
-        $filters['driver'] = (string)$_GET['driver'];
     }
     if (!empty($_GET['class'])) {
         $filters['class'] = (string)$_GET['class'];

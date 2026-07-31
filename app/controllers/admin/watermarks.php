@@ -29,34 +29,103 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
             echo 'CSRF verification failed.';
             return;
         }
-        try {
-            $stmt = $pdo->prepare(<<<'SQL'
-                UPDATE watermark_settings
-                SET position = ?, opacity = ?, text = ?, enabled = ?, apply_to_sizes = ?
-                WHERE id = 1
-            SQL);
 
-            if ($stmt->execute([
-                $_POST['position'] ?? 'bottom_right',
-                (float)($_POST['opacity'] ?? 0.8),
-                $_POST['text'] ?? '',
-                isset($_POST['enabled']) ? 1 : 0,
-                $_POST['apply_to_sizes'] ?? 'sm,md,lg',
-            ])) {
+        $action = $_POST['action'] ?? 'update';
+
+        try {
+            if ($action === 'save_preset') {
+                // Save current settings as a preset
+                $presetName = trim($_POST['preset_name'] ?? '');
+                if (!$presetName) {
+                    $errors[] = 'Preset name is required.';
+                } else {
+                    $preset = [
+                        'name' => $presetName,
+                        'position' => $_POST['position'] ?? 'bottom_right',
+                        'opacity' => (float)($_POST['opacity'] ?? 0.8),
+                        'text' => $_POST['text'] ?? '',
+                        'enabled' => isset($_POST['enabled']) ? 1 : 0,
+                        'apply_to_sizes' => $_POST['apply_to_sizes'] ?? 'sm,md,lg',
+                    ];
+
+                    $stmt = $pdo->prepare('SELECT presets FROM watermark_settings WHERE id = 1');
+                    $stmt->execute();
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $presets = $row ? (json_decode($row['presets'] ?? '[]', true) ?: []) : [];
+
+                    // Replace if preset exists, otherwise add
+                    $presets = array_filter($presets, fn($p) => $p['name'] !== $presetName);
+                    $presets[] = $preset;
+
+                    $stmt = $pdo->prepare('UPDATE watermark_settings SET presets = ? WHERE id = 1');
+                    $stmt->execute([json_encode($presets)]);
+                    audit_log($pdo, 'admin', 'watermark_preset_save', 'presets', null, ['name' => $presetName], client_ip());
+                    $success = 'preset_saved';
+                }
+            } elseif ($action === 'load_preset') {
+                $presetName = $_POST['preset_name'] ?? '';
+                $stmt = $pdo->prepare('SELECT presets FROM watermark_settings WHERE id = 1');
+                $stmt->execute();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $presets = $row ? (json_decode($row['presets'] ?? '[]', true) ?: []) : [];
+                $preset = array_filter($presets, fn($p) => $p['name'] === $presetName)[0] ?? null;
+
+                if ($preset) {
+                    $stmt = $pdo->prepare(<<<'SQL'
+                        UPDATE watermark_settings
+                        SET position = ?, opacity = ?, text = ?, enabled = ?, apply_to_sizes = ?
+                        WHERE id = 1
+                    SQL);
+                    $stmt->execute([$preset['position'], $preset['opacity'], $preset['text'], $preset['enabled'], $preset['apply_to_sizes']]);
+                    audit_log($pdo, 'admin', 'watermark_preset_load', 'presets', null, ['name' => $presetName], client_ip());
+                    $success = 'preset_loaded';
+                }
+            } elseif ($action === 'delete_preset') {
+                $presetName = $_POST['preset_name'] ?? '';
+                $stmt = $pdo->prepare('SELECT presets FROM watermark_settings WHERE id = 1');
+                $stmt->execute();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $presets = $row ? (json_decode($row['presets'] ?? '[]', true) ?: []) : [];
+                $presets = array_filter($presets, fn($p) => $p['name'] !== $presetName);
+
+                $stmt = $pdo->prepare('UPDATE watermark_settings SET presets = ? WHERE id = 1');
+                $stmt->execute([json_encode(array_values($presets))]);
+                audit_log($pdo, 'admin', 'watermark_preset_delete', 'presets', null, ['name' => $presetName], client_ip());
+                $success = 'preset_deleted';
+            } else {
+                // Update current settings
+                $stmt = $pdo->prepare(<<<'SQL'
+                    UPDATE watermark_settings
+                    SET position = ?, opacity = ?, text = ?, enabled = ?, apply_to_sizes = ?
+                    WHERE id = 1
+                SQL);
+
+                $stmt->execute([
+                    $_POST['position'] ?? 'bottom_right',
+                    (float)($_POST['opacity'] ?? 0.8),
+                    $_POST['text'] ?? '',
+                    isset($_POST['enabled']) ? 1 : 0,
+                    $_POST['apply_to_sizes'] ?? 'sm,md,lg',
+                ]);
                 audit_log($pdo, 'admin', 'update_watermark', 'settings', null, [], client_ip());
-                header('Location: /admin/watermarks?success=1');
-                exit;
+                $success = 'settings_updated';
             }
+
+            header('Location: /admin/watermarks?success=' . urlencode((string)$success));
+            exit;
         } catch (Throwable $e) {
+            error_log('watermarks: ' . $e->getMessage());
             $errors[] = 'Failed to update watermark settings';
         }
     }
 
     try {
-        $stmt = $pdo->query('SELECT id, position, opacity, scale, text, enabled, updated_at FROM watermark_settings LIMIT 1');
+        $stmt = $pdo->query('SELECT id, position, opacity, scale, text, enabled, updated_at, presets FROM watermark_settings LIMIT 1');
         $settings = $stmt->fetch(PDO::FETCH_ASSOC);
+        $presets = $settings ? (json_decode($settings['presets'] ?? '[]', true) ?: []) : [];
     } catch (Throwable $e) {
         $settings = null;
+        $presets = [];
     }
 
     render(__DIR__ . '/../../views/admin/watermarks.php', [
@@ -65,6 +134,7 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'csrfToken' => csrf_token(),
         'settings' => $settings,
+        'presets' => $presets,
         'errors' => $errors,
         'success' => $success,
     ]);

@@ -1,0 +1,8 @@
+# app/ holds controllers, views, and libraries. Nothing in here is meant to be
+# requested directly: every entry point goes through public/index.php. Denying
+# the directory is a second layer under "the docroot is public/", for the same
+# reason config/ and storage/ carry one. On a shared host a docroot pointed one
+# level too high would otherwise expose source, including database credentials
+# read into config at runtime.
+# See docs/architecture.md section 6 (security requirements -> enforcement map).
+Require all denied

@@ -1,14 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($isNew ? 'Create session' : 'Edit session') ?>: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/assets/css/admin.css">
-<link rel="stylesheet" href="/assets/css/admin-refined.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Sessions';
+$currentPage = 'events';
+require_once __DIR__ . '/../partials/layout_header.php';
+?>
 <div class="dashboard">
   <h1><?= e($isNew ? 'Create session' : 'Edit session') ?></h1>
   <p><a href="/admin/sessions?event=<?= e($eventId) ?>">← Back to sessions</a></p>
@@ -36,5 +30,4 @@
     <button type="submit"><?= e($isNew ? 'Create session' : 'Update session') ?></button>
   </form>
 </div>
-</body>
-</html>
+<?php require_once __DIR__ . '/../partials/layout_footer.php'; ?>

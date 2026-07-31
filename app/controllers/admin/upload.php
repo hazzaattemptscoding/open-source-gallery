@@ -60,8 +60,8 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
         return;
     }
 
-    $batchId = init_upload_batch($pdo, $sessionId);
     $response = ['accepted' => [], 'rejected' => []];
+    $batchId = null;
 
     foreach ($fileStrings as $fileString) {
         $file = json_decode($fileString, true);
@@ -79,13 +79,36 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
         }
 
         $chunksTotal = (int)ceil($fileSize / CHUNK_SIZE);
-        $fileId = register_upload_file($pdo, $batchId, $fileName, $fileSize, $chunksTotal);
+
+        // Check for existing upload in progress to enable resumption
+        $stmt = $pdo->prepare(<<<'SQL'
+            SELECT uf.id, uf.batch_id, uf.chunks_received
+            FROM upload_files uf
+            JOIN upload_batches ub ON uf.batch_id = ub.id
+            WHERE ub.session_id = ? AND uf.client_name = ? AND uf.size_bytes = ? AND uf.status = ?
+            LIMIT 1
+        SQL);
+        $stmt->execute([$sessionId, $fileName, $fileSize, 'uploading']);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing) {
+            $fileId = (int)$existing['id'];
+            $batchId = (int)$existing['batch_id'];
+            $chunksReceived = (int)$existing['chunks_received'];
+        } else {
+            if ($batchId === null) {
+                $batchId = init_upload_batch($pdo, $sessionId);
+            }
+            $fileId = register_upload_file($pdo, $batchId, $fileName, $fileSize, $chunksTotal);
+            $chunksReceived = 0;
+        }
 
         $response['accepted'][] = [
             'file_id' => $fileId,
             'name' => $fileName,
             'size' => $fileSize,
             'chunks_total' => $chunksTotal,
+            'chunks_received' => $chunksReceived,
         ];
     }
 

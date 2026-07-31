@@ -24,6 +24,7 @@ function create_api_key(PDO $pdo, int $adminId, string $name, array $permissions
         }
         return null;
     } catch (Throwable $e) {
+        error_log('api: create_api_key() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -48,6 +49,7 @@ function validate_api_key(PDO $pdo, string $providedKey): ?array {
 
         return $key;
     } catch (Throwable $e) {
+        error_log('api: validate_api_key() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -71,6 +73,11 @@ function log_api_request(PDO $pdo, int $keyId, string $endpoint, string $method,
         SQL);
         $stmt->execute([$keyId, $endpoint, $method, $statusCode, $responseTimeMs]);
     } catch (Throwable $e) {
+        // Never let request logging break the request it is logging, but do
+        // not swallow it either: silent loss here means the API audit trail
+        // quietly develops holes, which is the one thing an audit trail
+        // cannot afford.
+        error_log('api: log_api_request() failed: ' . $e->getMessage());
     }
 }
 
@@ -93,6 +100,7 @@ function api_get_photos(PDO $pdo, int $page = 1, int $perPage = 50): array {
         $stmt->execute([$perPage, $offset]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
+        error_log('api: api_get_photos() failed: ' . $e->getMessage());
         return [];
     }
 }
@@ -113,6 +121,7 @@ function api_get_photo(PDO $pdo, int $photoId): ?array {
         $stmt->execute([$photoId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
+        error_log('api: api_get_photo() failed: ' . $e->getMessage());
         return null;
     }
 }
@@ -125,6 +134,7 @@ function revoke_api_key(PDO $pdo, int $keyId): bool {
         $stmt = $pdo->prepare('UPDATE api_keys SET enabled = 0 WHERE id = ?');
         return $stmt->execute([$keyId]);
     } catch (Throwable $e) {
+        error_log('api: revoke_api_key() failed: ' . $e->getMessage());
         return false;
     }
 }

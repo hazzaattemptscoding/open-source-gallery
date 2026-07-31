@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/audit.php';
+require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_tagging_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -17,6 +18,15 @@ function admin_tagging_controller(PDO $pdo, array $config): void {
     if ($path === '/admin/photos/tags' && $method === 'GET') {
         show_tagging_ui($pdo, $config, $sessionId);
     } elseif ($path === '/admin/photos/tags/bulk' && $method === 'POST') {
+        // The token arrives as a header because this endpoint takes a JSON
+        // body, not a form post. Checked before any work happens, matching
+        // every other admin mutation in this codebase.
+        if (!csrf_verify($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['error' => 'CSRF verification failed']);
+            return;
+        }
         handle_bulk_tagging($pdo, $config, $adminId, $ip);
     } else {
         http_response_code(404);
@@ -52,7 +62,8 @@ function show_tagging_ui(PDO $pdo, array $config, ?int $sessionId): void {
     $eventEntries = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $selectedPhotos = [];
-    render(__DIR__ . '/../../views/admin/photos/tags.php', compact('siteName', 'sessionId', 'photos', 'eventEntries', 'selectedPhotos'));
+    $csrfToken = csrf_token();
+    render(__DIR__ . '/../../views/admin/photos/tags.php', compact('siteName', 'sessionId', 'photos', 'eventEntries', 'selectedPhotos', 'csrfToken'));
 }
 
 function handle_bulk_tagging(PDO $pdo, array $config, int $adminId, string $ip): void {

@@ -53,6 +53,7 @@ function create_order(PDO $pdo, array $config, string $email, array $lines, int 
             'status' => 'pending',
         ];
     } catch (Throwable $e) {
+        error_log('orders: create_order() failed: ' . $e->getMessage());
         $pdo->rollBack();
         throw $e;
     }

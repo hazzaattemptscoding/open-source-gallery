@@ -31,10 +31,11 @@ if (isset($pageTitle) && $metaDescription) {
     echo '<title>' . e($pageTitle ?? $siteName) . '</title>';
 }
 
-// Generate structured data if event is provided (for event pages)
+// Generate structured data if event is provided (for event pages).
+// seo.php is already required at the top of this file; generate_event_schema()
+// takes the config first, then the event, then an optional image URL.
 if (isset($event)) {
-    require_once __DIR__ . '/../../lib/seo.php';
-    echo generate_event_schema($event) ?? '';
+    echo generate_event_schema($GLOBALS['config'], $event, $metaImageUrl);
 }
 ?>
 <link rel="stylesheet" href="/api/styles.css">

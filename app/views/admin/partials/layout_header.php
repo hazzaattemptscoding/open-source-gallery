@@ -103,9 +103,9 @@
     </nav>
 
     <!-- Logout -->
-    <nav class="admin-nav-group" style="margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem;">
-      <form method="post" action="/admin/logout" style="margin: 0;">
-        <button type="submit" class="admin-nav-link" style="width: 100%; text-align: left; border: none; background: none; padding-left: 2rem;">
+    <nav class="admin-nav-group admin-nav-group-logout">
+      <form method="post" action="/admin/logout" class="admin-logout-form">
+        <button type="submit" class="admin-nav-link admin-logout-button">
           <span class="admin-nav-link-icon"></span>
           <span>Log out</span>
         </button>

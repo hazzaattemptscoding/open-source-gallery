@@ -38,9 +38,8 @@ require __DIR__ . '/partials/layout_header.php';
 <!-- Conditional filter dropdowns -->
 <?php
 $hasKartFilter = !empty($kartOptions);
-$hasDriverFilter = !empty($driverOptions);
 $hasClassFilter = !empty($classOptions);
-$hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
+$hasAnyFilter = $hasKartFilter || $hasClassFilter;
 ?>
 
 <?php if ($hasAnyFilter): ?>
@@ -57,15 +56,6 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
     </select>
   <?php endif; ?>
 
-  <?php if ($hasDriverFilter): ?>
-    <select name="driver" id="filterDriver">
-      <option value="">All drivers</option>
-      <?php foreach ($driverOptions as $driver): ?>
-        <option value="<?= e($driver) ?>" <?= $filters['driver'] === $driver ? 'selected' : '' ?>><?= e($driver) ?></option>
-      <?php endforeach; ?>
-    </select>
-  <?php endif; ?>
-
   <?php if ($hasClassFilter): ?>
     <select name="class" id="filterClass">
       <option value="">All classes</option>
@@ -76,7 +66,7 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
   <?php endif; ?>
 
   <button type="submit">Filter</button>
-  <?php if ($filters['kart'] || $filters['driver'] || $filters['class']): ?>
+  <?php if ($filters['kart'] || $filters['class']): ?>
     <button type="button" class="clear-filters" data-clear-href="<?= e($basePath) ?>">Clear</button>
   <?php endif; ?>
 </form>
