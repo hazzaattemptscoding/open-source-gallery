@@ -45,6 +45,71 @@ require_once __DIR__ . '/../partials/layout_header.php';
 
     <button type="submit"><?= e($isNew ? 'Create event' : 'Update event') ?></button>
   </form>
+
+  <?php if (!$isNew): ?>
+    <section class="entries-section">
+      <h2>Entry list</h2>
+      <p class="hint">
+        The kart numbers and classes here fill the tagging screen's lookup and the
+        gallery's kart filter. Driver names are used for tagging only and are never
+        shown on a public page.
+      </p>
+
+      <?php if ($entriesError): ?>
+        <div class="error"><?= e($entriesError) ?></div>
+      <?php elseif ($entriesOk !== null): ?>
+        <div class="success">
+          Imported <?= (int)$entriesOk ?> entr<?= $entriesOk === 1 ? 'y' : 'ies' ?>.
+          <?php if ($entriesNotes): ?><br><?= e($entriesNotes) ?><?php endif; ?>
+        </div>
+      <?php endif; ?>
+
+      <form method="post" action="/admin/events/<?= (int)$event['id'] ?>/entries" enctype="multipart/form-data" class="form-narrow">
+        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+
+        <label for="entries_csv">Paste rows</label>
+        <textarea id="entries_csv" name="entries_csv" rows="6"
+                  placeholder="Kart,Driver,Class&#10;23,Sam Taylor,Junior Rotax&#10;7,Alex Reed,Senior Rotax"></textarea>
+        <p class="hint">
+          One entry per line: kart number, driver, class. A header row is optional,
+          and its columns can be in any order. Kart number is the only required field.
+        </p>
+
+        <label for="entries_file">Or upload a CSV</label>
+        <input type="file" id="entries_file" name="entries_file" accept=".csv,text/csv">
+
+        <fieldset class="entries-mode">
+          <legend>If entries already exist</legend>
+          <label><input type="radio" name="import_mode" value="replace" checked> Replace them</label>
+          <label><input type="radio" name="import_mode" value="append"> Keep them and add new ones</label>
+        </fieldset>
+
+        <button type="submit">Import entries</button>
+      </form>
+
+      <?php if ($entries): ?>
+        <h3><?= count($entries) ?> current entr<?= count($entries) === 1 ? 'y' : 'ies' ?></h3>
+        <div class="table-scroll">
+          <table class="entries-table">
+            <thead>
+              <tr><th>Kart</th><th>Driver</th><th>Class</th></tr>
+            </thead>
+            <tbody>
+              <?php foreach ($entries as $entry): ?>
+                <tr>
+                  <td><?= e($entry['kart_number']) ?></td>
+                  <td><?= e($entry['driver_name']) ?></td>
+                  <td><?= e($entry['class']) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php else: ?>
+        <p class="hint">No entries yet. Tagging autocomplete and the kart filter stay empty until you import some.</p>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
 </div>
 
 <?php require_once __DIR__ . '/../partials/layout_footer.php'; ?>
