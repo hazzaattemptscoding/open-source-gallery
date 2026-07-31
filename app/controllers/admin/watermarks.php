@@ -68,7 +68,16 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
                 $stmt->execute();
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
                 $presets = $row ? (json_decode($row['presets'] ?? '[]', true) ?: []) : [];
-                $preset = array_filter($presets, fn($p) => $p['name'] === $presetName)[0] ?? null;
+                // array_values before [0]: array_filter preserves the original
+                // keys, so indexing [0] found a preset only when it happened to
+                // be the first one saved. Every other preset silently failed to
+                // load and the page just redirected as though it had worked.
+                $matches = array_values(array_filter($presets, fn($p) => $p['name'] === $presetName));
+                $preset = $matches[0] ?? null;
+
+                if (!$preset) {
+                    $errors[] = 'That preset no longer exists.';
+                }
 
                 if ($preset) {
                     $stmt = $pdo->prepare(<<<'SQL'
@@ -111,8 +120,13 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
                 $success = 'settings_updated';
             }
 
-            header('Location: /admin/watermarks?success=' . urlencode((string)$success));
-            exit;
+            // Only redirect on success. Errors collected above (an unknown
+            // preset, a blank name) have to survive to the render below, and a
+            // redirect to ?success= would throw them away.
+            if (!$errors) {
+                header('Location: /admin/watermarks?success=' . urlencode((string)$success));
+                exit;
+            }
         } catch (Throwable $e) {
             error_log('watermarks: ' . $e->getMessage());
             $errors[] = 'Failed to update watermark settings';
@@ -120,10 +134,16 @@ function admin_watermarks_controller(PDO $pdo, array $config): void {
     }
 
     try {
-        $stmt = $pdo->query('SELECT id, position, opacity, scale, text, enabled, updated_at, presets FROM watermark_settings LIMIT 1');
+        $stmt = $pdo->query('SELECT id, position, opacity, text, enabled, apply_to_sizes, updated_at, presets FROM watermark_settings LIMIT 1');
         $settings = $stmt->fetch(PDO::FETCH_ASSOC);
         $presets = $settings ? (json_decode($settings['presets'] ?? '[]', true) ?: []) : [];
     } catch (Throwable $e) {
+        // This catch hid a missing `presets` column for the whole life of the
+        // presets feature: the query threw, settings came back null, and the
+        // page rendered as though there were simply no presets yet. Log it, and
+        // tell the admin the page is degraded rather than quietly lying.
+        error_log('watermarks: settings query failed: ' . $e->getMessage());
+        $errors[] = 'Could not load watermark settings. Check that migrations are up to date on the Migrations page.';
         $settings = null;
         $presets = [];
     }
