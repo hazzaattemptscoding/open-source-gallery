@@ -7,7 +7,9 @@ require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/auth.php';
 
 /**
- * GET /admin/stats — sales dashboard with top photos and event performance.
+ * GET /admin/stats — sales dashboard showing event performance.
+ * Shows revenue and order count per event. Admins drill down by clicking an
+ * event title to see order detail and photo performance per-session.
  */
 function admin_stats_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -28,13 +30,11 @@ function admin_stats_controller(PDO $pdo, array $config): void {
         $eventId = (int)$event['id'];
         $revenue = get_event_revenue($pdo, $eventId);
         $orderCount = get_event_order_count($pdo, $eventId);
-        $topPhotos = get_top_photos_by_sales($pdo, $eventId, 5);
 
         $eventStats[] = [
             'event' => $event,
             'revenue' => $revenue,
             'orderCount' => $orderCount,
-            'topPhotos' => $topPhotos,
         ];
     }
 
