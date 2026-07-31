@@ -73,7 +73,7 @@ Each task is written to be picked up by a fresh session with no other context. R
 - [x] **C4. Watermark presets UI.**
   The hard part already exists: watermarked previews with clean originals delivered post-payment. This is only a preset management UI on top (`app/controllers/admin/watermarks.php` is the existing surface). Do not touch the delivery path.
   Skills: emil-design-eng, design-taste-frontend.
-  **Status**: Complete in commit `0a71922`. Preset save/load/delete UI added with success message handling and alert styling.
+  **Status**: UI added in commit `0a71922`, but it did not work: it read and wrote a `presets` column that no migration created, so every operation threw into a silent catch. Actually functional as of `f55e181` (migration 011 plus three further bugs, see Round 2 below). The `0a71922` status line originally claimed this was complete; it had never been run against a database.
 
 ## Phase D: dedicated-session builds. Do not compress these into other work.
 
@@ -113,6 +113,43 @@ Each task is written to be picked up by a fresh session with no other context. R
 - **Kart-number OCR**: needs B1's closed set first. Revisit after B1 ships.
 - **Zero-result search logging** (backlog §5): still worth building, small; natural follow-on to B1 since `event_entries` is what makes the logs interpretable. Slot after B1 if there is room.
 - **"Total Orders" stat box**: code is clean, symptom unexplained. Needs a screenshot from the maintainer, not another blind code pass.
+
+## Round 2: maintainer feedback after testing
+
+Eight issues raised from hands-on testing. All closed.
+
+| # | Issue | Commit | Notes |
+| --- | --- | --- | --- |
+| 1 | Settings page toggle dead | `bd44d97` | `admin-common.js` wires `data-href` but only loaded on some pages. Moved to the shared footer. |
+| 2 | Setup page unreadable in dark mode | `bd44d97` | Dropped the `.auth-page` gradient, added a theme-aware `--error-bg`. |
+| 3 | Upload progress lost on navigation | `ced1810` | Already closed by D1. |
+| 4 | Flat admin navigation | `0326b4b` | Five task-based groups as `<details>`; nav declared as data; collapse state persisted per group. |
+| 5 | Email templates all expanded | `4529e94` | Templates and the queue log collapse. The view was also discarding `$success`/`$errors`, so saves gave no feedback. |
+| 6 | Admin pages front-load explanation | `adcce07` | Export/health/watermark reference material collapsed; last inline styles retired. |
+| 7 | No API documentation | `8bfd74b` | `docs/API.md` rewritten against the code. |
+| 8 | Homepage is one flat grid | `4f43888` | Hero, scroll-snap rail, archive grouped by year. |
+
+### Defects found while doing the above, each fixed in place
+
+These were not on any list. They are recorded because in every case the code
+looked finished and the failure was silent.
+
+- **Watermark presets never worked** (`f55e181`). The C4 UI read and wrote
+  `watermark_settings.presets`, a column no migration ever created. Every
+  operation threw into a catch that logged nothing. Added migration 011. The
+  same query also selected a `scale` column that has never existed and omitted
+  `apply_to_sizes`, which the form renders; `load_preset` indexed
+  `array_filter()` at `[0]`, so only the first preset saved could ever load;
+  and Delete used an inline `onsubmit` confirm that the admin CSP blocks, so it
+  fired without confirming.
+- **Home hero and every event's social image 404'd** (`f50e9d0`). Both
+  requested a `-1200` derivative; the pipeline generates 400/800/1600 only.
+- **Nav hover and active states were invisible in dark mode** (`0326b4b`).
+  Hardcoded `rgba(0,0,0,0.03)`/`0.05` on a near-black sidebar.
+
+The lesson worth carrying: four of these shipped as "complete" in the C/D
+phases above without ever being exercised against a database or a browser. A
+green `php -l` is not evidence a feature works.
 
 ## Conflicts and discrepancies, stated once
 
