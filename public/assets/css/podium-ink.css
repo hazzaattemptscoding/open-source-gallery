@@ -637,10 +637,78 @@ button:disabled,
   font-size: 1.1rem;
 }
 
+.event-card-body h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
 .event-card-meta {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+
+/* Home page sections */
+
+.home-section + .home-section {
+  margin-top: var(--space-8);
+}
+
+.home-section-title {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * Recent galleries: a scroll-snapped rail, not a carousel widget. The site
+ * ships no JavaScript bundler and no third-party libraries, so the browser's
+ * own overflow scrolling does the work — it keeps keyboard and trackpad
+ * scrolling, momentum, and screen-reader order for free, which a hand-rolled
+ * transform carousel would each have to reimplement.
+ *
+ * Where three cards fit, this is indistinguishable from a row.
+ */
+.event-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(280px, 1fr);
+  gap: var(--space-5);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* Room for the card's focus ring and hover lift, which a tight overflow
+     box would otherwise clip. */
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
+}
+
+.event-rail > .event-card {
+  scroll-snap-align: start;
+}
+
+/* Above three-card width the rail has nothing to scroll, so let the cards
+   spread into the available space instead of leaving a gap on the right. */
+@media (min-width: 1100px) {
+  .event-rail {
+    grid-auto-columns: 1fr;
+    overflow-x: visible;
+  }
+}
+
+.archive-year + .archive-year {
+  margin-top: var(--space-7);
+}
+
+.archive-year-title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Hero */
