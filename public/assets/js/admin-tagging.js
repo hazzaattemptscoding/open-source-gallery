@@ -133,7 +133,10 @@ async function applyTags() {
   try {
     const response = await fetch('/admin/photos/tags/bulk', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': photosGrid.dataset.csrfToken || '',
+      },
       body: JSON.stringify({
         photo_ids: Array.from(selectedPhotos),
         tags: pendingTags,

@@ -41,7 +41,9 @@
   </div>
 
   <h3>Photos in this session</h3>
-  <div class="tag-photos-grid" id="photosGrid" data-event-entries="<?= e(json_encode($eventEntries ?? [])) ?>">
+  <div class="tag-photos-grid" id="photosGrid"
+       data-event-entries="<?= e(json_encode($eventEntries ?? [])) ?>"
+       data-csrf-token="<?= e($csrfToken) ?>">
     <?php foreach ($photos as $photo): ?>
       <div class="tag-photo-thumb" data-photo-id="<?= (int)$photo['id'] ?>">
         <img src="/media/d/<?= e($photo['public_token']) ?>-400.jpg" alt="">
