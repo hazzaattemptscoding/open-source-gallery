@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cart.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/db_compat.php';
+require_once __DIR__ . '/../../lib/driver_privacy.php';
 
 /**
  * Event page, matching both /e/{event-slug} (full-event grid across all
@@ -83,11 +84,27 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     $photos = fetch_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
     $videos = fetch_gallery_media($pdo, $eventId, $sessionId, 'video', $filters);
 
+    // Redact driver names based on visibility settings
+    foreach ($photos as &$photo) {
+        $photo['driver_tags'] = redact_driver_tags($photo['driver_tags'], $driverVisibility);
+    }
+    foreach ($videos as &$video) {
+        $video['driver_tags'] = redact_driver_tags($video['driver_tags'], $driverVisibility);
+    }
+
+    // Load driver visibility settings
+    $driverVisibility = load_driver_visibility($pdo, $eventId);
+
     $stmt = $pdo->prepare('SELECT DISTINCT kart_number FROM event_entries WHERE event_id = ? AND kart_number <> \'\' ORDER BY kart_number ASC');
     $stmt->execute([$eventId]);
     $kartOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    $stmt = $pdo->prepare('SELECT DISTINCT driver_name FROM event_entries WHERE event_id = ? AND driver_name <> \'\' ORDER BY driver_name ASC');
+    // Only show driver names that are set to 'full' visibility
+    $stmt = $pdo->prepare('
+        SELECT DISTINCT driver_name FROM event_entries
+        WHERE event_id = ? AND driver_name <> \'\' AND drivers_visibility = \'full\'
+        ORDER BY driver_name ASC
+    ');
     $stmt->execute([$eventId]);
     $driverOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
