@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../lib/seo.php';
 $pageTitle = $siteName;
 $metaDescription = 'Professional sports photography gallery and sales platform';
 $metaUrl = $GLOBALS['config']['site']['url'] ?? 'https://example.com';

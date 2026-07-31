@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../lib/currency.php';
 
 $pageTitle = 'Search: ' . e($siteName);
 $metaDescription = 'Search for photos';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/search';
+$metaUrl = ($GLOBALS['config']['site']['url'] ?? '') . '/search';
 $showCart = false;
 require __DIR__ . '/partials/layout_header.php';
 ?>
