@@ -59,23 +59,6 @@ require __DIR__ . '/partials/layout_header.php';
             </div>
           <?php endif; ?>
 
-          <?php if (!empty($results['facets']['drivers'])): ?>
-            <div class="filter-group">
-              <h3>Drivers</h3>
-              <ul class="filter-list">
-                <?php foreach (array_slice($results['facets']['drivers'], 0, 10) as $driver): ?>
-                  <li>
-                    <label>
-                      <input type="checkbox" name="driver" value="<?= e($driver['driver_name']) ?>"
-                        <?= ($filters['driver'] ?? null) == $driver['driver_name'] ? 'checked' : '' ?>>
-                      <?= e($driver['driver_name']) ?>
-                      <span class="count"><?= e($driver['count']) ?></span>
-                    </label>
-                  </li>
-                <?php endforeach; ?>
-              </ul>
-            </div>
-          <?php endif; ?>
         </aside>
 
         <!-- Main: Results -->
@@ -115,7 +98,6 @@ require __DIR__ . '/partials/layout_header.php';
                 if (!empty($query)) $filterParams[] = 'q=' . urlencode($query);
                 if (!empty($filters['event_id'])) $filterParams[] = 'event=' . (int)$filters['event_id'];
                 if (!empty($filters['kart'])) $filterParams[] = 'kart=' . urlencode($filters['kart']);
-                if (!empty($filters['driver'])) $filterParams[] = 'driver=' . urlencode($filters['driver']);
                 if (!empty($filters['class'])) $filterParams[] = 'class=' . urlencode($filters['class']);
                 if (!empty($filters['price_min'])) $filterParams[] = 'price_min=' . (int)$filters['price_min'];
                 if (!empty($filters['price_max'])) $filterParams[] = 'price_max=' . (int)$filters['price_max'];
@@ -152,7 +134,7 @@ require __DIR__ . '/partials/layout_header.php';
 
     <div class="search-no-results">
       <h2>Enter a search query</h2>
-      <p>Search for photos by filename, kart number, driver name, or class.</p>
+      <p>Search for photos by filename, kart number, or class.</p>
     </div>
 
   <?php endif; ?>

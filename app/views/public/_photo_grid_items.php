@@ -16,7 +16,6 @@ require_once __DIR__ . '/../../lib/seo.php';
     <div class="photo-thumb"
          data-index="<?= (int)$index ?>"
          data-kart-tags="<?= e($photo['kart_tags'] ?? '') ?>"
-         data-driver-tags="<?= e($photo['driver_tags'] ?? '') ?>"
          data-class-tags="<?= e($photo['class_tags'] ?? '') ?>">
       <img
         src="/media/d/<?= e($photo['public_token']) ?>-800.jpg"

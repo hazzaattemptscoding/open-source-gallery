@@ -1,7 +1,7 @@
 <?php
 /**
  * Full-text search and advanced filtering for photos.
- * Searches: original_filename, captions, tags (kart, driver, class)
+ * Searches: original_filename, captions, tags (kart, class)
  * Uses caching for facets and trending photos.
  */
 
@@ -46,14 +46,15 @@ function search_photos(
 
     // Full-text search (if query provided)
     if (!empty($query)) {
+        // driver_name is not searchable: matching it would let anyone confirm
+        // whether a named driver (often a minor) appears in the galleries.
         $sql .= ' AND (
             p.original_filename LIKE ?
             OR t.kart_number LIKE ?
-            OR t.driver_name LIKE ?
             OR t.class LIKE ?
         )';
         $searchTerm = '%' . $query . '%';
-        $params = array_fill(0, 4, $searchTerm);
+        $params = array_fill(0, 3, $searchTerm);
     }
 
     // Apply filters
@@ -65,11 +66,6 @@ function search_photos(
     if (!empty($filters['kart'])) {
         $sql .= ' AND t.kart_number = ?';
         $params[] = (string)$filters['kart'];
-    }
-
-    if (!empty($filters['driver'])) {
-        $sql .= ' AND t.driver_name = ?';
-        $params[] = (string)$filters['driver'];
     }
 
     if (!empty($filters['class'])) {
@@ -101,11 +97,10 @@ function search_photos(
         $countSql .= ' AND (
             p.original_filename LIKE ?
             OR t.kart_number LIKE ?
-            OR t.driver_name LIKE ?
             OR t.class LIKE ?
         )';
         $searchTerm = '%' . $query . '%';
-        $countParams = array_fill(0, 4, $searchTerm);
+        $countParams = array_fill(0, 3, $searchTerm);
     } else {
         $countParams = [];
     }
@@ -117,10 +112,6 @@ function search_photos(
     if (!empty($filters['kart'])) {
         $countSql .= ' AND t.kart_number = ?';
         $countParams[] = (string)$filters['kart'];
-    }
-    if (!empty($filters['driver'])) {
-        $countSql .= ' AND t.driver_name = ?';
-        $countParams[] = (string)$filters['driver'];
     }
     if (!empty($filters['class'])) {
         $countSql .= ' AND t.class = ?';
@@ -164,20 +155,24 @@ function search_photos(
 
 /**
  * Get search facets (available filter options).
- * Shows counts for kart numbers, drivers, classes, etc.
+ * Shows counts for kart numbers, classes, etc.
  * Cached for 15 minutes to avoid repeated expensive queries.
  */
 function get_search_facets(PDO $pdo, array $currentFilters = []): array {
-    // Check cache first (15 min TTL).
-    $cacheKey = 'search_facets_all';
+    // Check cache first (15 min TTL). The key is versioned: entries written
+    // before driver names were removed still hold them, and bumping the key
+    // retires those payloads instead of serving them until they expire.
+    $cacheKey = 'search_facets_all_v2';
     if (cache_has($cacheKey)) {
         return cache_get($cacheKey);
     }
 
+    // No 'drivers' facet: a facet list enumerates every driver name in the
+    // system on a public page, which is the worst-case version of the
+    // safeguarding problem this codebase is required to avoid.
     $facets = [
         'events' => [],
         'karts' => [],
-        'drivers' => [],
         'classes' => [],
         'price_ranges' => [
             ['min' => 0, 'max' => 500, 'label' => 'Under £5'],
@@ -210,18 +205,6 @@ function get_search_facets(PDO $pdo, array $currentFilters = []): array {
             LIMIT 50
         SQL);
         $facets['karts'] = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-        // Drivers
-        $stmt = $pdo->query(<<<'SQL'
-            SELECT DISTINCT t.driver_name, COUNT(DISTINCT p.id) as count
-            FROM photo_tags t
-            JOIN photos p ON t.photo_id = p.id
-            WHERE p.status = 'live' AND t.driver_name IS NOT NULL AND t.driver_name != ''
-            GROUP BY t.driver_name
-            ORDER BY t.driver_name
-            LIMIT 100
-        SQL);
-        $facets['drivers'] = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         // Classes
         $stmt = $pdo->query(<<<'SQL'

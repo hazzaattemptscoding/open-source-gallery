@@ -13,7 +13,7 @@ require_once __DIR__ . '/../../lib/db_compat.php';
  * Both render the same template — the only difference is whether the
  * photo/video queries are constrained to one session_id.
  *
- * Filters (?kart=&driver=&class=) live in the query string so the URL is
+ * Filters (?kart=&class=) live in the query string so the URL is
  * always a shareable deep link (docs/architecture.md section 4): the
  * server renders the fully-filtered grid for any URL, JS is progressive
  * enhancement on top via /api/photos.
@@ -62,7 +62,6 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
 
     $filters = [
         'kart' => trim((string)($_GET['kart'] ?? '')),
-        'driver' => trim((string)($_GET['driver'] ?? '')),
         'class' => trim((string)($_GET['class'] ?? '')),
         'date_start' => trim((string)($_GET['date_start'] ?? '')),
         'date_end' => trim((string)($_GET['date_end'] ?? '')),
@@ -87,10 +86,9 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     $stmt->execute([$eventId]);
     $kartOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    $stmt = $pdo->prepare('SELECT DISTINCT driver_name FROM event_entries WHERE event_id = ? AND driver_name <> \'\' ORDER BY driver_name ASC');
-    $stmt->execute([$eventId]);
-    $driverOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
+    // No driver-name option list: event_entries holds real names (often of
+    // minors) and this list would publish every one of them to an
+    // unauthenticated page. Kart number is the public discovery key.
     $stmt = $pdo->prepare('SELECT DISTINCT class FROM event_entries WHERE event_id = ? AND class <> \'\' ORDER BY class ASC');
     $stmt->execute([$eventId]);
     $classOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -124,15 +122,20 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
 
     render(__DIR__ . '/../../views/public/event.php', compact(
         'siteName', 'currencyCode', 'event', 'sessions', 'activeSession', 'sessionId',
-        'filters', 'heroToken', 'photos', 'videos', 'kartOptions', 'driverOptions', 'classOptions',
+        'filters', 'heroToken', 'photos', 'videos', 'kartOptions', 'classOptions',
         'basePath', 'cartCount'
     ));
 }
 
 /**
  * Shared by the full page render and /api/photos so the two can never
- * return different results for the same filters. Filters on kart/driver/class
+ * return different results for the same filters. Filters on kart/class
  * (photo_tags, motorsport-specific) and created_at date range.
+ *
+ * Driver name is deliberately absent from both the filter set and the
+ * selected columns. Drivers are frequently minors, so their names must
+ * never reach a public surface, and a driver filter would also let anyone
+ * probe whether a named child appears in a gallery.
  *
  * @return list<array<string, mixed>>
  */
@@ -151,10 +154,6 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
         $where[] = 'pt.kart_number = ?';
         $params[] = $filters['kart'];
     }
-    if ($filters['driver'] !== '') {
-        $where[] = 'pt.driver_name = ?';
-        $params[] = $filters['driver'];
-    }
     if ($filters['class'] !== '') {
         $where[] = 'pt.class = ?';
         $params[] = $filters['class'];
@@ -171,7 +170,6 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
 
     $select = "SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order,
                GROUP_CONCAT(pt.kart_number) as kart_tags,
-               GROUP_CONCAT(pt.driver_name) as driver_tags,
                GROUP_CONCAT(pt.class) as class_tags";
 
     $sql = "{$select}
