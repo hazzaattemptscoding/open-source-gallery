@@ -951,6 +951,91 @@ details > summary:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   12c. PROGRESSIVE DISCLOSURE
+   ═══════════════════════════════════════════════════════════════
+   Shared shell for reference material an admin reads once and then wants out
+   of the way: legends, compliance notes, secondary forms. The page's actual
+   subject stays visible; this sits under it. */
+
+.admin-disclosure {
+  margin-top: var(--stack);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.admin-disclosure > summary {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.admin-disclosure > summary:hover { color: var(--text); }
+
+.admin-disclosure p,
+.admin-disclosure ul {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  max-width: 68ch;
+}
+
+.page-intro {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  max-width: 68ch;
+  margin-top: calc(var(--space-2) * -1);
+}
+
+/* ---- Export page ---- */
+
+.export-fields {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ---- Health page ---- */
+
+.status-submeta,
+.error-detail {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.error-log-more {
+  margin: var(--space-4) 0 0;
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.status-legend {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+
+.status-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+/* Legend marks read from the same status tokens the indicators use, so the
+   legend cannot drift from what it is explaining. */
+.legend-mark { font-weight: 600; }
+.legend-ok { color: var(--ok); }
+.legend-warning { color: var(--warn); }
+.legend-error { color: var(--bad); }
+
+/* ---- Watermark preview ---- */
+
+.watermark-preview-placeholder {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    13. SEPARATORS, STEPS, SELECTION, UPLOAD
    ═══════════════════════════════════════════════════════════════ */
 
