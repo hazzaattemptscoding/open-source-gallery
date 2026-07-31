@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/assets/css/podium-ink.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
 <link rel="stylesheet" href="/assets/css/admin-refined.css">
+<link rel="stylesheet" href="/assets/css/progress-widget.css">
 <link rel="stylesheet" href="/api/styles.css">
 <?= isset($extraStyles) ? $extraStyles : '' ?>
 </head>
