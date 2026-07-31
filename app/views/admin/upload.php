@@ -70,5 +70,13 @@ require_once __DIR__ . '/partials/layout_header.php';
   <?php endif; ?>
 </div>
 <script src="/assets/js/admin-upload.js" defer></script>
+<script>
+  // Register Service Worker for upload persistence
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/assets/js/service-worker-upload.js').catch(() => {
+      // Silently fail if Service Worker is not available; uploads still work without it
+    });
+  }
+</script>
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>
