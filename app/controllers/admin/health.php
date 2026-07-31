@@ -20,6 +20,8 @@ function admin_health_check_controller(PDO $pdo, array $config): void {
         'storage' => check_storage_health(),
         'recent_errors' => get_recent_errors($pdo),
         'stats' => get_quick_stats($pdo),
+        'job_failures' => get_recent_job_failures($pdo),
+        'job_queue' => get_job_queue_by_type($pdo),
     ];
 
     render(__DIR__ . '/../../views/admin/health.php', [
@@ -59,6 +61,58 @@ function check_database_health(PDO $pdo): array {
             'message' => 'Database connection failed: ' . $e->getMessage(),
             'stats' => [],
         ];
+    }
+}
+
+/**
+ * Failed jobs with the reason they failed.
+ *
+ * A count of failures tells you something is wrong but not what, and
+ * last_error is the one column that answers it. Payload is included because
+ * a failing job is usually only meaningful alongside what it was asked to
+ * do (which photo, which order).
+ *
+ * @return list<array<string, mixed>>
+ */
+function get_recent_job_failures(PDO $pdo, int $limit = 10): array {
+    try {
+        $stmt = $pdo->prepare(<<<'SQL'
+            SELECT id, type, payload, attempts, last_error, run_after, updated_at
+            FROM jobs
+            WHERE status = 'failed'
+            ORDER BY updated_at DESC
+            LIMIT ?
+        SQL);
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        error_log('Health: could not read job failures: ' . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Queue depth broken down by job type.
+ *
+ * A single "pending" number hides which worker is behind. Split by type,
+ * a backlog of derivatives reads very differently from a backlog of emails.
+ *
+ * @return list<array<string, mixed>>
+ */
+function get_job_queue_by_type(PDO $pdo): array {
+    try {
+        $stmt = $pdo->query(<<<'SQL'
+            SELECT type, status, COUNT(*) as count
+            FROM jobs
+            WHERE status IN ('pending', 'running', 'failed')
+            GROUP BY type, status
+            ORDER BY type, status
+        SQL);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        error_log('Health: could not read job queue: ' . $e->getMessage());
+        return [];
     }
 }
 

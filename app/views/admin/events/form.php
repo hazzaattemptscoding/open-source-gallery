@@ -89,8 +89,8 @@ require_once __DIR__ . '/../partials/layout_header.php';
 
       <?php if ($entries): ?>
         <h3><?= count($entries) ?> current entr<?= count($entries) === 1 ? 'y' : 'ies' ?></h3>
-        <div class="table-scroll">
-          <table class="entries-table">
+        <div class="table-wrapper">
+          <table class="admin-table">
             <thead>
               <tr><th>Kart</th><th>Driver</th><th>Class</th></tr>
             </thead>
