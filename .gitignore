@@ -7,12 +7,15 @@ composer.lock
 /storage/tmp/
 /storage/cache/
 /storage/customize/
+/storage/gallery/
 /storage/*.sqlite*
 !/storage/hires/.gitkeep
 !/storage/zips/.gitkeep
 !/storage/tmp/.gitkeep
 !/storage/cache/.gitkeep
 !/storage/customize/.gitkeep
+!/storage/gallery/.gitkeep
+/public/uploads/
 /public/media/d/
 !/public/media/d/.gitkeep
 *.log
