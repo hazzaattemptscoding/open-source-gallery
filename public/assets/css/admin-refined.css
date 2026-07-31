@@ -222,6 +222,7 @@ button[type="submit"]:hover:not(:disabled),
 .btn-pill,
 .btn-choose,
 .btn-add-tag,
+.btn-secondary,
 .clear-filter {
   background: transparent;
   border: 1px solid var(--divider-strong);
@@ -231,6 +232,7 @@ button[type="submit"]:hover:not(:disabled),
 .btn-pill:hover,
 .btn-choose:hover,
 .btn-add-tag:hover,
+.btn-secondary:hover,
 .clear-filter:hover {
   background: var(--bg-alt);
   border-color: var(--text);
@@ -713,22 +715,30 @@ td.value,
   margin: var(--stack-tight) 0;
 }
 
-.error-box,
-.error-message {
+.alert {
   padding: var(--space-3) var(--space-4);
-  background: var(--bad-quiet);
-  color: var(--bad);
   font-size: var(--text-sm);
   margin: var(--stack-tight) 0;
 }
 
+.alert.alert-error,
+.error-box,
+.error-message {
+  background: var(--bad-quiet);
+  color: var(--bad);
+}
+
+.alert.alert-success,
 .success-msg,
 .success-message {
-  padding: var(--space-3) var(--space-4);
   background: var(--ok-quiet);
   color: var(--ok);
-  font-size: var(--text-sm);
-  margin: var(--stack-tight) 0;
+}
+
+.alert.alert-info,
+.info-box {
+  background: var(--accent-quiet);
+  color: var(--accent);
 }
 
 .no-data,
@@ -1260,6 +1270,62 @@ details > summary:hover { color: var(--accent); }
 .contrast-advisor-item[data-level="fail"] { color: var(--error); }
 .contrast-advisor-item[data-level="warn"] { color: var(--text); }
 .contrast-advisor-item[data-level="pass"] { color: var(--text-muted); }
+
+/* ---------------------------------------------------------------------------
+   Watermark presets
+   --------------------------------------------------------------------------- */
+
+.preset-section {
+  margin-top: var(--stack);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.preset-section:first-of-type {
+  margin-top: var(--stack-tight);
+  padding-top: 0;
+  border-top: none;
+}
+
+.preset-form { margin-top: var(--space-3); }
+
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.preset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.preset-item:hover { border-color: var(--divider-strong); }
+
+.preset-info { flex: 1; }
+.preset-info strong { display: block; margin-bottom: var(--space-1); }
+
+.preset-meta {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.preset-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.preset-action-form { display: contents; }
 
 /* Logout sits apart from the navigation groups above it. Previously inline in
    the header partial, so it appeared in the markup of every admin page. */
