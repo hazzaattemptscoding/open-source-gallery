@@ -1279,14 +1279,53 @@
   margin-bottom: 2rem;
 }
 
+/*
+ * Group headers are <summary> elements: the groups are <details>, so collapsing
+ * is native browser behaviour with keyboard support and no JavaScript. The
+ * default disclosure triangle is removed in favour of a chevron drawn on the
+ * right, which keeps the label flush with the links beneath it.
+ */
 .admin-nav-group-title {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0 2rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
+  cursor: pointer;
+  list-style: none;
+  transition: color 150ms ease-out;
+}
+
+/* Safari still paints the marker unless this pseudo-element is targeted too. */
+.admin-nav-group-title::-webkit-details-marker {
+  display: none;
+}
+
+.admin-nav-group-title:hover {
+  color: var(--text);
+}
+
+.admin-nav-group-title:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.admin-nav-group-title::after {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+  transition: transform 150ms ease-out;
+}
+
+.admin-nav-group[open] > .admin-nav-group-title::after {
+  transform: rotate(-135deg) translate(-0.15rem, -0.15rem);
 }
 
 .admin-nav-link {
@@ -1301,12 +1340,18 @@
   transition: background 150ms ease-out, border-color 150ms ease-out;
 }
 
+/*
+ * Hover and active shading read from --text rather than a fixed black: a 3%
+ * black wash is invisible against the dark theme's near-black sidebar, so the
+ * old rgba() values meant dark-mode users got no hover feedback and no filled
+ * active state at all.
+ */
 .admin-nav-link:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: color-mix(in oklch, var(--text) 4%, transparent);
 }
 
 .admin-nav-link.active {
-  background: rgba(0, 0, 0, 0.05);
+  background: color-mix(in oklch, var(--text) 7%, transparent);
   border-left-color: var(--text);
   font-weight: 500;
 }
@@ -1368,8 +1413,20 @@
     margin-bottom: 0;
   }
 
+  /*
+   * The group header stays visible on mobile. It used to be display:none, but
+   * it is now the <summary> that opens the group — hiding it would lock every
+   * section shut. It earns its space here anyway: collapsing sections is worth
+   * more on a phone, where the sidebar becomes a stack above the content.
+   */
   .admin-nav-group-title {
-    display: none;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Links sit in a row on mobile rather than one full-width item per line. */
+  .admin-nav-group > nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 
   .admin-nav-link {
