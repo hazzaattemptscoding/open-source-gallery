@@ -13,12 +13,18 @@
    1. TOKENS
    ═══════════════════════════════════════════════════════════════ */
 
-:root {
-  --accent: oklch(0.520 0.185 318);
-  --accent-hover: oklch(0.455 0.190 318);
-  --accent-quiet: oklch(0.962 0.020 318);
-  --accent-text: oklch(0.985 0.005 315);
+/* Token ownership: chrome, accent and family tokens belong to podium-ink.css and
+   are NEVER redeclared here.
+   This block used to restate --accent, --accent-hover, --accent-quiet and
+   --accent-text with their LIGHT-mode values. Because this file loads after
+   podium-ink.css and a plain :root beats a media query at equal specificity on
+   source order, every admin page in dark mode got the light accent — precisely
+   the muddy-at-this-lightness result podium-ink's dark block exists to avoid.
+   New admin-only tokens are fine; redefining an existing one is not.
 
+   The tokens below are all either new or derived via color-mix from --bg/--text,
+   so they follow the active theme on their own. */
+:root {
   --divider: var(--border);
   --divider-strong: color-mix(in oklch, var(--text) 18%, transparent);
 
