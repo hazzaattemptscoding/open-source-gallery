@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../lib/currency.php';
+
 $pageTitle = 'Search: ' . e($siteName);
 $metaDescription = 'Search for photos';
 $metaUrl = $GLOBALS['config']['site']['url'] . '/search';
@@ -98,7 +100,7 @@ require __DIR__ . '/partials/layout_header.php';
                   <div class="search-result-title"><?= e($photo['original_filename']) ?></div>
                   <div class="search-result-meta"><?= e($photo['event_title']) ?></div>
                   <div class="search-result-price">
-                    £<?= number_format($photo['price_single_pence'] / 100, 2) ?>
+                    <?= e(format_pence((int)$photo['price_single_pence'], $currencyCode)) ?>
                   </div>
                 </div>
               </a>
