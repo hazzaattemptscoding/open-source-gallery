@@ -2,7 +2,10 @@
 $pageTitle = e($event['title']) . ': ' . e($siteName);
 $metaDescription = isset($event['description']) ? $event['description'] : 'Event photography gallery';
 $metaUrl = $GLOBALS['config']['site']['url'] . '/e/' . e($event['slug']);
-$metaImageUrl = $event['cover_token'] ? '/media/d/' . e($event['cover_token']) . '-1200.jpg' : '';
+// 1600 is the largest derivative generated (400/800/1600, see
+// app/lib/derivatives.php). This asked for -1200, which does not exist, so
+// every social card and link preview for an event pointed at a 404.
+$metaImageUrl = $event['cover_token'] ? '/media/d/' . e($event['cover_token']) . '-1600.jpg' : '';
 $showCart = true;
 $pageScripts = '<script src="/assets/js/event.js" defer></script>';
 require __DIR__ . '/partials/layout_header.php';

@@ -46,7 +46,10 @@ function home_event_card(array $event, string $sizeSuffix = '800'): void {
   <?php $heroTimestamp = !empty($hero['event_date']) ? strtotime((string) $hero['event_date']) : false; ?>
   <section class="hero">
     <?php if ($hero['cover_token']): ?>
-      <img src="/media/d/<?= e($hero['cover_token']) ?>-1200.jpg" alt="<?= e($hero['title']) ?>" class="hero-image">
+      <?php /* 1600, not 1200: derivatives are generated at 400/800/1600 only
+               (app/lib/derivatives.php), so a -1200 request falls through the
+               rewrite to the 404 page and the hero renders blank. */ ?>
+      <img src="/media/d/<?= e($hero['cover_token']) ?>-1600.jpg" alt="<?= e($hero['title']) ?>" class="hero-image">
     <?php endif; ?>
     <div class="hero-overlay">
       <div class="hero-meta">
