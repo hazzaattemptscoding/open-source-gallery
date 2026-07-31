@@ -1,15 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Payment Pending</title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName ?? 'Gallery') ?></a>
-</header>
+<?php
+$pageTitle = 'Payment Pending';
+$metaDescription = 'Your payment is being processed';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/checkout/pending';
+$showCart = false;
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <main>
 <div class="error-page">
@@ -21,5 +16,5 @@
   </div>
 </div>
 </main>
-</body>
-</html>
+
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

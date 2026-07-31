@@ -3,19 +3,12 @@
  * 429 Too Many Requests error page.
  * Displayed when rate limiting threshold is exceeded.
  */
+$pageTitle = 'Too Many Requests';
+$metaDescription = 'Please wait a moment before trying again';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/errors/429';
+$showCart = false;
+require __DIR__ . '/../public/partials/layout_header.php';
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Too Many Requests</title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName ?? 'Gallery') ?></a>
-</header>
 
 <main>
 <div class="error-page">
@@ -27,5 +20,5 @@
   </div>
 </div>
 </main>
-</body>
-</html>
+
+<?php require __DIR__ . '/../public/partials/layout_footer.php'; ?>

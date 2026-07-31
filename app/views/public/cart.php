@@ -1,15 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cart: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+<?php
+$pageTitle = 'Cart: ' . e($siteName);
+$metaDescription = 'Shopping cart - add photos and checkout';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/cart';
+$showCart = false; // we're on the cart page itself
+$pageScripts = '<script src="/assets/js/cart.js" defer></script>';
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <main class="cart-page">
   <h1>Your cart</h1>
@@ -74,9 +70,4 @@
   <?php endif; ?>
 </main>
 
-<script src="/assets/js/ui-feedback.js" defer></script>
-<script src="/assets/js/accessibility.js" defer></script>
-<script src="/assets/js/cart.js" defer></script>
-<script src="/assets/js/page-init.js" defer></script>
-</body>
-</html>
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

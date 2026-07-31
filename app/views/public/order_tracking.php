@@ -1,15 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Order <?= e(substr($orderToken, 0, 8)) ?>: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+<?php
+$pageTitle = 'Order ' . e(substr($orderToken, 0, 8)) . ': ' . e($siteName);
+$metaDescription = 'Track your order';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/order/' . e($orderToken);
+$showCart = false;
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <main style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
   <h1 style="font-family: 'Newsreader', serif; font-size: 2.25rem; font-weight: 700; margin: 0 0 0.5rem; letter-spacing: -0.02em;">Order Confirmation</h1>
@@ -100,7 +95,4 @@
   </div>
 </main>
 
-<script src="/assets/js/accessibility.js" defer></script>
-<script src="/assets/js/page-init.js" defer></script>
-</body>
-</html>
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

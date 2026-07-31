@@ -1,15 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Order confirmed: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+<?php
+$pageTitle = 'Order confirmed: ' . e($siteName);
+$metaDescription = 'Your order has been confirmed';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/checkout/success';
+$showCart = false;
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <main class="cart-page">
   <h1>Order confirmed</h1>
@@ -63,5 +58,5 @@
 
   <p class="hint">Check your spam folder if you don't see the email within a few minutes. Or <a href="/">return to the gallery</a>.</p>
 </main>
-</body>
-</html>
+
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

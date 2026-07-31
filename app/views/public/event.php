@@ -1,16 +1,12 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($event['title']) ?>: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-  <a href="/cart" class="cart-badge" id="cartBadge">Cart (<span id="cartCount"><?= (int)$cartCount ?></span>)</a>
-</header>
+<?php
+$pageTitle = e($event['title']) . ': ' . e($siteName);
+$metaDescription = isset($event['description']) ? $event['description'] : 'Event photography gallery';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/e/' . e($event['slug']);
+$metaImageUrl = $event['cover_token'] ? '/media/d/' . e($event['cover_token']) . '-1200.jpg' : '';
+$showCart = true;
+$pageScripts = '<script src="/assets/js/event.js" defer></script>';
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <!-- Full-screen hero -->
 <section class="hero">
@@ -136,9 +132,4 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
   <button class="lightbox-cart" id="lightboxCart">Add to cart</button>
 </div>
 
-<script src="/assets/js/ui-feedback.js" defer></script>
-<script src="/assets/js/accessibility.js" defer></script>
-<script src="/assets/js/event.js" defer></script>
-<script src="/assets/js/page-init.js" defer></script>
-</body>
-</html>
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

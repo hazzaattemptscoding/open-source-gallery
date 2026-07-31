@@ -1,15 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page Not Found</title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName ?? 'Gallery') ?></a>
-</header>
+<?php
+$pageTitle = 'Page Not Found';
+$metaDescription = 'The page you\'re looking for doesn\'t exist';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/errors/404';
+$showCart = false;
+require __DIR__ . '/../public/partials/layout_header.php';
+?>
 
 <main>
 <div class="error-page">
@@ -22,5 +17,5 @@
   </div>
 </div>
 </main>
-</body>
-</html>
+
+<?php require __DIR__ . '/../public/partials/layout_footer.php'; ?>

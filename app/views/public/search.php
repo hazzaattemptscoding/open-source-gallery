@@ -1,16 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Search: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+<?php
+$pageTitle = 'Search: ' . e($siteName);
+$metaDescription = 'Search for photos';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/search';
+$showCart = false;
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <div class="search-container">
   <form method="get" action="/search" class="search-form">
@@ -163,5 +157,4 @@
 
 </div>
 
-</body>
-</html>
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>
