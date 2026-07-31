@@ -1,16 +1,12 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Search: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
+<?php
+require_once __DIR__ . '/../../lib/currency.php';
 
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+$pageTitle = 'Search: ' . e($siteName);
+$metaDescription = 'Search for photos';
+$metaUrl = ($GLOBALS['config']['site']['url'] ?? '') . '/search';
+$showCart = false;
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <div class="search-container">
   <form method="get" action="/search" class="search-form">
@@ -104,7 +100,7 @@
                   <div class="search-result-title"><?= e($photo['original_filename']) ?></div>
                   <div class="search-result-meta"><?= e($photo['event_title']) ?></div>
                   <div class="search-result-price">
-                    £<?= number_format($photo['price_single_pence'] / 100, 2) ?>
+                    <?= e(format_pence((int)$photo['price_single_pence'], $currencyCode)) ?>
                   </div>
                 </div>
               </a>
@@ -163,5 +159,4 @@
 
 </div>
 
-</body>
-</html>
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

@@ -284,10 +284,10 @@ button.submit:active {
 <?php endif; ?>
 
 <div class="mode-toggle">
-  <button class="<?= $mode === 'basic' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=basic">
+  <button type="button" class="<?= $mode === 'basic' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=basic">
     Basic Settings
   </button>
-  <button class="<?= $mode === 'advanced' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=advanced">
+  <button type="button" class="<?= $mode === 'advanced' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=advanced">
     Advanced Settings
   </button>
   <?php if ($mode === 'advanced'): ?>
@@ -362,14 +362,6 @@ button.submit:active {
   </div>
 <?php endif; ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.mode-toggle button[data-href]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      window.location.href = btn.dataset.href;
-    });
-  });
-});
-</script>
+<script src="/assets/js/admin-common.js" defer></script>
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

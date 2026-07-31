@@ -12,18 +12,38 @@ const CUSTOMIZE_CONFIG_FILE = __DIR__ . '/../../storage/customize.json';
  * Get current customization settings, merging with defaults.
  */
 function get_customize_settings(): array {
+    /*
+     * Colour and font defaults are deliberately EMPTY, and must stay that way.
+     *
+     * They used to hold real values (#ffffff, #111111, 'Geist Sans', ...). Because
+     * get_customize_css_overrides() emits a rule for every non-empty setting, that
+     * meant every install — including ones whose owner had never opened the
+     * Customization page — served an override block that replaced the whole
+     * palette with flat hex. It overwrote the OKLCH tokens in podium-ink.css and,
+     * because the block lands after that file's dark-mode media query, it disabled
+     * dark mode outright. The shipped design was never what anyone actually saw.
+     *
+     * Empty here means "the admin has expressed no preference", so the design
+     * system in podium-ink.css renders as authored. The Customization form shows
+     * the shipped values as placeholders so the admin can still see what they are.
+     *
+     * Structural settings below keep real defaults: they describe layout choices
+     * with no equivalent in the stylesheet, and they do not fight the token system.
+     */
     $defaults = [
         'site_name' => '',
         'site_logo_filename' => '',
-        'text' => '#111111',
-        'text_muted' => '#787774',
-        'bg' => '#ffffff',
-        'bg_alt' => '#f9f9f8',
-        'border' => '#eaeaea',
-        'body_font' => 'Geist Sans',
-        'heading_font' => 'Newsreader',
-        'mono_font' => 'Geist Mono',
-        'heading_letter_spacing' => '-0.02em',
+        'text' => '',
+        'text_muted' => '',
+        'bg' => '',
+        'bg_alt' => '',
+        'border' => '',
+        'accent' => '',
+        'accent_hover' => '',
+        'body_font' => '',
+        'heading_font' => '',
+        'mono_font' => '',
+        'heading_letter_spacing' => '',
         'max_content_width' => '1200px',
         'spacing_multiplier' => '1',
         'grid_columns' => 3,
@@ -99,11 +119,66 @@ function reset_customize_settings(): bool {
 }
 
 /**
+ * Escape a value for interpolation into a CSS declaration.
+ *
+ * NOT the same job as e(). e() is htmlspecialchars, which is the wrong tool in a
+ * stylesheet twice over: it fails to neutralise the characters that actually
+ * break out of a CSS declaration ({ } ; and comment markers), and it mangles
+ * legitimate values — a font name containing an apostrophe came out as
+ * "Foo&#039;s Sans" and rendered as the fallback.
+ *
+ * Strategy is allowlist, not blocklist: strip anything outside the small set of
+ * characters a colour, length, or font name legitimately needs. An empty return
+ * means the caller should omit the declaration entirely rather than emit a
+ * broken one.
+ */
+function css_safe_value(string $value): string {
+    // Alphanumerics, spaces, and the punctuation used by lengths, hex colours,
+    // decimals, negative values, and multi-word font names.
+    $clean = preg_replace('/[^A-Za-z0-9 \-_.,#%()]/', '', $value);
+    return trim((string)$clean);
+}
+
+/**
+ * Quote a font family name for CSS, unless it is a bare CSS-wide keyword or
+ * generic family (sans-serif, serif, monospace, system-ui) which must NOT be
+ * quoted or the browser treats it as a family literally named "serif".
+ */
+function css_font_family(string $name): string {
+    $clean = css_safe_value($name);
+    if ($clean === '') {
+        return '';
+    }
+    $generic = ['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy',
+                'system-ui', 'ui-monospace', 'ui-serif', 'ui-sans-serif'];
+    return in_array(strtolower($clean), $generic, true) ? $clean : "'$clean'";
+}
+
+/**
  * Generate CSS overrides for all customization settings.
  * Used for live preview and public site injection.
+ *
+ * Two rules govern this function, both learned from bugs it used to have:
+ *
+ * 1. Emit NOTHING for a setting the admin has not explicitly chosen. The
+ *    defaults in get_customize_settings() used to carry real values (#ffffff,
+ *    #111111, 'Geist Sans'), so every install — including ones that had never
+ *    opened the Customization page — got its whole palette overwritten with flat
+ *    hex. That silently disabled the OKLCH token system and dark mode for
+ *    everyone. Colour and font defaults are now empty; the shipped design in
+ *    podium-ink.css is what an uncustomised site renders.
+ *
+ * 2. Scope colour overrides to light mode. This block is appended after
+ *    podium-ink.css, which means it lands after that file's
+ *    @media (prefers-color-scheme: dark) rule and beats it on source order at
+ *    equal specificity. Unscoped, a single customised colour forced light values
+ *    onto dark-mode visitors — set only --bg and you got light-on-light text.
+ *    Wrapping in `light` confines customisation to the scheme it was picked in
+ *    and leaves the shipped dark palette intact. (The `light` query also matches
+ *    visitors who have expressed no preference, so the common case is covered.)
  */
 function get_customize_css_overrides(array $settings): string {
-    $css = ":root {\n";
+    $css = '';
 
     $colorMappings = [
         'text' => '--text',
@@ -115,39 +190,68 @@ function get_customize_css_overrides(array $settings): string {
         'accent_hover' => '--accent-hover',
     ];
 
+    $colorRules = '';
     foreach ($colorMappings as $key => $varName) {
         if (!empty($settings[$key])) {
-            $css .= "  $varName: " . e($settings[$key]) . ";\n";
+            $value = css_safe_value($settings[$key]);
+            if ($value !== '') {
+                $colorRules .= "    $varName: $value;\n";
+            }
         }
     }
 
-    $css .= "}\n\n";
+    // Only emit the wrapper when there is something to put in it — an empty
+    // :root {} block on every uncustomised install is noise in a file that is
+    // served on every page view.
+    if ($colorRules !== '') {
+        $css .= "@media (prefers-color-scheme: light) {\n";
+        $css .= "  :root {\n" . $colorRules . "  }\n";
+        $css .= "}\n\n";
+    }
 
+    // Fonts override the family tokens rather than re-declaring body/h1-h6.
+    // podium-ink.css routes every font-family through these three tokens, so
+    // setting the token reaches every element that uses it, including ones a
+    // hardcoded selector list here would miss.
+    $fontTokens = '';
     if (!empty($settings['body_font'])) {
-        $css .= "body, button, input, select, textarea {\n";
-        $css .= "  font-family: '" . e($settings['body_font']) . "', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n";
-        $css .= "}\n\n";
-    }
-
-    if (!empty($settings['heading_font'])) {
-        $css .= "h1, h2, h3, h4, h5, h6 {\n";
-        $css .= "  font-family: '" . e($settings['heading_font']) . "', serif;\n";
-        if (!empty($settings['heading_letter_spacing'])) {
-            $css .= "  letter-spacing: " . e($settings['heading_letter_spacing']) . ";\n";
+        $family = css_font_family($settings['body_font']);
+        if ($family !== '') {
+            $fontTokens .= "  --font-body: $family, system-ui, sans-serif;\n";
         }
-        $css .= "}\n\n";
+    }
+    if (!empty($settings['heading_font'])) {
+        $family = css_font_family($settings['heading_font']);
+        if ($family !== '') {
+            $fontTokens .= "  --font-heading: $family, Georgia, serif;\n";
+        }
+    }
+    if (!empty($settings['mono_font'])) {
+        $family = css_font_family($settings['mono_font']);
+        if ($family !== '') {
+            $fontTokens .= "  --font-mono: $family, ui-monospace, monospace;\n";
+        }
+    }
+    if ($fontTokens !== '') {
+        $css .= ":root {\n" . $fontTokens . "}\n\n";
     }
 
-    if (!empty($settings['mono_font'])) {
-        $css .= "code, pre, .detail-value, .migration-item {\n";
-        $css .= "  font-family: '" . e($settings['mono_font']) . "', 'SF Mono', monospace;\n";
-        $css .= "}\n\n";
+    if (!empty($settings['heading_letter_spacing'])) {
+        $spacing = css_safe_value($settings['heading_letter_spacing']);
+        if ($spacing !== '') {
+            $css .= "h1, h2, h3, h4, h5, h6 {\n";
+            $css .= "  letter-spacing: $spacing;\n";
+            $css .= "}\n\n";
+        }
     }
 
     if (!empty($settings['max_content_width'])) {
-        $css .= ".event-list-page, .cart-page, main {\n";
-        $css .= "  max-width: " . e($settings['max_content_width']) . ";\n";
-        $css .= "}\n\n";
+        $width = css_safe_value($settings['max_content_width']);
+        if ($width !== '') {
+            $css .= ".event-list-page, .cart-page, main {\n";
+            $css .= "  max-width: $width;\n";
+            $css .= "}\n\n";
+        }
     }
 
     if (!empty($settings['spacing_multiplier']) && $settings['spacing_multiplier'] != '1') {

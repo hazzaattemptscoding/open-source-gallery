@@ -1,6 +1,7 @@
 /**
  * Chunked upload UI: drag-drop or file picker, 2MB chunks with retry,
  * then finalize. Talks to /admin/upload/init, /chunk, /finalize.
+ * Integrates with floating progress widget for real-time upload tracking.
  */
 
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
@@ -10,6 +11,7 @@ const CSRF_TOKEN = document.getElementById('uploadZone').dataset.csrfToken;
 let selectedFiles = [];
 let batchId = null;
 let sessionId = null;
+let progressWidget = null;
 
 const uploadZone = document.getElementById('uploadZone');
 uploadZone.addEventListener('dragover', (e) => {
@@ -66,6 +68,12 @@ function startUpload() {
     return;
   }
 
+  progressWidget = getProgressWidget('Uploading photos');
+  progressWidget.show();
+  selectedFiles.forEach((file) => {
+    progressWidget.addFile(file.name, file.size);
+  });
+
   initBatch();
 }
 
@@ -90,7 +98,7 @@ async function initBatch() {
     const data = await response.json();
     batchId = data.batch_id;
 
-    uploadFiles(data.files);
+    uploadFiles(data.accepted);
   } catch (err) {
     alert('Error: ' + err.message);
   }
@@ -150,6 +158,10 @@ async function uploadFile(idx, file, fileInfo) {
 
     const progress = ((chunkIndex + 1) / chunksTotal) * 100;
     progressEl.style.width = progress + '%';
+
+    if (progressWidget) {
+      progressWidget.updateProgress(idx, progress);
+    }
   }
 
   await finalizeUpload(idx, fileId, statusEl, progressEl);

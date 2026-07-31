@@ -1,19 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <?php
 require_once __DIR__ . '/../../lib/seo.php';
-echo generate_meta_tags($GLOBALS['config'], $siteName, 'Professional sports photography gallery and sales platform', $GLOBALS['config']['site']['url'] ?? 'https://example.com');
+$pageTitle = $siteName;
+$metaDescription = 'Professional sports photography gallery and sales platform';
+$metaUrl = $GLOBALS['config']['site']['url'] ?? 'https://example.com';
+$metaImageUrl = '';
+$showCart = false; // home page doesn't show cart
+$extraStyles = generate_organization_schema($GLOBALS['config']) ?? '';
+require __DIR__ . '/partials/layout_header.php';
 ?>
-<link rel="stylesheet" href="/api/styles.css">
-<?= generate_organization_schema($GLOBALS['config']) ?? '' ?>
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
 
 <?php if (!empty($events)): ?>
 <section class="hero">
@@ -58,5 +52,5 @@ echo generate_meta_tags($GLOBALS['config'], $siteName, 'Professional sports phot
     </div>
   <?php endif; ?>
 </main>
-</body>
-</html>
+
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

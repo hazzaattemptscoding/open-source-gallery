@@ -13,12 +13,18 @@
    1. TOKENS
    ═══════════════════════════════════════════════════════════════ */
 
-:root {
-  --accent: oklch(0.520 0.185 318);
-  --accent-hover: oklch(0.455 0.190 318);
-  --accent-quiet: oklch(0.962 0.020 318);
-  --accent-text: oklch(0.985 0.005 315);
+/* Token ownership: chrome, accent and family tokens belong to podium-ink.css and
+   are NEVER redeclared here.
+   This block used to restate --accent, --accent-hover, --accent-quiet and
+   --accent-text with their LIGHT-mode values. Because this file loads after
+   podium-ink.css and a plain :root beats a media query at equal specificity on
+   source order, every admin page in dark mode got the light accent — precisely
+   the muddy-at-this-lightness result podium-ink's dark block exists to avoid.
+   New admin-only tokens are fine; redefining an existing one is not.
 
+   The tokens below are all either new or derived via color-mix from --bg/--text,
+   so they follow the active theme on their own. */
+:root {
   --divider: var(--border);
   --divider-strong: color-mix(in oklch, var(--text) 18%, transparent);
 
@@ -84,17 +90,64 @@
    3. WEIGHT DISCIPLINE — 600 headings / 500 labels / 400 body
    ═══════════════════════════════════════════════════════════════ */
 
-.dashboard h1,
-.dashboard h2,
-.dashboard h3 {
+/* These were scoped to .dashboard alone, but only some admin views use that
+   wrapper — analytics, reporting, exports and the rest use their own
+   *-container class. On those pages the rules never applied and headings fell
+   back to podium-ink's public-site sizes, so a chart panel title rendered at
+   clamp(1.5rem, 3vw, 2rem) in serif and swallowed a third of the panel.
+   Admin headings are dense-UI headings wherever they appear. */
+:is(.dashboard,
+    .admins-container,
+    .analytics-container,
+    .bulk-container,
+    .emails-container,
+    .print-orders-container,
+    .reporting-container,
+    .watermark-container) :is(h1, h2, h3) {
   font-weight: 600;
   letter-spacing: -0.015em;
   text-wrap: balance;
 }
 
-.dashboard h1 { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
-.dashboard h2 { font-size: var(--text-lg); }
-.dashboard h3 { font-size: var(--text-md); }
+:is(.dashboard,
+    .admins-container,
+    .analytics-container,
+    .bulk-container,
+    .emails-container,
+    .print-orders-container,
+    .reporting-container,
+    .watermark-container) h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-2);
+}
+
+:is(.dashboard,
+    .admins-container,
+    .analytics-container,
+    .bulk-container,
+    .emails-container,
+    .print-orders-container,
+    .reporting-container,
+    .watermark-container) h2 { font-size: var(--text-lg); }
+
+:is(.dashboard,
+    .admins-container,
+    .analytics-container,
+    .bulk-container,
+    .emails-container,
+    .print-orders-container,
+    .reporting-container,
+    .watermark-container) h3 { font-size: var(--text-md); }
+
+/* Panel titles sit above their content as labels, not as section headings. */
+.chart-container h2,
+.stat-card h3 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-3);
+}
 
 label,
 .setting-label,
@@ -305,8 +358,12 @@ button[type="submit"]:disabled {
    7. STATS & METRICS
    ═══════════════════════════════════════════════════════════════ */
 
+/* .analytics-summary belongs here: it wraps eight .stat-card children but only
+   ever had a margin rule, so the cards stacked one per row at full width and the
+   analytics page opened with eight screens of scrolling before the first chart. */
 .stats-grid,
 .analytics-grid,
+.analytics-summary,
 .export-grid,
 .print-stats,
 .metrics {
@@ -314,6 +371,12 @@ button[type="submit"]:disabled {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--space-4);
   margin-top: var(--stack-tight);
+}
+
+/* The charts need real width to be readable, so they get a coarser track than
+   the stat cards they sit beneath. */
+.analytics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .stat-box,
@@ -377,6 +440,24 @@ button[type="submit"]:disabled {
   padding: var(--space-5);
   margin-top: var(--stack-tight);
   min-height: 120px;
+}
+
+/* The SVG charts (admin-charts.js) draw into a fixed 640x260 viewBox and scale
+   to fit, so the host only needs an aspect ratio. Height rather than
+   aspect-ratio because the panels sit in a grid whose columns can get narrow,
+   and a squashed chart is harder to read than a slightly letterboxed one. */
+.chart {
+  width: 100%;
+  height: 260px;
+}
+
+.chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.chart text {
+  font-family: var(--font-body);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -858,6 +939,50 @@ details > summary:hover { color: var(--accent); }
 .list-plain a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ═══════════════════════════════════════════════════════════════
+   13a. TABLES & DATA DISPLAYS
+   ═══════════════════════════════════════════════════════════════ */
+
+.table-wrapper { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table thead tr { background: var(--bg-alt); border-bottom: 1px solid var(--border); }
+.admin-table th { padding: 1rem; text-align: left; font-weight: 600; }
+.admin-table tbody tr { border-bottom: 1px solid var(--border); }
+.admin-table td { padding: 1rem; }
+.admin-table code { font-size: 0.85rem; }
+
+.table-order-id code { font-size: 0.85rem; }
+.table-status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 3px; font-size: 0.85rem; font-weight: 500; }
+.table-status.paid { background: rgba(81, 207, 102, 0.2); color: #51cf66; }
+.table-status.refunded { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+.table-status.partial_refund { background: rgba(255, 159, 64, 0.2); color: #ff9f40; }
+.table-status.pending { background: rgba(153, 153, 153, 0.2); color: #999999; }
+
+.table-date { color: var(--text-muted); font-size: 0.9rem; }
+.table-pagination { margin-top: 2rem; text-align: center; }
+.table-pagination a { margin: 0 1rem; }
+
+.sales-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+.sales-stats-grid .stat-value { font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
+.sales-stats-grid .stat-label { color: var(--text-muted); font-size: 0.95rem; }
+
+.event-stats-section { margin-bottom: 2rem; }
+.event-stats-section h2 { margin-bottom: 1.5rem; }
+.event-stats-section h2 a { color: inherit; text-decoration: none; }
+.event-stats-section h2 a:hover { text-decoration: underline; }
+
+.event-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+.event-metric-value { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
+.event-metric-label { color: var(--text-muted); font-size: 0.9rem; }
+
+.top-selling-list { list-style: none; padding: 0; margin: 0; }
+.top-selling-list li { padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.top-selling-list li:last-child { border-bottom: none; }
+.top-selling-item { display: flex; justify-content: space-between; align-items: center; }
+.top-selling-meta { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+.empty-section { color: var(--text-muted); font-size: 0.9rem; }
+
+/* ═══════════════════════════════════════════════════════════════
    14. RESPONSIVE & ACCESSIBILITY
    ═══════════════════════════════════════════════════════════════ */
 
@@ -867,7 +992,8 @@ details > summary:hover { color: var(--accent); }
   .admin-row { grid-template-columns: 1fr auto; gap: var(--space-2); }
   .admin-row.header { display: none; }
   .session-select-row { flex-direction: column; align-items: stretch; }
-  .stats-grid, .analytics-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+  .stats-grid, .analytics-summary { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+  .analytics-grid { grid-template-columns: 1fr; }
 }
 
 @media (hover: none) {

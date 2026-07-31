@@ -1,13 +1,90 @@
 /* Photo Gallery — premium editorial minimalism */
 
-/* Google Fonts fallbacks for customizable fonts (Geist Sans, Newsreader, Geist Mono loaded via @font-face) */
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,8..72,200..800;1,8..72,200..800&display=swap');
-
 /*
- * Font files below are placeholders — real brand fonts should be supplied
- * and placed in public/assets/fonts/ with @font-face rules updated.
- * Until then, we rely on system-font fallback stacks.
+ * Fonts are self-hosted, not loaded from a CDN. This is deliberate and load-
+ * bearing: the app sends `default-src 'self'` with an explicit `font-src 'self'`
+ * (public/index.php, admin/index.php), so a Google Fonts @import is blocked
+ * outright. It also keeps the app self-contained for shared hosting and drops
+ * three render-blocking third-party requests.
+ *
+ * All three faces are variable and ship under the SIL Open Font License; the
+ * licence text sits beside the files in public/assets/fonts/. Axes are narrowed
+ * to what the design actually uses — Newsreader is pinned to wght 400 (every
+ * heading is 400) while keeping the opsz axis variable, which is the whole point
+ * of the face given .hero-title clamps between 1.75rem and 2.5rem.
+ *
+ * Only the latin subset loads for most visitors; latin-ext is a separate file
+ * the browser fetches on demand, which matters because self-hosters outside the
+ * UK need its currency range (U+20A0-20C0).
  */
+
+/* ---- Newsreader: headings. Optical sizing 6-72, weight pinned to 400. ---- */
+@font-face {
+  font-family: 'Newsreader';
+  src: url('/assets/fonts/Newsreader-Variable-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-optical-sizing: auto;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Newsreader';
+  src: url('/assets/fonts/Newsreader-Variable-latin-ext.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-optical-sizing: auto;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---- Instrument Sans: body, UI, buttons. Weights 400-700. ---- */
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/assets/fonts/InstrumentSans-Variable-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/assets/fonts/InstrumentSans-Variable-latin-ext.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---- JetBrains Mono: tokens, IDs, code. Weights 400-600. ---- */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/JetBrainsMono-Variable-latin.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/JetBrainsMono-Variable-latin-ext.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 :root {
   /* ---- Chrome: purple at low chroma. Reads as tinted ink, not "purple". ---- */
@@ -58,6 +135,34 @@
   /* Animation timing */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* ---- Families. Declared once here; every rule reads the token. ---- */
+  --font-body: 'Instrument Sans', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  --font-heading: 'Newsreader', 'Instrument Serif', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---- Radii. Three steps, deliberately few. ----
+     Before these existed the codebase used eight different hardcoded values
+     (0, 2, 3, 4, 6, 8, 12px and 50%) with no rule about which went where, so
+     the same kind of component was rounded differently on different pages. */
+  --radius-sm: 4px;   /* inputs, buttons, badges */
+  --radius-md: 8px;   /* cards, panels, media */
+  --radius-full: 999px;
+
+  /* ---- Shadows. Theme-aware, which the hardcoded rgba(0,0,0,…) they replace
+     were not: a 6%-black shadow is simply invisible against a dark background.
+     Dark mode needs far more opacity to register at all, and leans on --bg-alt
+     for elevation besides (see the dark-mode comment below). ---- */
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.10);
+  --shadow-md: 0 2px 12px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.12);
+
+  /* A surface that sits ON a photograph — the add-to-cart, heart and share
+     buttons. These used a hardcoded white with color: var(--text), which in
+     dark mode is near-white text on a near-white chip: invisible. Reading from
+     --bg keeps the chip legible in both themes. */
+  --surface-on-media: color-mix(in oklch, var(--bg) 94%, transparent);
+  --surface-on-media-hover: var(--bg);
 }
 
 /* Dark viewing surface: photographs belong on dark. Elevation comes from
@@ -76,6 +181,13 @@
     --accent-hover: oklch(0.740 0.170 318);
     --accent-quiet: oklch(0.260 0.045 318);
     --accent-text:  oklch(0.145 0.020 315);
+
+    /* Shadows need markedly more opacity here to read against a dark surface.
+       They stay subtle on purpose: elevation is carried by --bg-alt being
+       lighter than --bg, per the note above, not by drawing a ghost card. */
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.40);
+    --shadow-md: 0 2px 12px rgb(0 0 0 / 0.45);
+    --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.55);
   }
 }
 
@@ -91,7 +203,7 @@ html, body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Geist Sans', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-body);
   line-height: 1.6;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -101,6 +213,11 @@ body {
 /* Vertical rhythm: standard section spacing */
 main {
   padding: var(--space-8) var(--space-4);
+  /* Centring belongs with the element that can be width-limited. The
+     Customization layer sets `max-width` on main (default 1200px) but cannot
+     add a margin, so without this the whole page sat against the left edge with
+     dead space on the right at any viewport wider than the limit. */
+  margin-inline: auto;
 }
 
 section {
@@ -114,7 +231,7 @@ section {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Newsreader', 'Instrument Serif', 'Lyon Text', serif;
+  font-family: var(--font-heading);
   letter-spacing: -0.02em;
   line-height: 1.2;
   font-weight: 400;
@@ -314,7 +431,7 @@ button:disabled,
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f7f6f3 100%);
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%);
 }
 
 .auth-card {
@@ -323,7 +440,7 @@ button:disabled,
   background: var(--bg);
   border: 1px solid var(--border);
   padding: 3rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-sm);
   animation: fadeInUp 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -406,7 +523,7 @@ button:disabled,
 }
 
 .list-plain li:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-alt);
 }
 
 .list-plain li:last-child {
@@ -553,7 +670,16 @@ button:disabled,
   position: relative;
   width: 100%;
   padding: 3rem 2rem;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.5) 30%, transparent);
+  /* Mixed from --bg rather than hardcoded white. A literal rgba(255,255,255)
+     here painted a white wash across the bottom of the hero in dark mode,
+     fighting the photograph instead of seating the title against it. Mixing
+     toward transparent keeps the same shape in both themes. */
+  background: linear-gradient(
+    to top,
+    color-mix(in oklch, var(--bg) 98%, transparent),
+    color-mix(in oklch, var(--bg) 50%, transparent) 30%,
+    transparent
+  );
   z-index: 1;
 }
 
@@ -598,7 +724,7 @@ button:disabled,
   color: var(--text);
   font-family: inherit;
   border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .hero-search-input::placeholder {
@@ -830,7 +956,7 @@ body.lightbox-open {
 }
 
 .search-result:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-md);
 }
 
 .search-result-image {
@@ -956,7 +1082,7 @@ body.lightbox-open {
   width: 2.5rem;
   height: 2.5rem;
   margin: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--surface-on-media);
   color: var(--text);
   font-size: 1.1rem;
   line-height: 1;
@@ -969,7 +1095,7 @@ body.lightbox-open {
   border-radius: 2px;
   transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), 
               background 160ms cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .add-to-cart:active {
@@ -1536,7 +1662,7 @@ body.lightbox-open {
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--surface-on-media);
   border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
@@ -1547,7 +1673,7 @@ body.lightbox-open {
 
 .heart-button:hover,
 .share-button:hover {
-  background: rgba(255, 255, 255, 1);
+  background: var(--surface-on-media-hover);
 }
 
 .heart-button:active,
@@ -1589,7 +1715,7 @@ body.lightbox-open {
   width: 90%;
   position: relative;
   animation: slideUp 300ms var(--ease-out);
-  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes slideUp {
@@ -1606,7 +1732,7 @@ body.lightbox-open {
 .share-modal h3 {
   margin: 0 0 var(--space-4);
   font-size: var(--text-lg);
-  font-family: 'Newsreader', serif;
+  font-family: var(--font-heading);
   font-weight: 600;
 }
 
@@ -1676,7 +1802,7 @@ body.lightbox-open {
 .share-preview code {
   display: block;
   word-break: break-all;
-  font-family: 'Geist Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text);
   background: var(--bg);
@@ -1845,7 +1971,7 @@ body.lightbox-open {
 }
 
 .empty-state-title {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: var(--font-heading);
   font-size: var(--text-xl);
   margin: 0 0 var(--space-3);
   color: var(--text);
@@ -1993,7 +2119,7 @@ body.lightbox-open {
   border-radius: 8px;
   font-size: var(--text-sm);
   z-index: 9999;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-lg);
   animation: slideUpIn 180ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
@@ -2062,12 +2188,12 @@ textarea:focus-visible {
 /* Hover effects for desktop browsers */
 @media (hover: hover) and (pointer: fine) {
   .event-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
 
   .photo-thumb:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
   }
 
@@ -2121,11 +2247,22 @@ textarea:focus-visible {
   }
 }
 
-/* High contrast mode support */
+/* High contrast mode support.
+   These must be scoped per colour scheme. A single unscoped block forcing
+   --text: #000000 was reasoning in light mode only: a dark-mode visitor who
+   also asked for more contrast got black text on a near-black background,
+   turning the accessibility preference into an unreadable page. */
 @media (prefers-contrast: more) {
   :root {
-    --text: #000000;
-    --border: #333333;
+    --text: oklch(0 0 0);
+    --border: oklch(0.35 0 0);
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root {
+    --text: oklch(1 0 0);
+    --border: oklch(0.72 0 0);
   }
 }
 
@@ -2165,7 +2302,7 @@ textarea:focus-visible {
     text-decoration: none;
     font-weight: 600;
     font-size: var(--text-sm);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
     transition: transform 160ms ease-out, box-shadow 160ms ease-out;
   }
 
@@ -2269,4 +2406,313 @@ textarea:focus-visible {
 .trust-signal span {
   color: var(--text-muted);
   font-size: var(--text-xs);
+}
+
+/* Order tracking page */
+
+.order-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.order-title {
+  font-family: 'Newsreader', serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.order-subtitle {
+  color: var(--text-muted);
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+}
+
+.order-status-box {
+  background: var(--bg-alt);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+}
+
+.order-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2rem;
+}
+
+.order-status-metric {
+  /* Base styling handled by child elements */
+}
+
+.order-status-label {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.order-status-value {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.status-completed {
+  color: var(--success);
+}
+
+.status-refunded {
+  color: var(--error);
+}
+
+.status-processing {
+  color: var(--text-muted);
+}
+
+.order-download-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.order-download-title {
+  margin: 0 0 1rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.order-download-note {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+}
+
+.order-files-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+.order-files-table thead {
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+
+.order-files-table thead th {
+  padding: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.order-files-table thead th:nth-child(2) {
+  text-align: center;
+}
+
+.order-files-table thead th:nth-child(3) {
+  text-align: right;
+}
+
+.order-files-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.order-files-table tbody td {
+  padding: 1rem 0.75rem;
+}
+
+.order-files-table tbody td:nth-child(2) {
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.order-files-table tbody td:nth-child(3) {
+  text-align: right;
+  padding: 0.75rem;
+}
+
+.order-file-item-meta {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.order-download-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--text);
+  color: var(--bg);
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 160ms ease-out;
+}
+
+.order-download-btn:hover {
+  background: var(--text-hover);
+}
+
+.order-download-btn:active {
+  transform: scale(0.97);
+}
+
+.order-download-btn.large {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.order-processing-box {
+  background: var(--bg-alt);
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.order-processing-title {
+  margin: 0 0 1rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.order-processing-text {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
+.order-processing-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.order-back-section {
+  text-align: center;
+  padding: 2rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.order-back-text {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+}
+
+.order-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.order-footer p {
+  margin: 0;
+}
+
+.order-footer p:not(:first-child) {
+  margin-top: 0.5rem;
+}
+
+/* Order verification page */
+
+.verify-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}
+
+.verify-title {
+  font-family: 'Newsreader', serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.verify-subtitle {
+  color: var(--text-muted);
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+}
+
+.verify-form-box {
+  background: var(--bg-alt);
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.verify-submit-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 160ms ease-out;
+  min-height: 44px;
+}
+
+.verify-submit-btn:hover {
+  background: var(--text-hover);
+}
+
+.verify-submit-btn:active {
+  transform: scale(0.97);
+}
+
+.verify-help-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.verify-help-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.verify-help-text {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+}
+
+.verify-help-link {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.verify-help-link:hover {
+  text-decoration: underline;
+}
+
+/* Respect prefers-reduced-motion: reduce all animations when requested */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

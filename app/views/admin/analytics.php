@@ -63,7 +63,11 @@ require_once __DIR__ . '/partials/layout_header.php';
     <div class="chart-container">
       <h2>Revenue Trend (30 Days)</h2>
       <?php if (!empty($analytics['revenue_trend'])): ?>
-        <canvas id="revenueChart"></canvas>
+        <div class="chart" data-chart="line" data-value-prefix="<?= e($currencySymbol) ?>"
+             data-series="<?= e(json_encode(array_map(fn($d) => [
+                 'label' => date('j M', strtotime($d['period'])),
+                 'value' => $d['revenue_pence'] / 100,
+             ], $analytics['revenue_trend']))) ?>"></div>
       <?php else: ?>
         <div class="no-data">No revenue data yet</div>
       <?php endif; ?>
@@ -73,7 +77,11 @@ require_once __DIR__ . '/partials/layout_header.php';
     <div class="chart-container">
       <h2>Orders by Hour</h2>
       <?php if (!empty($analytics['hourly_distribution'])): ?>
-        <canvas id="hourlyChart"></canvas>
+        <div class="chart" data-chart="bar"
+             data-series="<?= e(json_encode(array_map(fn($d) => [
+                 'label' => sprintf('%02d', $d['hour']),
+                 'value' => $d['orders'],
+             ], $analytics['hourly_distribution']))) ?>"></div>
       <?php else: ?>
         <div class="no-data">No order data yet</div>
       <?php endif; ?>
@@ -83,7 +91,11 @@ require_once __DIR__ . '/partials/layout_header.php';
     <div class="chart-container">
       <h2>Sales by Event</h2>
       <?php if (!empty($analytics['sales_by_event'])): ?>
-        <canvas id="eventsChart"></canvas>
+        <div class="chart" data-chart="doughnut" data-value-prefix="<?= e($currencySymbol) ?>"
+             data-series="<?= e(json_encode(array_map(fn($d) => [
+                 'label' => $d['title'],
+                 'value' => $d['revenue_pence'] / 100,
+             ], $analytics['sales_by_event']))) ?>"></div>
       <?php else: ?>
         <div class="no-data">No sales data yet</div>
       <?php endif; ?>
@@ -123,98 +135,7 @@ require_once __DIR__ . '/partials/layout_header.php';
 </div>
 
 <!-- Charts.js initialization -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
-  const textMutedColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
-  const bgAltColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-alt').trim();
-  const currencySymbol = <?= json_encode($currencySymbol) ?>;
-
-  // Revenue Trend
-  const revenueTrendData = <?= json_encode($analytics['revenue_trend']) ?>;
-  if (revenueTrendData && revenueTrendData.length > 0) {
-    new Chart(document.getElementById('revenueChart'), {
-      type: 'line',
-      data: {
-        labels: revenueTrendData.map(d => d.period),
-        datasets: [{
-          label: 'Revenue',
-          data: revenueTrendData.map(d => d.revenue_pence / 100),
-          borderColor: textColor,
-          backgroundColor: 'rgba(0, 0, 0, 0.04)',
-          tension: 0.4,
-          fill: true,
-          pointBackgroundColor: textColor,
-          pointBorderColor: textColor,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
-        },
-        scales: {
-          y: { beginAtZero: true, ticks: { callback: v => currencySymbol + v, color: textMutedColor } },
-          x: { ticks: { color: textMutedColor } }
-        }
-      }
-    });
-  }
-
-  // Hourly Distribution
-  const hourlyData = <?= json_encode($analytics['hourly_distribution']) ?>;
-  if (hourlyData && hourlyData.length > 0) {
-    new Chart(document.getElementById('hourlyChart'), {
-      type: 'bar',
-      data: {
-        labels: hourlyData.map(d => d.hour + ':00'),
-        datasets: [{
-          label: 'Orders',
-          data: hourlyData.map(d => d.orders),
-          backgroundColor: textColor,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, ticks: { color: textMutedColor } },
-          x: { ticks: { color: textMutedColor } }
-        }
-      }
-    });
-  }
-
-  // Sales by Event
-  const eventData = <?= json_encode($analytics['sales_by_event']) ?>;
-  if (eventData && eventData.length > 0) {
-    const colors = [
-      '#111111', '#2a2a2a', '#3f3f3f', '#535353', '#676767',
-      '#7a7a7a', '#8d8d8d', '#a1a1a1', '#b4b4b4', '#c7c7c7'
-    ];
-    new Chart(document.getElementById('eventsChart'), {
-      type: 'doughnut',
-      data: {
-        labels: eventData.map(e => e.title),
-        datasets: [{
-          data: eventData.map(e => e.revenue_pence / 100),
-          backgroundColor: colors
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'right', labels: { color: textColor } }
-        }
-      }
-    });
-  }
-});
-</script>
+<script src="/assets/js/admin-charts.js" defer></script>
 
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

@@ -22,7 +22,13 @@ require __DIR__ . '/../app/lib/view.php';
 session_start_secure();
 
 // Security headers (same as public site)
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'");
+// style-src and font-src are stated explicitly rather than inherited from
+// default-src. They are the same value, but naming them documents that inline
+// styles and CDN fonts are deliberately refused: fonts are self-hosted under
+// /assets/fonts, and every style belongs in a stylesheet. Do NOT add
+// 'unsafe-inline' here to make a page render — that silently re-permits the
+// whole class of inline styling this codebase is moving away from.
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'");
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');

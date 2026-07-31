@@ -1,15 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cart: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName) ?></a>
-</header>
+<?php
+$pageTitle = 'Cart: ' . e($siteName);
+$metaDescription = 'Shopping cart - add photos and checkout';
+$metaUrl = $GLOBALS['config']['site']['url'] . '/cart';
+$showCart = false; // we're on the cart page itself
+$pageScripts = '<script src="/assets/js/cart.js" defer></script>';
+require __DIR__ . '/partials/layout_header.php';
+?>
 
 <main class="cart-page">
   <h1>Your cart</h1>
@@ -54,7 +50,7 @@
       <span><?= e(format_pence($totalPence, $currencyCode)) ?></span>
     </div>
 
-    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" method="post">
+    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" method="post" data-validate="email">
       <div class="form-group">
         <label for="checkout-email" class="form-label">Email address</label>
         <input
@@ -74,32 +70,4 @@
   <?php endif; ?>
 </main>
 
-<script src="/assets/js/ui-feedback.js" defer></script>
-<script src="/assets/js/accessibility.js" defer></script>
-<script src="/assets/js/cart.js" defer></script>
-<script>
-  // Initialize form validation
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('checkout-form');
-    if (form && typeof UIFeedback !== 'undefined') {
-      UIFeedback.enableRealtimeValidation(form, {
-        email: {
-          required: true,
-          email: true,
-          requiredMessage: 'Email is required',
-          emailMessage: 'Please enter a valid email address',
-        },
-      });
-
-      // Auto-focus first field
-      UIFeedback.autoFocusForm(form);
-    }
-
-    // Initialize accessibility
-    if (typeof A11y !== 'undefined') {
-      A11y.init(document);
-    }
-  });
-</script>
-</body>
-</html>
+<?php require __DIR__ . '/partials/layout_footer.php'; ?>

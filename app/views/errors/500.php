@@ -1,16 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Server Error</title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <a href="/" class="site-title"><?= e($siteName ?? 'Gallery') ?></a>
-</header>
+<?php
+$siteName = $GLOBALS['config']['site']['name'] ?? 'Gallery';
+$pageTitle = 'Server Error';
+$metaDescription = 'Something went wrong on our end';
+$metaUrl = ($GLOBALS['config']['site']['url'] ?? '') . '/errors/500';
+$showCart = false;
+require __DIR__ . '/../public/partials/layout_header.php';
+?>
 
 <main>
 <div class="error-page">
@@ -23,5 +18,5 @@
   </div>
 </div>
 </main>
-</body>
-</html>
+
+<?php require __DIR__ . '/../public/partials/layout_footer.php'; ?>
