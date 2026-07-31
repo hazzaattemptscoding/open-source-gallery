@@ -8,6 +8,7 @@ composer.lock
 /storage/cache/
 /storage/customize/
 /storage/gallery/
+/storage/backups/
 /storage/*.sqlite*
 !/storage/hires/.gitkeep
 !/storage/zips/.gitkeep
@@ -15,6 +16,7 @@ composer.lock
 !/storage/cache/.gitkeep
 !/storage/customize/.gitkeep
 !/storage/gallery/.gitkeep
+!/storage/backups/.gitkeep
 /public/uploads/
 /public/media/d/
 !/public/media/d/.gitkeep

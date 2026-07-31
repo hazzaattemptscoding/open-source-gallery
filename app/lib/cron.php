@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/derivatives.php';
 require_once __DIR__ . '/db_compat.php';
+require_once __DIR__ . '/backup.php';
 
 $GLOBALS['pdo'] = $GLOBALS['pdo'] ?? null;
 
@@ -66,6 +67,8 @@ function run_cron_drain(PDO $pdo): void {
                     $success = process_cleanup_job($pdo, $payload);
                 } elseif ($type === 'view_count') {
                     $success = process_view_count_job($pdo, $payload);
+                } elseif ($type === 'backup') {
+                    $success = process_backup_job($pdo, $payload);
                 } else {
                     $lastError = "Unknown job type \"{$type}\"";
                 }
