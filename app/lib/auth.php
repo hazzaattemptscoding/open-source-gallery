@@ -82,6 +82,8 @@ function admin_attempt_login(PDO $pdo, array $config, string $email, string $pas
     session_regenerate_after_login();
     $_SESSION['admin_id'] = (int) $admin['id'];
     $_SESSION['admin_email'] = $admin['email'];
+    // Track TOTP verification for step-up authentication on sensitive operations
+    $_SESSION['totp_verified_at'] = time();
 
     audit_log($pdo, 'admin', 'login_ok', 'admin_users', (int) $admin['id'], null, $ip);
 
@@ -116,4 +118,91 @@ function admin_logout(PDO $pdo): void
 
     $_SESSION = [];
     session_destroy();
+}
+
+/**
+ * Check if TOTP step-up verification is required for sensitive operations.
+ * Returns true if the admin needs to re-verify with TOTP (older than timeLimit).
+ * Returns false if already recently verified or TOTP is not enabled.
+ */
+function totp_stepup_required(PDO $pdo, int $timeLimit = 600): bool
+{
+    if (!admin_is_logged_in()) {
+        return false;
+    }
+
+    $adminId = current_admin_id();
+    if (!$adminId) {
+        return false;
+    }
+
+    // Check if admin has TOTP enabled
+    $stmt = $pdo->prepare('SELECT totp_enabled FROM admin_users WHERE id = ?');
+    $stmt->execute([$adminId]);
+    $admin = $stmt->fetch();
+
+    if (!$admin || !(bool)$admin['totp_enabled']) {
+        return false;
+    }
+
+    // Check if TOTP was verified recently (within timeLimit seconds)
+    $verifiedAt = $_SESSION['totp_verified_at'] ?? null;
+    if ($verifiedAt === null || (time() - $verifiedAt) > $timeLimit) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Verify TOTP code for step-up authentication on sensitive operations.
+ * Returns true if verification succeeds and updates totp_verified_at.
+ * Returns false if verification fails (invalid code, rate limited, etc).
+ */
+function totp_stepup_verify(PDO $pdo, string $totpCode, string $ip): bool
+{
+    if (!admin_is_logged_in()) {
+        return false;
+    }
+
+    $adminId = current_admin_id();
+    if (!$adminId) {
+        return false;
+    }
+
+    $email = $_SESSION['admin_email'] ?? null;
+    if (!$email) {
+        return false;
+    }
+
+    // Rate limit TOTP step-up attempts
+    $maxAttempts = 5;
+    if (!check_rate_limit($pdo, 'totp_stepup', 'acct:' . $email, 300, $maxAttempts)) {
+        audit_log($pdo, 'admin', 'stepup_rate_limited', 'admin_users', $adminId, null, $ip);
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT totp_secret, totp_last_step FROM admin_users WHERE id = ?');
+    $stmt->execute([$adminId]);
+    $admin = $stmt->fetch();
+
+    if (!$admin) {
+        return false;
+    }
+
+    $matchedStep = totp_verify($admin['totp_secret'], $totpCode, $admin['totp_last_step']);
+    if ($matchedStep === null) {
+        audit_log($pdo, 'admin', 'stepup_fail_totp', 'admin_users', $adminId, null, $ip);
+        return false;
+    }
+
+    // Update last step and verified timestamp
+    $pdo->prepare('UPDATE admin_users SET totp_last_step = ? WHERE id = ?')
+        ->execute([$matchedStep, $adminId]);
+
+    $_SESSION['totp_verified_at'] = time();
+
+    audit_log($pdo, 'admin', 'stepup_ok', 'admin_users', $adminId, null, $ip);
+
+    return true;
 }
