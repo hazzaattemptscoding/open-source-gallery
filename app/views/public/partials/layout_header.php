@@ -33,7 +33,7 @@ if (isset($pageTitle) && $metaDescription) {
 
 // Generate structured data if event is provided (for event pages)
 if (isset($event)) {
-    require_once __DIR__ . '/../../lib/seo.php';
+    require_once __DIR__ . '/../../../lib/seo.php';
     echo generate_event_schema($event) ?? '';
 }
 ?>
