@@ -11,6 +11,29 @@ if (file_exists($configPath)) {
     return; // Config already exists, use it as-is
 }
 
+/**
+ * Report a fatal config-bootstrap problem.
+ *
+ * STDERR alone is not enough: it is only reliable on the CLI. Under PHP-FPM
+ * or mod_php the constant may not even be defined, and writing to it either
+ * fails or vanishes, so a misconfigured host would fail silently with a blank
+ * page and nothing in the log. error_log() always lands somewhere the admin
+ * can find, and STDERR is still used on top of it when running from a shell so
+ * installer output stays visible.
+ */
+function bootstrap_config_fail(string $message, bool $fatal = true): void
+{
+    error_log('config bootstrap: ' . $message);
+
+    if (PHP_SAPI === 'cli' && defined('STDERR')) {
+        fwrite(STDERR, ($fatal ? 'ERROR: ' : 'WARNING: ') . $message . "\n");
+    }
+
+    if ($fatal) {
+        exit(1);
+    }
+}
+
 // Generate from environment variables (Docker Compose sets these)
 $config = [
     'db' => [
@@ -57,24 +80,24 @@ $config = [
 $configDir = dirname($configPath);
 if (!is_dir($configDir)) {
     if (!@mkdir($configDir, 0755, true)) {
-        fwrite(STDERR, "ERROR: Could not create {$configDir}. Check directory permissions.\n");
-        exit(1);
+        bootstrap_config_fail("Could not create {$configDir}. Check directory permissions.");
     }
 }
 
 // Check directory is writable
 if (!is_writable($configDir)) {
-    fwrite(STDERR, "ERROR: Directory {$configDir} is not writable. Fix permissions with: chmod 755 {$configDir}\n");
-    exit(1);
+    bootstrap_config_fail("Directory {$configDir} is not writable. Fix permissions with: chmod 755 {$configDir}");
 }
 
 // Write config file
 $configCode = "<?php\nreturn " . var_export($config, true) . ";\n";
 if (!@file_put_contents($configPath, $configCode)) {
-    fwrite(STDERR, "ERROR: Could not write {$configPath}. Check file permissions.\n");
-    exit(1);
+    bootstrap_config_fail("Could not write {$configPath}. Check file permissions.");
 }
 
 if (!@chmod($configPath, 0600)) {
-    fwrite(STDERR, "WARNING: Could not set permissions on {$configPath}. File may be readable by other users.\n");
+    bootstrap_config_fail(
+        "Could not set permissions on {$configPath}. It may be readable by other users on this host.",
+        fatal: false
+    );
 }
