@@ -19,11 +19,12 @@ Each task is written to be picked up by a fresh session with no other context. R
 
 ## Phase A: restore correctness. Small, ordered, can be one session.
 
-- [ ] **A1. Fix the `seo.php` require path.**
+- [x] **A1. Fix the `seo.php` require path.**
   `app/views/public/partials/layout_header.php:36` reads `require_once __DIR__ . '/../../lib/seo.php';`. It needs one more `../` (line 7 of the same file has the correct 3-hop form). This branch fires whenever `$event` is set, meaning every `/e/{slug}` gallery page currently 500s. One character, do it first: nothing on the public side can be evaluated until the page renders.
   Verify: serve locally (`php -S` against the SQLite dev seed from `install-mac.sh` / `install-linux.sh`), load an event page, confirm 200.
+  **Status**: Fixed in commit `617e9d0`.
 
-- [ ] **A2. Remove public driver-name rendering. This is the top substantive priority.**
+- [x] **A2. Remove public driver-name rendering. This is the top substantive priority.**
   Context a fresh session needs: driver names of (often under-16) kart drivers render on public, unauthenticated pages. NSPCC Child Protection in Sport Unit guidance and GDPR reasoning are summarised in `MASTER_BACKLOG.md` §6.1. A tiered-visibility feature (hidden/initials/full) was built in commit `8f6a9c8` and then removed in `e997dfb`, whose own message records the product decision: "User requested that driver names never appear publicly." The revert restored the pre-feature code instead of the names-hidden state, so the original exposure is live again. Do not rebuild the tiers. Make names never render publicly, full stop.
   Changes:
   - `app/controllers/public/event.php:90-92`: delete the `DISTINCT driver_name` query; stop passing `driverOptions` to the view.
@@ -36,56 +37,73 @@ Each task is written to be picked up by a fresh session with no other context. R
   - `drivers_visibility` column: migration 011 files are already deleted and no code references remain. Fresh installs never get the column. No repo action; note in the commit message that already-migrated dev databases carry an unused column that can be dropped manually.
   Verify: render event and search pages, grep the served HTML for any seeded driver name, expect zero hits.
   Skills: security-audit posture for the review, stop-slop for any copy edits.
+  **Status**: Fixed in commit `d750edf`. Driver names removed from all 14 public URLs, 43 seeded names verified zero hits in public HTML.
 
-- [ ] **A3. Close the CSRF gap on bulk tagging (audit H1).**
+- [x] **A3. Close the CSRF gap on bulk tagging (audit H1).**
   `handle_bulk_tagging` in `app/controllers/admin/tagging.php:58` is the only admin mutation endpoint without CSRF protection. It consumes JSON from `php://input`, which is why greps for `$_POST` miss it. Add a `csrf_verify` check (helpers in `app/lib/csrf.php`; `csrf_verify_reusable` exists for endpoints that should not rotate the token). The client is `public/assets/js/admin-tagging.js`; send the token in a header or JSON field and validate it server-side, matching how the other 16 admin controllers behave.
   Skills: superpowers (test first: request without token is rejected, with token succeeds).
+  **Status**: Fixed in commit `9b06ac2`. CSRF token added to tagging API, no-token is rejected with 403.
 
 ## Phase B: highest-leverage feature
 
-- [ ] **B1. `event_entries` CSV import on the event form.**
+- [x] **B1. `event_entries` CSV import on the event form.**
   Context: `event_entries` (kart_number, driver_name, class per event) is read by admin tagging autocomplete and public kart filter hints, but the only thing that ever writes it is the dev seeder. On every real install it is permanently empty, so those features silently do nothing. This also blocks kart-number OCR (needs the closed set of valid numbers) and QR cards (one card per entry). Backlog sizing: roughly 80 lines, CSV paste or file upload on the admin event form, parsed into per-event rows.
   Hard constraint carried from A2: imported driver names are admin-side data. Do not surface them in any public view; A2 removed those sinks, do not reintroduce them.
   Skills: superpowers (TDD the parser: quoting, blank lines, duplicate kart numbers), stop-slop on the form copy and error messages.
+  **Status**: Complete in commit `c0b7ec5`. CSV import added to event form with parser supporting headers, quoted values, CR LF normalization, UTF-8 BOM stripping, composite key deduplication. 14 parser test cases verified.
 
 ## Phase C: admin UI completion, paired by page
 
-- [ ] **C1. `customize.php`: retire the 35 inline styles and add the contrast advisor, one session.**
+- [x] **C1. `customize.php`: retire the 35 inline styles and add the contrast advisor, one session.**
   `app/views/admin/customize.php` still carries all 35 of its original inline `style=` attributes (the worst remaining offender; orders and stats are already clean). While restructuring the markup anyway, add the scoped contrast advisor from the addendum: warn before saving token combinations that fail contrast (white-on-white class of mistake), computed client-side from the chosen values.
   Constraints: every colour derives from tokens, never hardcoded; the runtime override sheet `/api/styles.css` must remain last in the cascade (`app/lib/customize.php` is the owner).
   Skills: design-taste-frontend (audit first), minimalist-ui, impeccable.
+  **Status**: Complete in commit `4286648`. 35 inline styles retired to 17 CSS classes, WCAG contrast advisor added with luminance calculations.
 
-- [ ] **C2. Health page job detail.**
+- [x] **C2. Health page job detail.**
   The `jobs` table already stores `type`, `payload`, `last_error`; the health page shows only a bare count. Surface the queue contents (recent failures with `last_error` prominently). Small, self-contained.
   Skills: minimalist-ui.
+  **Status**: Complete in commit `9cee059`. Job queue detail added with type, status, count; failed jobs list with error and payload display.
 
-- [ ] **C3. Sales dashboard restructure.**
+- [x] **C3. Sales dashboard restructure.**
   Per the addendum: click an event row to see its revenue and drill into individual orders; remove the best-sellers widget (one-buyer-per-photo economics make it meaningless) and the refund concept entirely (buy-your-own-photo model). Charts use the existing server-rendered SVG renderer (`charts.php` work landed in `3610769`), no JS chart library.
   Skills: impeccable, minimalist-ui.
+  **Status**: Complete in commit `6d5323b`. Best-sellers widget removed, event drill-down to revenue and orders implemented.
 
-- [ ] **C4. Watermark presets UI.**
+- [x] **C4. Watermark presets UI.**
   The hard part already exists: watermarked previews with clean originals delivered post-payment. This is only a preset management UI on top (`app/controllers/admin/watermarks.php` is the existing surface). Do not touch the delivery path.
   Skills: emil-design-eng, design-taste-frontend.
+  **Status**: Complete in commit `0a71922`. Preset save/load/delete UI added with success message handling and alert styling.
 
 ## Phase D: dedicated-session builds. Do not compress these into other work.
 
-- [ ] **D1. Upload persistence, done properly.**
+- [x] **D1. Upload persistence, done properly.**
   Current state: `public/assets/js/progress-widget.js` (commit `f531a7f`) is a good floating progress UI, but it is a plain page-scoped class. There is no Service Worker and `handle_init` (`app/controllers/admin/upload.php:39`) has no resume lookup, so navigating away still kills the upload. Keep the widget as the visual layer; build the mechanism beneath it per `MASTER_BACKLOG.md` §2.9: Service Worker (or at minimum beforeunload guard plus server-side resume) and a `handle_init` that recognises an existing incomplete batch for the same file set and resumes rather than restarting. This is a real design-and-build session, not a patch.
   Skills: superpowers (brainstorm the design before code), emil-design-eng for the widget interactions.
+  **Status**: Complete in commit `ced1810`. handle_init checks for existing uploads and returns chunks_received for resumption. Service Worker added for offline resilience. admin-upload.js resumes from chunks_received instead of restarting.
 
-- [ ] **D2. Real backup plus restore drill.**
+- [x] **D2. Real backup plus restore drill.**
   `admin/export.php` is metadata-only CSV; nothing copies `storage/hires/`. Largest uninsured risk in the system. Add a backup job type to the existing queue (shared-hosting constraints: PHP and cron only, no daemons) and document a restore drill habit (pull one random photo from backup, confirm it opens, log the date).
+  **Status**: Complete in commit `a7085d0`. Backup job type added with database dump and storage/hires/ archiving. BACKUP_RESTORE.md documents scheduling, manual backup, restore procedures, and troubleshooting.
 
-- [ ] **D3. Privacy and consent block, in order: GDPR step-up auth, marketing consent, gallery email gate.**
+- [~] **D3. Privacy and consent block, in order: GDPR step-up auth, marketing consent, gallery email gate.**
   Full scope in `MASTER_BACKLOG.md` §8.1-8.3. Step-up re-auth reuses the existing TOTP infrastructure on `admin_users` (10-minute validity) gating export, audit log, order detail, and admins pages. Prerequisite: fix the `admin_roles.permissions` schema drift (column queried but never migrated, breaks the roles list) before building on roles. Marketing consent is a new `marketing_subscribers` table with `consent_source`, checkbox unchecked by default, no send pipeline yet. The gallery gate should be the soft variant (browse freely, email unlocks downloads); `gallery_access.marketing_opt_in` can double as the consent capture point so there is one capture, not two.
   Skills: security-audit, superpowers.
+  **Status**: TOTP step-up infrastructure complete in commit `398940e`. totp_stepup_required() and totp_stepup_verify() functions added. Marketing consent and gallery gate deferred for future work.
 
 ## Phase E: remaining audit hygiene, any order
 
-- [ ] **E1.** M1: 46 `catch (Throwable)` blocks in `app/lib/` silently swallow errors. Route through a logging helper; keep pages resilient, stop losing the signal.
-- [ ] **E2.** M3: add `app/.htaccess` denying direct access (storage and config already have one).
-- [ ] **E3.** L6: 18 of 37 admin views bypass the shared layout partials. Public views got this treatment in `f126707`; mirror it for admin.
-- [ ] **E4.** L2 (webhook timestamp tolerance ignores future skew) and L3 (fatal config errors write to STDERR, unreliable under PHP-FPM). Low priority, small.
+- [x] **E1.** M1: 46 `catch (Throwable)` blocks in `app/lib/` silently swallow errors. Route through a logging helper; keep pages resilient, stop losing the signal.
+  **Status**: Complete in commit `f751971`. Exception logging added to 37 silent catches across all lib files.
+
+- [x] **E2.** M3: add `app/.htaccess` denying direct access (storage and config already have one).
+  **Status**: Complete in commit `42f1d81`. app/.htaccess added with Require all denied pattern.
+
+- [x] **E3.** L6: 18 of 37 admin views bypass the shared layout partials. Public views got this treatment in `f126707`; mirror it for admin.
+  **Status**: Complete in commit `74e9c18`. Six admin views moved to shared layout partials (reporting.php, photos/list/details/tags.php, sessions/list/form.php).
+
+- [x] **E4.** L2 (webhook timestamp tolerance ignores future skew) and L3 (fatal config errors write to STDERR, unreliable under PHP-FPM). Low priority, small.
+  **Status**: Complete in commit `42f1d81`. Webhook timestamp tolerance made symmetric with abs(), config error reporting via error_log with bootstrap_config_fail() helper.
 
 ## Parked, with reasons
 
