@@ -3,7 +3,7 @@
 <p class="step-description">Where to store original photo files. <strong>Skippable:</strong> defaults to local storage.</p>
 
 <div class="help-section">
-    <div class="help-toggle" onclick="toggleHelp(this)">
+    <div class="help-toggle" data-help-toggle>
         <span class="help-toggle-icon">▸</span>
         <span>Which storage mode should I choose?</span>
     </div>
@@ -33,20 +33,3 @@
 <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
     <button type="submit" name="skip" class="button button-secondary" style="width: 100%; margin-bottom: 12px;">Skip for now (use Local)</button>
 </div>
-
-<script>
-function toggleHelp(el) {
-    const content = el.nextElementSibling;
-    const icon = el.querySelector('.help-toggle-icon');
-    content.classList.toggle('hidden');
-    icon.style.transform = content.classList.contains('hidden') ? '' : 'rotate(90deg)';
-}
-
-document.querySelectorAll('.mode-option').forEach(label => {
-    label.addEventListener('click', function() {
-        document.querySelectorAll('.mode-option').forEach(l => l.classList.remove('active'));
-        this.classList.add('active');
-        this.querySelector('input[type="radio"]').checked = true;
-    });
-});
-</script>

@@ -1,13 +1,90 @@
 /* Photo Gallery — premium editorial minimalism */
 
-/* Google Fonts fallbacks for customizable fonts (Geist Sans, Newsreader, Geist Mono loaded via @font-face) */
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,8..72,200..800;1,8..72,200..800&display=swap');
-
 /*
- * Font files below are placeholders — real brand fonts should be supplied
- * and placed in public/assets/fonts/ with @font-face rules updated.
- * Until then, we rely on system-font fallback stacks.
+ * Fonts are self-hosted, not loaded from a CDN. This is deliberate and load-
+ * bearing: the app sends `default-src 'self'` with an explicit `font-src 'self'`
+ * (public/index.php, admin/index.php), so a Google Fonts @import is blocked
+ * outright. It also keeps the app self-contained for shared hosting and drops
+ * three render-blocking third-party requests.
+ *
+ * All three faces are variable and ship under the SIL Open Font License; the
+ * licence text sits beside the files in public/assets/fonts/. Axes are narrowed
+ * to what the design actually uses — Newsreader is pinned to wght 400 (every
+ * heading is 400) while keeping the opsz axis variable, which is the whole point
+ * of the face given .hero-title clamps between 1.75rem and 2.5rem.
+ *
+ * Only the latin subset loads for most visitors; latin-ext is a separate file
+ * the browser fetches on demand, which matters because self-hosters outside the
+ * UK need its currency range (U+20A0-20C0).
  */
+
+/* ---- Newsreader: headings. Optical sizing 6-72, weight pinned to 400. ---- */
+@font-face {
+  font-family: 'Newsreader';
+  src: url('/assets/fonts/Newsreader-Variable-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-optical-sizing: auto;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Newsreader';
+  src: url('/assets/fonts/Newsreader-Variable-latin-ext.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-optical-sizing: auto;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---- Instrument Sans: body, UI, buttons. Weights 400-700. ---- */
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/assets/fonts/InstrumentSans-Variable-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/assets/fonts/InstrumentSans-Variable-latin-ext.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---- JetBrains Mono: tokens, IDs, code. Weights 400-600. ---- */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/JetBrainsMono-Variable-latin.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/JetBrainsMono-Variable-latin-ext.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 :root {
   /* ---- Chrome: purple at low chroma. Reads as tinted ink, not "purple". ---- */
@@ -58,6 +135,11 @@
   /* Animation timing */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* ---- Families. Declared once here; every rule reads the token. ---- */
+  --font-body: 'Instrument Sans', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  --font-heading: 'Newsreader', 'Instrument Serif', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 /* Dark viewing surface: photographs belong on dark. Elevation comes from
@@ -91,7 +173,7 @@ html, body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Geist Sans', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-body);
   line-height: 1.6;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -114,7 +196,7 @@ section {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Newsreader', 'Instrument Serif', 'Lyon Text', serif;
+  font-family: var(--font-heading);
   letter-spacing: -0.02em;
   line-height: 1.2;
   font-weight: 400;
@@ -1606,7 +1688,7 @@ body.lightbox-open {
 .share-modal h3 {
   margin: 0 0 var(--space-4);
   font-size: var(--text-lg);
-  font-family: 'Newsreader', serif;
+  font-family: var(--font-heading);
   font-weight: 600;
 }
 
@@ -1676,7 +1758,7 @@ body.lightbox-open {
 .share-preview code {
   display: block;
   word-break: break-all;
-  font-family: 'Geist Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text);
   background: var(--bg);
@@ -1845,7 +1927,7 @@ body.lightbox-open {
 }
 
 .empty-state-title {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: var(--font-heading);
   font-size: var(--text-xl);
   margin: 0 0 var(--space-3);
   color: var(--text);

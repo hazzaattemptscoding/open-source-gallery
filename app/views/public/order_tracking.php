@@ -42,8 +42,11 @@
   </div>
 
   <?php if ($order['status'] === 'paid'): ?>
-    <!-- Download section -->
-    <div style="background: #fff; border: 1px solid #eee; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+    <!-- Download section. data-region promotes this to a labelled ARIA landmark
+         via page-init.js. The old inline script tried to find it with
+         querySelector('[style*="Download Your Files"]'), which matches a style
+         ATTRIBUTE containing that text and so could never match anything. -->
+    <div data-region="Download files" style="background: #fff; border: 1px solid #eee; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
       <h2 style="margin: 0 0 1rem; font-size: 1.375rem; font-weight: 600;">Download Your Files</h2>
       <p style="color: #666; margin: 0 0 1.5rem;">Your files are ready to download. Links expire on <strong><?= e($downloadExpiry) ?></strong>.</p>
 
@@ -98,19 +101,6 @@
 </main>
 
 <script src="/assets/js/accessibility.js" defer></script>
-<script>
-  // Initialize accessibility
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof A11y !== 'undefined') {
-      A11y.init(document);
-      // Mark download section as live region for status
-      const downloadSection = document.querySelector('[style*="Download Your Files"]');
-      if (downloadSection) {
-        downloadSection.setAttribute('role', 'region');
-        downloadSection.setAttribute('aria-label', 'Download files section');
-      }
-    }
-  });
-</script>
+<script src="/assets/js/page-init.js" defer></script>
 </body>
 </html>

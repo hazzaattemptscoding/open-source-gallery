@@ -80,7 +80,7 @@ require_once __DIR__ . '/partials/layout_header.php';
               <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
               <input type="hidden" name="action" value="update_role">
               <input type="hidden" name="admin_id" value="<?= e($admin['id']) ?>">
-              <select name="role_id" class="admin-role-select" onchange="this.form.submit()">
+              <select name="role_id" class="admin-role-select" data-submit-on-change>
                 <?php foreach ($roles as $role): ?>
                   <option value="<?= e($role['id']) ?>" <?= $admin['admin_role_id'] == $role['id'] ? 'selected' : '' ?>>
                     <?= e($role['display_name']) ?>
@@ -97,7 +97,7 @@ require_once __DIR__ . '/partials/layout_header.php';
 
         <div class="admin-actions">
           <?php if ($admin['id'] != $currentAdminId): ?>
-            <form method="post" style="display: inline;" onsubmit="return confirm('Delete this admin?');">
+            <form method="post" style="display: inline;" data-confirm="Delete this admin?">
               <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="admin_id" value="<?= e($admin['id']) ?>">

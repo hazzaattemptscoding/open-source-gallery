@@ -33,7 +33,7 @@ require_once __DIR__ . '/partials/layout_header.php';
 
       <div class="form-group">
         <label>Operation:</label>
-        <select name="action" id="operation" onchange="updateForm()">
+        <select name="action" id="operation" data-reveal-group="tag,price,status">
           <option value="tag">Add Tags (kart, driver, class)</option>
           <?php if ($limits['can_bulk_price']): ?>
             <option value="price">Update Prices</option>
@@ -87,22 +87,7 @@ require_once __DIR__ . '/partials/layout_header.php';
   </div>
 </main>
 
-<script>
-  function updateForm() {
-    const op = document.getElementById('operation').value;
-    document.getElementById('tag-options').classList.remove('active');
-    document.getElementById('price-options').classList.remove('active');
-    document.getElementById('status-options').classList.remove('active');
-
-    if (op === 'tag') {
-      document.getElementById('tag-options').classList.add('active');
-    } else if (op === 'price') {
-      document.getElementById('price-options').classList.add('active');
-    } else if (op === 'status') {
-      document.getElementById('status-options').classList.add('active');
-    }
-  }
-</script>
+<script src="/assets/js/admin-common.js" defer></script>
 
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

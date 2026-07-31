@@ -16,7 +16,7 @@
   <p style="color: #787774; margin: 0 0 2rem; font-size: 0.9rem;">Order #<?= e(substr($orderToken, 0, 8)) ?></p>
 
   <div style="background: #f7f6f3; padding: 2rem; border-radius: 8px;">
-    <form id="order-verify-form" method="post" aria-label="Order verification form">
+    <form id="order-verify-form" method="post" aria-label="Order verification form" data-validate="email">
       <input type="hidden" name="order_token" value="<?= e($orderToken) ?>">
 
       <div class="form-group">
@@ -48,29 +48,6 @@
 
 <script src="/assets/js/ui-feedback.js" defer></script>
 <script src="/assets/js/accessibility.js" defer></script>
-<script>
-  // Initialize form validation
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('order-verify-form');
-    if (form && typeof UIFeedback !== 'undefined') {
-      UIFeedback.enableRealtimeValidation(form, {
-        email: {
-          required: true,
-          email: true,
-          requiredMessage: 'Email is required',
-          emailMessage: 'Please enter a valid email address',
-        },
-      });
-
-      // Auto-focus email field
-      UIFeedback.autoFocusForm(form);
-    }
-
-    // Initialize accessibility
-    if (typeof A11y !== 'undefined') {
-      A11y.init(document);
-    }
-  });
-</script>
+<script src="/assets/js/page-init.js" defer></script>
 </body>
 </html>

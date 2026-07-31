@@ -139,13 +139,6 @@ $hasAnyFilter = $hasKartFilter || $hasDriverFilter || $hasClassFilter;
 <script src="/assets/js/ui-feedback.js" defer></script>
 <script src="/assets/js/accessibility.js" defer></script>
 <script src="/assets/js/event.js" defer></script>
-<script>
-  // Initialize accessibility on page load
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof A11y !== 'undefined') {
-      A11y.init(document);
-    }
-  });
-</script>
+<script src="/assets/js/page-init.js" defer></script>
 </body>
 </html>

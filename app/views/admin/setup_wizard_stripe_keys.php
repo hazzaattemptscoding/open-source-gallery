@@ -3,7 +3,7 @@
 <p class="step-description">Accept customer payments. Optional but required for checkout functionality.</p>
 
 <div class="help-section">
-    <div class="help-toggle" onclick="toggleHelp(this)">
+    <div class="help-toggle" data-help-toggle>
         <span class="help-toggle-icon">▸</span>
         <span>Where do I find my Stripe API keys?</span>
     </div>

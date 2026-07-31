@@ -54,7 +54,7 @@
       <span><?= e(format_pence($totalPence, $currencyCode)) ?></span>
     </div>
 
-    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" method="post">
+    <form id="checkout-form" class="checkout-form" aria-label="Checkout form" method="post" data-validate="email">
       <div class="form-group">
         <label for="checkout-email" class="form-label">Email address</label>
         <input
@@ -77,29 +77,6 @@
 <script src="/assets/js/ui-feedback.js" defer></script>
 <script src="/assets/js/accessibility.js" defer></script>
 <script src="/assets/js/cart.js" defer></script>
-<script>
-  // Initialize form validation
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('checkout-form');
-    if (form && typeof UIFeedback !== 'undefined') {
-      UIFeedback.enableRealtimeValidation(form, {
-        email: {
-          required: true,
-          email: true,
-          requiredMessage: 'Email is required',
-          emailMessage: 'Please enter a valid email address',
-        },
-      });
-
-      // Auto-focus first field
-      UIFeedback.autoFocusForm(form);
-    }
-
-    // Initialize accessibility
-    if (typeof A11y !== 'undefined') {
-      A11y.init(document);
-    }
-  });
-</script>
+<script src="/assets/js/page-init.js" defer></script>
 </body>
 </html>

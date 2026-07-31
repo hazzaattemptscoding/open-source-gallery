@@ -3,7 +3,7 @@
 <p class="step-description">Customers receive order confirmations and download links. Optional but recommended for customer experience.</p>
 
 <div class="help-section">
-    <div class="help-toggle" onclick="toggleHelp(this)">
+    <div class="help-toggle" data-help-toggle>
         <span class="help-toggle-icon">▸</span>
         <span>How to find your email provider's SMTP settings</span>
     </div>
@@ -21,10 +21,10 @@
 <div class="form-group">
     <label>Which email provider do you use?</label>
     <div class="provider-select">
-        <button type="button" class="provider-option active" onclick="selectProvider('gmail')">Gmail</button>
-        <button type="button" class="provider-option" onclick="selectProvider('outlook')">Outlook</button>
-        <button type="button" class="provider-option" onclick="selectProvider('ionos')">IONOS</button>
-        <button type="button" class="provider-option" onclick="selectProvider('custom')">Other</button>
+        <button type="button" class="provider-option active" data-provider="gmail">Gmail</button>
+        <button type="button" class="provider-option" data-provider="outlook">Outlook</button>
+        <button type="button" class="provider-option" data-provider="ionos">IONOS</button>
+        <button type="button" class="provider-option" data-provider="custom">Other</button>
     </div>
     <input type="hidden" id="provider" name="provider" value="gmail">
 </div>
@@ -75,34 +75,3 @@
 <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
     <button type="submit" name="skip" class="button button-secondary" style="width: 100%; margin-bottom: 12px;">Skip for now</button>
 </div>
-
-<script>
-function toggleHelp(el) {
-    const content = el.nextElementSibling;
-    const icon = el.querySelector('.help-toggle-icon');
-    content.classList.toggle('hidden');
-    icon.style.transform = content.classList.contains('hidden') ? '' : 'rotate(90deg)';
-}
-
-function selectProvider(provider) {
-    document.getElementById('provider').value = provider;
-    document.querySelectorAll('.provider-option').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-
-    const providers = {
-        gmail: { host: 'smtp.gmail.com', port: 587 },
-        outlook: { host: 'smtp-mail.outlook.com', port: 587 },
-        ionos: { host: 'smtp.ionos.com', port: 587 },
-        custom: { host: '', port: 587 }
-    };
-
-    const cfg = providers[provider];
-    if (cfg.host) {
-        document.getElementById('smtp_host').value = cfg.host;
-        document.getElementById('smtp_port').value = cfg.port;
-    } else {
-        document.getElementById('smtp_host').value = '';
-        document.getElementById('smtp_port').value = 587;
-    }
-}
-</script>

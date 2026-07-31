@@ -362,15 +362,6 @@ button.submit:active {
   </div>
 <?php endif; ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.mode-toggle button[data-href]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = btn.dataset.href;
-    });
-  });
-});
-</script>
+<script src="/assets/js/admin-common.js" defer></script>
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

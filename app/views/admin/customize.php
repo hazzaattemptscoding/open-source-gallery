@@ -149,7 +149,7 @@ require_once __DIR__ . '/partials/layout_header.php';
 
       <div class="customize-buttons">
         <button type="submit" style="background: var(--text); color: var(--bg); border: none; border-radius: 4px; cursor: pointer; flex: 2;">Save Changes</button>
-        <button type="button" class="preview-button" onclick="openPublicPreview();" style="flex: 1;">Preview</button>
+        <button type="button" class="preview-button" data-popup="/admin/customize?preview=public" data-popup-name="customize_preview" style="flex: 1;">Preview</button>
       </div>
     </form>
 
@@ -157,7 +157,7 @@ require_once __DIR__ . '/partials/layout_header.php';
     <form method="post" style="margin-top: 1rem;">
       <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <input type="hidden" name="action" value="reset">
-      <button type="submit" onclick="return confirm('Reset all customizations to defaults? This will delete any uploaded logo.');" style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Reset to Defaults</button>
+      <button type="submit" data-confirm="Reset all customizations to defaults? This will delete any uploaded logo." style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Reset to Defaults</button>
     </form>
 
     <!-- Delete logo form (only shown if logo exists) -->
@@ -165,7 +165,7 @@ require_once __DIR__ . '/partials/layout_header.php';
     <form method="post" style="margin-top: 0.5rem;">
       <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
       <input type="hidden" name="action" value="delete_logo">
-      <button type="submit" onclick="return confirm('Delete the uploaded logo?');" style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Delete Logo</button>
+      <button type="submit" data-confirm="Delete the uploaded logo?" style="width: 100%; background: var(--bg-alt); color: var(--text); border: 1px solid var(--border); padding: 0.875rem; font-weight: 500; cursor: pointer; border-radius: 4px;">Delete Logo</button>
     </form>
     <?php endif; ?>
   </div>
@@ -192,10 +192,6 @@ require_once __DIR__ . '/partials/layout_header.php';
   </div>
 </div>
 
-<script>
-function openPublicPreview() {
-  window.open('/admin/customize?preview=public', 'customize_preview', 'width=1200,height=800');
-}
-</script>
+<script src="/assets/js/admin-common.js" defer></script>
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>

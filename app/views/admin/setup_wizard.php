@@ -84,5 +84,6 @@ declare(strict_types=1);
             </div>
         <?php endif; ?>
     </div>
+<script src="/assets/js/admin-wizard.js" defer></script>
 </body>
 </html>
