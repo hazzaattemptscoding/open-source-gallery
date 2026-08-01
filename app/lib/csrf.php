@@ -23,8 +23,10 @@ function csrf_token(): string
 }
 
 /**
- * Check a submitted token against the session's token. On success, invalidates
- * the token to prevent replay attacks (one-time use only).
+ * Check a submitted token against the session's token. Tokens are per-session
+ * and verified with hash_equals (constant-time comparison), so they're not
+ * replayable across sessions. One-time-use invalidation (unsetting the token)
+ * breaks concurrent requests in multiple tabs without adding meaningful security.
  */
 function csrf_verify(?string $submitted): bool
 {
@@ -32,14 +34,7 @@ function csrf_verify(?string $submitted): bool
         return false;
     }
 
-    if (!hash_equals($_SESSION['csrf_token'], $submitted)) {
-        return false;
-    }
-
-    // Token verified successfully. Invalidate it immediately to prevent replay.
-    unset($_SESSION['csrf_token']);
-
-    return true;
+    return hash_equals($_SESSION['csrf_token'], $submitted);
 }
 
 /**
