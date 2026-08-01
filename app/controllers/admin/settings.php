@@ -88,9 +88,20 @@ function admin_settings_controller(PDO $pdo, array $config): void {
             // settings_registry rows, and config.php is a different destination
             // entirely. A malformed value here breaks Stripe or SMTP silently at
             // the next checkout or email send rather than at save time.
+            //
+            // Blank is skipped ONLY for secrets, where it means "leave
+            // unchanged" (enforced by the routing filter above, which never
+            // lets a blank secret reach $fileUpdates at all). A blank
+            // NON-secret value -- site.name = '', for instance -- reaching
+            // this loop means the admin actually submitted a blank value and
+            // must be validated and rejected like anything else. An earlier
+            // version of this loop skipped validation for every blank value
+            // regardless of secrecy, which let a blank site.name overwrite the
+            // real config.php value with an empty string, unvalidated.
             foreach ($fileUpdates as $settingKey => $value) {
-                if ($value === '') {
-                    continue; // secrets: blank means "leave unchanged", nothing to validate
+                $path = settings_field_to_config_path($category, $settingKey);
+                if ($value === '' && config_path_is_secret($path)) {
+                    continue;
                 }
                 foreach (config_field_validate($category, $settingKey, $value) as $message) {
                     $errors[] = $settingKey . ': ' . $message;
@@ -276,6 +287,15 @@ function config_field_validate(string $category, string $key, string $value): ar
     }
     if ($category === 'currency' && $key === 'code' && !preg_match('/^[A-Z]{3}$/', $value)) {
         return ['Currency must be a 3-letter ISO code (e.g., GBP, USD).'];
+    }
+    if ($category === 'site' && $key === 'name' && trim($value) === '') {
+        return ['Gallery name cannot be blank.'];
+    }
+    if ($category === 'site' && $key === 'contact_email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        return ['Must be a valid email address.'];
+    }
+    if ($category === 'site' && $key === 'timezone' && !in_array($value, DateTimeZone::listIdentifiers(), true)) {
+        return ["Not a recognised timezone identifier (e.g. 'Europe/London', 'America/New_York')."];
     }
 
     return [];

@@ -50,6 +50,16 @@ const CONFIG_FILE_PATHS = [
     'stripe.webhook_secret',
     'smtp.pass',
     'currency',
+    // site.name and site.timezone were the same disconnected-duplicate bug as
+    // the Stripe fields above, just on the two most visible Settings fields:
+    // both are Basic tier, category 'site', the page's own default category.
+    // config['site']['name'] alone has 42 real call sites (page titles, email
+    // templates, ...); editing "Gallery Name" in Settings changed none of
+    // them. site.contact_email is the same shape again, mapped below to
+    // config's real field name (support_email, not contact_email).
+    'site.name',
+    'site.support_email',
+    'timezone',
 ];
 
 /**
@@ -140,18 +150,28 @@ function config_path_is_secret(string $path): bool
 /**
  * settings_registry's category.key_name -> the real config.php dot path.
  *
- * Identity for almost everything (stripe.mode, smtp.pass, ...). The one
- * exception: config.php stores currency as a bare top-level string, not
- * nested under a 'currency' category the way every other config.php-native
- * group is, so the Settings UI's currency.code field needs a translation
- * rather than a literal match against CONFIG_FILE_PATHS.
+ * Identity for most fields (stripe.mode, smtp.pass, site.name, ...). Three
+ * exceptions, all because a settings_registry field was named independently
+ * of the config.php key it actually needs to reach:
+ *
+ * - currency.code -> currency (config.php stores it as a bare top-level
+ *   string, not nested under a 'currency' category)
+ * - security.session_timeout... not handled here, that one stays database-
+ *   backed, this list is only for the exceptions
+ * - site.contact_email -> site.support_email (config.php's real field name;
+ *   every consumer -- app/lib/mailer.php, app/lib/fulfillment.php -- reads
+ *   support_email, and contact_email was a same-concept, different-name
+ *   duplicate that never reached them)
+ * - site.timezone -> timezone (bare top-level, same shape as currency)
  */
 function settings_field_to_config_path(string $category, string $key): string
 {
-    if ($category === 'currency' && $key === 'code') {
-        return 'currency';
-    }
-    return "{$category}.{$key}";
+    return match ("{$category}.{$key}") {
+        'currency.code' => 'currency',
+        'site.contact_email' => 'site.support_email',
+        'site.timezone' => 'timezone',
+        default => "{$category}.{$key}",
+    };
 }
 
 /** 'stripe.live_secret_key' -> ['stripe', 'live_secret_key']. */

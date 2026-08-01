@@ -1,10 +1,19 @@
+<?php
+require_once __DIR__ . '/../../../lib/seo.php';
+require_once __DIR__ . '/../../../lib/settings.php';
+
+// site.language: was set in Settings, read by nothing -- every page declared
+// English regardless. get_setting()'s own try/catch degrades to the 'en'
+// default if settings_registry isn't reachable, so a DB hiccup here can't
+// break the page the way a missing require would.
+$htmlLang = e(get_setting($GLOBALS['pdo'], 'site', 'language', 'en'));
+?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= $htmlLang ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php
-require_once __DIR__ . '/../../../lib/seo.php';
 
 // Default meta description if not provided
 if (!isset($metaDescription)) {
