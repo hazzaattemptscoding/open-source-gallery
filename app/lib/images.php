@@ -173,6 +173,14 @@ function watermark_xy(int $imgWidth, int $imgHeight, int $textWidth, int $textHe
             $x = $margin;
             $y = $margin;
             break;
+        case 'bottom-center':
+            $x = (int)(($imgWidth - $textWidth) / 2);
+            $y = $imgHeight - $textHeight - $margin;
+            break;
+        case 'center':
+            $x = (int)(($imgWidth - $textWidth) / 2);
+            $y = (int)(($imgHeight - $textHeight) / 2);
+            break;
         case 'bottom-right':
         default:
             $x = $imgWidth - $textWidth - $margin;

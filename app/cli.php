@@ -26,6 +26,7 @@ try {
         'db:validate' => cli_db_validate($pdo),
         'photos:organize' => cli_photos_organize($pdo, $args),
         'photos:fix-watermarks' => cli_photos_fix_watermarks($pdo, $args),
+        'photos:backfill-exif' => cli_photos_backfill_exif($pdo, $args),
         'email:queue' => cli_email_queue($pdo, $args),
         'email:retry' => cli_email_retry($pdo, $args),
         'backup:create' => cli_backup_create($pdo, $config, $args),
@@ -55,6 +56,7 @@ Database:
 Photos:
   photos:organize       Rename/organize photos by event
   photos:fix-watermarks Regenerate watermarks for photos
+  photos:backfill-exif  Read EXIF for photos uploaded before this was wired
 
 Email:
   email:queue           Show pending email queue

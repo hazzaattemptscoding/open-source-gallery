@@ -112,8 +112,14 @@ events are never returned.
       "height": 1080,
       "view_count": 92,
       "created_at": "2026-07-31 16:08:50",
-      "camera_make": null,
-      "camera_model": null
+      "camera_make": "Canon",
+      "camera_model": "EOS R6",
+      "lens": null,
+      "focal_length": "840/10",
+      "aperture": "28/10",
+      "shutter_speed": "1/1000",
+      "iso": 400,
+      "taken_at": "2026-07-31 15:40:12"
     }
   ]
 }
@@ -126,7 +132,27 @@ rows than `per_page`.
 `price_pence` falls back to the event's `price_single_pence` when the photo has
 no override.
 
-`created_at` is a MySQL datetime string in the server's timezone, not ISO 8601.
+`created_at`/`taken_at` are MySQL datetime strings in the server's timezone,
+not ISO 8601. `taken_at` is when the shutter fired (EXIF `DateTimeOriginal`,
+falling back to `DateTime`); `created_at` is when the row was inserted at
+upload time — the two will differ if photos are uploaded some time after the
+event.
+
+`focal_length`, `aperture` and `shutter_speed` are the raw EXIF rational
+values (`"840/10"` = 84.0mm, not pre-divided) rather than a formatted string,
+since different consumers want different precision and rounding here would
+throw some of it away permanently.
+
+**Every EXIF field is `null` on a photo uploaded before this API returned
+them.** Extraction only runs at upload time
+(`app/controllers/admin/upload.php`'s `handle_finalize()`, calling
+`extract_exif_metadata()`/`save_photo_metadata()` in `app/lib/metadata.php`);
+existing photos were never retroactively read. Run
+`php app/cli.php photos:backfill-exif [event_id]` once to backfill from the
+stored originals — safe to re-run, it only touches rows where `camera_make`
+is still `null`. A photo with no EXIF at all (a screenshot, or one re-saved
+by software that strips it) stays `null` permanently; there is nothing to
+extract.
 
 ### Get one photo
 
@@ -146,18 +172,20 @@ GET /api/v1/photos/{id}
     "height": 1080,
     "view_count": 92,
     "created_at": "2026-07-31 16:08:50",
-    "camera_make": null,
-    "camera_model": null
+    "camera_make": "Canon",
+    "camera_model": "EOS R6",
+    "lens": null,
+    "focal_length": "840/10",
+    "aperture": "28/10",
+    "shutter_speed": "1/1000",
+    "iso": 400,
+    "taken_at": "2026-07-31 15:40:12"
   }
 }
 ```
 
-This returns **exactly the same fields as the list endpoint**. It does not
-return EXIF detail. `focal_length`, `aperture`, `shutter_speed`, `iso` and
-`taken_at` are captured at upload and stored on the `photos` row, but
-`api_get_photo()` does not select them, so there is currently no way to read
-them over the API. An earlier version of this document described them as part
-of the response; that was never true.
+This returns **exactly the same fields as the list endpoint**, including the
+full EXIF set described above.
 
 Returns `404` for an unknown id, a photo that is not `live`, or a photo whose
 event is unpublished.

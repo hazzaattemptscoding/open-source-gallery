@@ -18,13 +18,14 @@ function search_photos(
     string $query,
     array $filters = [],
     int $page = 1,
-    int $perPage = 20
+    int $perPage = 20,
+    int $minQueryLength = 2
 ): array {
     $offset = ($page - 1) * $perPage;
 
     // Sanitize query (remove dangerous characters)
     $query = trim($query);
-    if (strlen($query) < 2) {
+    if (strlen($query) < $minQueryLength) {
         return ['photos' => [], 'total' => 0, 'pages' => 0, 'facets' => []];
     }
 

@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cart.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/db_compat.php';
+require_once __DIR__ . '/../../lib/validation.php';
+require_once __DIR__ . '/../../lib/wishlist.php';
 
 /**
  * Event page, matching both /e/{event-slug} (full-event grid across all
@@ -67,6 +69,12 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
         'date_end' => trim((string)($_GET['date_end'] ?? '')),
     ];
 
+    // ?page= is the no-JS fallback and what keeps every photo crawlable and
+    // linkable, per docs/architecture.md section 4's URL-as-state rule
+    // already followed for filters above. The "Load more" button appends
+    // page+1 via /api/photos without a navigation.
+    $page = validate_page($_GET['page'] ?? 1);
+
     $heroToken = null;
     if ($event['cover_photo_id']) {
         $stmt = $pdo->prepare('SELECT public_token FROM photos WHERE id = ? AND status = ?');
@@ -79,8 +87,23 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
         $heroToken = $stmt->fetchColumn() ?: null;
     }
 
-    $photos = fetch_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
-    $videos = fetch_gallery_media($pdo, $eventId, $sessionId, 'video', $filters);
+    $photos = fetch_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters, $page, GALLERY_PAGE_SIZE);
+    $totalPhotos = count_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
+    $hasMorePhotos = ($page * GALLERY_PAGE_SIZE) < $totalPhotos;
+
+    // Videos are a separate section with their own load order (CLAUDE.md:
+    // "Videos live in their own section, never mixed into the photo grid's
+    // load order"), and typically far fewer per event than photos, so they
+    // keep a single generous page rather than the same load-more UI.
+    $videos = fetch_gallery_media($pdo, $eventId, $sessionId, 'video', $filters, 1, 500);
+
+    // Only looks up an existing cookie -- never mints one just to render a
+    // page, which would set a cookie on every visitor regardless of whether
+    // they ever touch favourites.
+    $favoriteToken = $_COOKIE[FAVORITES_COOKIE_NAME] ?? '';
+    $favoritedIds = $favoriteToken !== ''
+        ? get_wishlisted_photo_ids($pdo, $favoriteToken, array_column($photos, 'id'))
+        : [];
 
     $stmt = $pdo->prepare('SELECT DISTINCT kart_number FROM event_entries WHERE event_id = ? AND kart_number <> \'\' ORDER BY kart_number ASC');
     $stmt->execute([$eventId]);
@@ -123,7 +146,7 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     render(__DIR__ . '/../../views/public/event.php', compact(
         'siteName', 'currencyCode', 'event', 'sessions', 'activeSession', 'sessionId',
         'filters', 'heroToken', 'photos', 'videos', 'kartOptions', 'classOptions',
-        'basePath', 'cartCount'
+        'basePath', 'cartCount', 'page', 'totalPhotos', 'hasMorePhotos', 'favoritedIds'
     ));
 }
 
@@ -139,7 +162,18 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
  *
  * @return list<array<string, mixed>>
  */
-function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $mediaType, array $filters): array {
+/**
+ * Shared by fetch_gallery_media() and count_gallery_media() so a filter
+ * added to one can't silently stop applying to the other -- the previous
+ * shape had this WHERE-building duplicated nowhere yet, but pagination
+ * needs a count alongside the page of results, and copy-pasting the filter
+ * logic into a second function is exactly how the settings_registry/
+ * `settings` table split happened in the first place.
+ *
+ * @return array{0: string, 1: list<mixed>} [$join, $where SQL, is folded into index 1's trailing element]
+ */
+function build_gallery_media_where(int $eventId, ?int $sessionId, string $mediaType, array $filters): array
+{
     $where = ['p.event_id = ?', 'p.status = ?', 'p.media_type = ?'];
     $params = [$eventId, 'live', $mediaType];
 
@@ -147,8 +181,6 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
         $where[] = 'p.session_id = ?';
         $params[] = $sessionId;
     }
-
-    $join = 'LEFT JOIN photo_tags pt ON pt.photo_id = p.id';
 
     if ($filters['kart'] !== '') {
         $where[] = 'pt.kart_number = ?';
@@ -168,20 +200,48 @@ function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $me
         $params[] = $filters['date_end'];
     }
 
-    $select = "SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order,
-               GROUP_CONCAT(pt.kart_number) as kart_tags,
-               GROUP_CONCAT(pt.class) as class_tags";
+    return [implode(' AND ', $where), $params];
+}
 
-    $sql = "{$select}
+/**
+ * Default page size for a gallery grid. Deliberately not
+ * search.results_per_page: that setting governs the /search results list,
+ * a different UI with different reading density, and coupling the two would
+ * make an admin's search-page preference silently resize their event
+ * galleries too.
+ */
+const GALLERY_PAGE_SIZE = 60;
+
+function fetch_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $mediaType, array $filters, int $page = 1, int $perPage = GALLERY_PAGE_SIZE): array {
+    [$whereSql, $params] = build_gallery_media_where($eventId, $sessionId, $mediaType, $filters);
+    $join = 'LEFT JOIN photo_tags pt ON pt.photo_id = p.id';
+
+    $offset = max(0, ($page - 1) * $perPage);
+
+    $sql = "SELECT DISTINCT p.id, p.public_token, p.width, p.height, p.sort_order,
+               GROUP_CONCAT(pt.kart_number) as kart_tags,
+               GROUP_CONCAT(pt.class) as class_tags
         FROM photos p
         {$join}
-        WHERE " . implode(' AND ', $where) . "
+        WHERE {$whereSql}
         GROUP BY p.id
         ORDER BY p.sort_order ASC, p.id ASC
-        LIMIT 500
+        LIMIT ? OFFSET ?
     ";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+    $stmt->execute([...$params, $perPage, $offset]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/** Total media matching the same filters fetch_gallery_media() would use, for pagination controls. */
+function count_gallery_media(PDO $pdo, int $eventId, ?int $sessionId, string $mediaType, array $filters): int
+{
+    [$whereSql, $params] = build_gallery_media_where($eventId, $sessionId, $mediaType, $filters);
+    $join = 'LEFT JOIN photo_tags pt ON pt.photo_id = p.id';
+
+    $sql = "SELECT COUNT(DISTINCT p.id) FROM photos p {$join} WHERE {$whereSql}";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return (int) $stmt->fetchColumn();
 }

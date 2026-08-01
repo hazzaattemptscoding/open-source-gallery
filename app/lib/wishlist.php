@@ -1,10 +1,55 @@
 <?php
 /**
- * Customer wishlists and favorites.
- * Persisted by signed customer token, no login required.
+ * Customer wishlists ("favourites"), persisted by an opaque per-visitor
+ * token, no login required — same no-accounts model as the cart
+ * (app/lib/cart.php).
+ *
+ * Deliberately not modelled on the cart's cookie: the cart cookie carries
+ * its own contents directly (HMAC-signed, since a forged cart item is only
+ * harmless because price is always re-read from the DB, per that file's own
+ * comment). A favourites token is different in kind -- it is a lookup key
+ * into the wishlists table, not a payload -- so what it needs is
+ * unguessability, not tamper-evidence. There is nothing to tamper with in
+ * an opaque random token.
  */
 
 declare(strict_types=1);
+
+const FAVORITES_COOKIE_NAME = 'pm_favorites';
+const FAVORITES_COOKIE_DAYS = 365;
+
+/**
+ * Read the visitor's favourites token, minting and cookie-ing a new one if
+ * this is their first visit. Called at the top of every favourites request
+ * so a fresh visitor always gets a working, if empty, favourites list
+ * rather than an error.
+ */
+function get_or_create_favorites_token(): string {
+    $existing = $_COOKIE[FAVORITES_COOKIE_NAME] ?? '';
+    if (is_string($existing) && preg_match('/^[a-f0-9]{64}$/', $existing)) {
+        return $existing;
+    }
+
+    $token = bin2hex(random_bytes(32));
+    $isHttps = (($_SERVER['HTTPS'] ?? '') !== '') || (($_SERVER['SERVER_PORT'] ?? '') === '443');
+    setcookie(FAVORITES_COOKIE_NAME, $token, [
+        'expires' => time() + (FAVORITES_COOKIE_DAYS * 86400),
+        'path' => '/',
+        'secure' => $isHttps,
+        'httponly' => true,
+        // Lax, matching the cart cookie: a shared gallery link opened from
+        // another site is still a top-level GET navigation, which Lax sends
+        // the cookie on. It's also why a cross-site POST forging a favourite
+        // add/remove can't work -- Lax excludes the cookie from cross-site
+        // POSTs, which is what lets these two endpoints skip a CSRF token
+        // the same way cart_add()/cart_remove() already do.
+        'samesite' => 'Lax',
+    ]);
+    // Available to the rest of this request without a second round trip.
+    $_COOKIE[FAVORITES_COOKIE_NAME] = $token;
+
+    return $token;
+}
 
 /**
  * Get or create wishlist for customer token.
@@ -32,13 +77,21 @@ function get_customer_wishlist(PDO $pdo, string $customerToken): ?array {
 }
 
 /**
- * Add photo to wishlist.
+ * Add photo to wishlist. Idempotent: adding an already-favourited photo
+ * succeeds without a second row, rather than relying on the UNIQUE
+ * (wishlist_id, photo_id) constraint to fail and having the caller unable to
+ * tell that apart from a real failure -- both would have hit the same catch
+ * block and returned the same false.
  */
 function add_to_wishlist(PDO $pdo, string $customerToken, int $photoId, string $notes = ''): bool {
     try {
         $wishlist = get_customer_wishlist($pdo, $customerToken);
         if (!$wishlist) {
             return false;
+        }
+
+        if (is_in_wishlist($pdo, $customerToken, $photoId)) {
+            return true;
         }
 
         $stmt = $pdo->prepare(<<<'SQL'
@@ -110,6 +163,42 @@ function is_in_wishlist(PDO $pdo, string $customerToken, int $photoId): bool {
     } catch (Throwable $e) {
         error_log('wishlist: is_in_wishlist() failed: ' . $e->getMessage());
         return false;
+    }
+}
+
+/**
+ * Which of the given photo IDs are already in this customer's wishlist, as
+ * an id => true map for an O(1) isset() check per grid tile. Batched
+ * against the current page's photo IDs rather than one is_in_wishlist()
+ * call per tile, so rendering a page of GALLERY_PAGE_SIZE (60) photos costs
+ * one query, not 60.
+ *
+ * @param list<int> $photoIds
+ * @return array<int, true>
+ */
+function get_wishlisted_photo_ids(PDO $pdo, string $customerToken, array $photoIds): array {
+    if ($photoIds === []) {
+        return [];
+    }
+
+    try {
+        $placeholders = implode(',', array_fill(0, count($photoIds), '?'));
+        $stmt = $pdo->prepare(<<<SQL
+            SELECT wi.photo_id
+            FROM wishlist_items wi
+            JOIN wishlists w ON wi.wishlist_id = w.id
+            WHERE w.customer_token = ? AND wi.photo_id IN ({$placeholders})
+        SQL);
+        $stmt->execute([$customerToken, ...$photoIds]);
+
+        $result = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $id) {
+            $result[(int)$id] = true;
+        }
+        return $result;
+    } catch (Throwable $e) {
+        error_log('wishlist: get_wishlisted_photo_ids() failed: ' . $e->getMessage());
+        return [];
     }
 }
 

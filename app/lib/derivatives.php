@@ -49,7 +49,7 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
     try {
         foreach ($sizes as $size) {
             $outPath = "{$derivPath}/{$token}-{$size}.jpg";
-            $watermark = $settings['enabled'] && $size >= $settings['min_width'];
+            $watermark = $settings['enabled'] && in_array(watermark_size_tier($size), $settings['apply_to_sizes'], true);
             generate_derivative($hiresPath, $outPath, $size, $watermark, $settings);
             $bytes = (int)@filesize($outPath);
             if ($bytes > 0) {
@@ -75,17 +75,59 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
  * per migrations/001_initial_schema.sql seed data) and converts them into
  * the fractions/ints app/lib/images.php expects.
  */
+/**
+ * The pixel width of each generated derivative, tagged with the tier name
+ * app/controllers/admin/watermarks.php's apply_to_sizes column uses
+ * ('sm,md,lg'). Kept here, next to the one place $sizes is defined, so the
+ * two can never drift apart the way the size list and the watermark
+ * settings themselves already had.
+ */
+function watermark_size_tier(int $pixelWidth): string {
+    return match ($pixelWidth) {
+        400 => 'sm',
+        800 => 'md',
+        1600 => 'lg',
+        default => 'md',
+    };
+}
+
+/**
+ * Reads app/controllers/admin/watermarks.php's own table.
+ *
+ * Previously read a `watermark_%` prefix out of the legacy `settings`
+ * key/value table (migrations/001), which nothing in the Watermarks admin
+ * page has ever written to — that page writes watermark_settings (schema
+ * added for the C4 preset UI: position, opacity, text, enabled,
+ * apply_to_sizes). The two were never connected, so editing watermark
+ * settings through the page built for exactly that had no effect on a
+ * single generated image; every derivative rendered from whatever was left
+ * in the `settings` table's defaults regardless of what the admin set.
+ *
+ * `scale` is gone: it was read out of the old table but nothing in
+ * app/lib/images.php's watermark renderer ever consumed it, so it was
+ * configuring nothing even before this fix.
+ *
+ * `min_width` is gone too, replaced by `apply_to_sizes`: the admin UI has
+ * never offered a numeric width, only the sm/md/lg checkboxes, so a
+ * min_width read from a table the UI doesn't write was always just today's
+ * default (800) regardless of the admin's actual choice.
+ */
 function get_watermark_settings(PDO $pdo): array {
-    $stmt = $pdo->prepare('SELECT skey, svalue FROM settings WHERE skey LIKE ?');
-    $stmt->execute(['watermark_%']);
-    $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    $row = $pdo->query('SELECT position, opacity, text, enabled, apply_to_sizes FROM watermark_settings WHERE id = 1')
+                ->fetch(PDO::FETCH_ASSOC);
+
+    $tiers = $row ? array_filter(array_map('trim', explode(',', (string)$row['apply_to_sizes']))) : ['sm', 'md', 'lg'];
 
     return [
-        'enabled' => (bool)($rows['watermark_enabled'] ?? '1'),
-        'opacity' => ((float)($rows['watermark_opacity'] ?? 35)) / 100,
-        'scale' => ((float)($rows['watermark_scale'] ?? 22)) / 100,
-        'position' => $rows['watermark_position'] ?? 'bottom-right',
-        'min_width' => (int)($rows['watermark_min_width'] ?? 800),
-        'text' => $rows['watermark_text'] ?? 'PREVIEW',
+        'enabled' => $row ? (bool)$row['enabled'] : true,
+        'opacity' => $row ? (float)$row['opacity'] : 0.35,
+        // The admin form (app/views/admin/watermarks.php) submits underscored
+        // values ('bottom_right'); watermark_xy() (app/lib/images.php) matches
+        // on hyphens. Left unconverted, 3 of the form's 4 options fell through
+        // to the hyphenated default and rendered bottom-right regardless of
+        // what the admin picked.
+        'position' => str_replace('_', '-', $row['position'] ?? 'bottom-right'),
+        'apply_to_sizes' => $tiers ?: ['sm', 'md', 'lg'],
+        'text' => ($row['text'] ?? '') !== '' ? $row['text'] : 'PREVIEW',
     ];
 }

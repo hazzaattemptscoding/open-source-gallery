@@ -3,86 +3,37 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/cron.php';
-require_once __DIR__ . '/../../lib/derivatives.php';
-require_once __DIR__ . '/../../lib/db_compat.php';
 
+/**
+ * POST /admin/jobs/run — lets an admin drain the queue on demand from the
+ * health page rather than waiting for the next cron tick, useful right
+ * after a bulk upload or when cron isn't configured yet on a fresh install.
+ *
+ * Used to be its own ~180-line reimplementation of run_cron_drain()
+ * (app/lib/cron.php) with the same claim logic and a shorter list of
+ * handled job types: 'zip_build', 'cleanup', 'view_count' and 'backup' all
+ * fell through to a bare `return true` in this file's old process_job(),
+ * which deleted the job as if it had succeeded without ever running it. It
+ * also carried its own parallel email-sending path (email_template_*()
+ * functions in the now-removed app/lib/email_templates.php) reading
+ * config['mail']['from_address'], a key that has never existed in
+ * config.php's real shape (config['smtp'] is). Neither divergence had been
+ * noticed because nothing in the admin UI ever calls this endpoint -- no
+ * button, no fetch() -- so it has only ever been reachable by a direct POST.
+ * A shorter budget than the full cron drain, since this is a synchronous
+ * HTTP request an admin is waiting on in a browser tab.
+ */
 function admin_jobs_run_controller(PDO $pdo, array $config): void {
     require_admin();
 
     header('Content-Type: application/json');
 
-    $lockToken = 'pm_cron_browser';
-    if (!db_acquire_lock($pdo, $lockToken, 0)) {
-        echo json_encode(['status' => 'locked']);
-        return;
-    }
-
     $startTime = microtime(true);
-    $budget = 20.0;
-    $jobsProcessed = 0;
-
-    try {
-        while ((microtime(true) - $startTime) < $budget) {
-            $now = new DateTime('now', new DateTimeZone('UTC'));
-            $stmt = $pdo->prepare('
-                SELECT id, type, payload
-                FROM jobs
-                WHERE status = ? AND run_after <= ?
-                ORDER BY id ASC
-                LIMIT 1
-            ');
-            $stmt->execute(['pending', $now->format('Y-m-d H:i:s')]);
-            $job = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$job) {
-                break;
-            }
-
-            $jobId = (int)$job['id'];
-            $stmt = $pdo->prepare('
-                UPDATE jobs
-                SET status = ?, locked_at = ?
-                WHERE id = ?
-            ');
-            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), $jobId]);
-
-            if ($stmt->rowCount() === 0) {
-                break;
-            }
-        $type = (string)$job['type'];
-        $payload = json_decode((string)$job['payload'], true) ?? [];
-
-        $success = process_job($pdo, $type, $payload);
-
-            if ($success) {
-                $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
-                $jobsProcessed++;
-            } else {
-                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL WHERE id = ?')->execute(['pending', $jobId]);
-                break;
-            }
-        }
-    } finally {
-        db_release_lock($pdo, $lockToken);
-    }
+    $processed = run_cron_drain($pdo, 20.0);
 
     echo json_encode([
         'status' => 'ok',
-        'processed' => $jobsProcessed,
+        'processed' => $processed,
         'elapsed' => round(microtime(true) - $startTime, 2),
     ]);
-}
-
-function process_job(PDO $pdo, string $type, array $payload): bool {
-    try {
-        if ($type === 'derivative') {
-            return process_derivative_job($pdo, $payload);
-        } elseif ($type === 'email') {
-            return process_email_job($pdo, $payload);
-        }
-        return true;
-    } catch (Throwable $e) {
-        error_log("Job processing failed: {$e->getMessage()}");
-        return false;
-    }
 }

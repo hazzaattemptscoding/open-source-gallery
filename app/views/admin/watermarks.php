@@ -53,7 +53,8 @@ require_once __DIR__ . '/partials/layout_header.php';
 
     <div class="form-group">
       <label>Apply to image sizes:</label>
-      <input type="text" name="apply_to_sizes" placeholder="sm,md,lg,xl" value="<?= $settings ? e($settings['apply_to_sizes']) : 'sm,md,lg' ?>">
+      <input type="text" name="apply_to_sizes" placeholder="sm,md,lg" value="<?= $settings ? e($settings['apply_to_sizes']) : 'sm,md,lg' ?>">
+      <p class="help-text">sm = 400px, md = 800px, lg = 1600px. These are the only three derivative sizes generated, so an 'xl' tier does nothing.</p>
     </div>
 
     <div class="form-group">

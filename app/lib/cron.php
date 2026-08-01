@@ -8,144 +8,176 @@ require_once __DIR__ . '/backup.php';
 $GLOBALS['pdo'] = $GLOBALS['pdo'] ?? null;
 
 /**
- * Full 50s-budget job drain, guarded by a MySQL advisory lock so an
- * overlapping cron tick (or a stuck previous run) exits immediately
- * instead of racing. Shared by the CLI entry (cron/run.php) and the
- * URL-invoked fallback (public/index.php's /cron/{secret} route) —
- * see docs/architecture.md section 5.
+ * Job drain with a caller-chosen time budget. Two callers: the CLI/URL cron
+ * entry point wants the full 50s (docs/architecture.md section 5's
+ * shared-hosting cron interval), while the browser-assisted drain on the
+ * health page (app/controllers/admin/jobs.php) is a synchronous HTTP
+ * request a human is waiting on and needs a much shorter one. Both used to
+ * be separate ~60-line implementations of the same loop; the second one
+ * silently deleted any job type it didn't explicitly handle (zip_build,
+ * cleanup, view_count, backup all fell through to a bare `return true`) as
+ * if it had succeeded, without ever running it. One implementation now
+ * serves both.
+ *
+ * The claim step, not the whole drain, holds the write lock. It used to
+ * wrap the entire budget in one db_acquire_lock()/db_release_lock() pair --
+ * harmless on MySQL, where GET_LOCK() is a named advisory lock unrelated to
+ * row locking, but on SQLite db_acquire_lock() opens a real BEGIN IMMEDIATE
+ * transaction, and SQLite allows exactly one writer at a time. Holding that
+ * open for the full 50s budget meant every customer write anywhere in the
+ * app -- add to cart, checkout, a queued view-count increment -- blocked or
+ * failed for up to 50 seconds on every single cron tick. The claim UPDATE
+ * below is a few milliseconds; only that needs the lock, not whatever the
+ * claimed job's handler goes on to do (deriving an image, sending mail,
+ * building a zip).
+ *
+ * @return int number of jobs this call actually processed (succeeded or
+ *             failed-and-recorded), for the browser drain's "processed: N"
+ *             response. The CLI/URL caller ignores it.
  */
-function run_cron_drain(PDO $pdo): void {
+function run_cron_drain(PDO $pdo, float $budget = 50.0): int {
     $GLOBALS['pdo'] = $pdo;
-    $lockToken = 'pm_cron';
-    if (!db_acquire_lock($pdo, $lockToken, 0)) {
-        return;
-    }
-
+    $processed = 0;
     $startTime = microtime(true);
-    $budget = 50.0;
 
-    try {
-        while ((microtime(true) - $startTime) < $budget) {
-            $now = new DateTime('now', new DateTimeZone('UTC'));
-            $lockedAtThreshold = (clone $now)->modify('-10 minutes')->format('Y-m-d H:i:s');
-
-            $stmt = $pdo->prepare('
-                SELECT id, type, payload, attempts
-                FROM jobs
-                WHERE status = ? AND run_after <= ? AND (locked_at IS NULL OR locked_at < ?)
-                ORDER BY id ASC
-                LIMIT 1
-            ');
-            $stmt->execute(['pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
-            $job = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$job) {
-                break;
-            }
-
-            $jobId = (int)$job['id'];
-            $stmt = $pdo->prepare('
-                UPDATE jobs
-                SET status = ?, locked_at = ?, attempts = attempts + 1
-                WHERE id = ?
-            ');
-            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), $jobId]);
-
-            if ($stmt->rowCount() === 0) {
-                break;
-            }
-
-            $type = (string)$job['type'];
-            $payload = json_decode((string)$job['payload'], true) ?? [];
-            $attempts = (int)$job['attempts'];
-
-            $success = false;
-            $lastError = null;
-            try {
-                if ($type === 'derivative') {
-                    $success = process_derivative_job($pdo, $payload);
-                } elseif ($type === 'email') {
-                    $success = process_email_job($pdo, $payload);
-                } elseif ($type === 'zip_build') {
-                    $success = process_zip_build_job($pdo, $payload);
-                } elseif ($type === 'view_count') {
-                    $success = process_view_count_job($pdo, $payload);
-                } elseif ($type === 'backup') {
-                    $success = process_backup_job($pdo, $payload);
-                } else {
-                    $lastError = "Unknown job type \"{$type}\"";
-                }
-            } catch (Throwable $e) {
-                error_log("Job {$jobId} ({$type}) failed: {$e->getMessage()}");
-                $success = false;
-                // Class name included because the message alone is often
-                // ambiguous (an out-of-memory Error and a PDOException read
-                // very differently to whoever is debugging this later).
-                $lastError = get_class($e) . ': ' . $e->getMessage();
-            }
-
-            // A handler returning false without throwing is still a failure,
-            // and it used to leave no trace at all.
-            if (!$success && $lastError === null) {
-                $lastError = "Handler for \"{$type}\" reported failure without an exception";
-            }
-
-            if ($success) {
-                $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
-            } else {
-                // jobs.last_error exists and the health page reads it, but
-                // nothing ever wrote to it: the reason a job died was thrown
-                // away here, leaving "3 jobs failed" and no way to find out
-                // why. Persist it on both the give-up and retry paths, and
-                // log it too so the failure is visible even if the row is
-                // later cleaned up.
-                error_log("cron: job {$jobId} ({$type}) failed: {$lastError}");
-
-                if ($attempts >= 3) {
-                    $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, last_error = ? WHERE id = ?')
-                        ->execute(['failed', $lastError, $jobId]);
-                } else {
-                    $backoff = min(3600, (2 ** $attempts) * 60);
-                    $runAfter = (clone $now)->modify("+{$backoff} seconds")->format('Y-m-d H:i:s');
-                    $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = ?, last_error = ? WHERE id = ?')
-                        ->execute(['pending', $runAfter, $lastError, $jobId]);
-                }
-            }
+    while ((microtime(true) - $startTime) < $budget) {
+        $jobId = claim_next_job($pdo);
+        if ($jobId === null) {
+            break;
         }
 
-        cleanup_orphaned_upload_dirs($pdo);
-    } finally {
-        db_release_lock($pdo, $lockToken);
-    }
-}
-
-/**
- * Clean up orphaned upload directories older than 24 hours. These accumulate
- * when uploads are interrupted, timed out, or abandoned mid-batch.
- */
-function cleanup_orphaned_upload_dirs(PDO $pdo): void {
-    $uploadDir = __DIR__ . '/../../storage/tmp/uploads';
-    if (!is_dir($uploadDir)) {
-        return;
-    }
-
-    $now = time();
-    $ageThreshold = 24 * 3600; // 24 hours in seconds
-    $dirs = @glob($uploadDir . '/*', GLOB_ONLYDIR);
-
-    if (!$dirs) {
-        return;
-    }
-
-    foreach ($dirs as $dirPath) {
-        $dirMtime = @filemtime($dirPath);
-        if ($dirMtime === false) {
+        $stmt = $pdo->prepare('SELECT type, payload, attempts FROM jobs WHERE id = ?');
+        $stmt->execute([$jobId]);
+        $job = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$job) {
+            // Claimed then vanished between the UPDATE and this SELECT --
+            // not expected (nothing else deletes a 'running' row), but not
+            // worth crashing the drain over either.
             continue;
         }
 
-        if ($now - $dirMtime > $ageThreshold) {
-            @system("rm -rf " . escapeshellarg($dirPath));
+        $now = new DateTime('now', new DateTimeZone('UTC'));
+        $type = (string)$job['type'];
+        $payload = json_decode((string)$job['payload'], true) ?? [];
+        $attempts = (int)$job['attempts'];
+
+        $success = false;
+        $lastError = null;
+        try {
+            if ($type === 'derivative') {
+                $success = process_derivative_job($pdo, $payload);
+            } elseif ($type === 'email') {
+                $success = process_email_job($pdo, $payload);
+            } elseif ($type === 'zip_build') {
+                $success = process_zip_build_job($pdo, $payload);
+            } elseif ($type === 'cleanup') {
+                $success = process_cleanup_job($pdo, $payload);
+            } elseif ($type === 'view_count') {
+                $success = process_view_count_job($pdo, $payload);
+            } elseif ($type === 'backup') {
+                $success = process_backup_job($pdo, $payload);
+            } else {
+                $lastError = "Unknown job type \"{$type}\"";
+            }
+        } catch (Throwable $e) {
+            $success = false;
+            // Class name included because the message alone is often
+            // ambiguous (an out-of-memory Error and a PDOException read
+            // very differently to whoever is debugging this later).
+            $lastError = get_class($e) . ': ' . $e->getMessage();
         }
+
+        // A handler returning false without throwing is still a failure,
+        // and it used to leave no trace at all.
+        if (!$success && $lastError === null) {
+            $lastError = "Handler for \"{$type}\" reported failure without an exception";
+        }
+
+        if ($success) {
+            $pdo->prepare('DELETE FROM jobs WHERE id = ?')->execute([$jobId]);
+        } else {
+            // jobs.last_error exists and the health page reads it, but
+            // nothing ever wrote to it: the reason a job died was thrown
+            // away here, leaving "3 jobs failed" and no way to find out
+            // why. Persist it on both the give-up and retry paths, and
+            // log it too so the failure is visible even if the row is
+            // later cleaned up.
+            error_log("cron: job {$jobId} ({$type}) failed: {$lastError}");
+
+            if ($attempts >= 3) {
+                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, last_error = ? WHERE id = ?')
+                    ->execute(['failed', $lastError, $jobId]);
+            } else {
+                $backoff = min(3600, (2 ** $attempts) * 60);
+                $runAfter = (clone $now)->modify("+{$backoff} seconds")->format('Y-m-d H:i:s');
+                $pdo->prepare('UPDATE jobs SET status = ?, locked_at = NULL, run_after = ?, last_error = ? WHERE id = ?')
+                    ->execute(['pending', $runAfter, $lastError, $jobId]);
+            }
+        }
+
+        $processed++;
+    }
+
+    return $processed;
+}
+
+/**
+ * Atomically claim the oldest eligible pending job and return its id, or
+ * null if there is none.
+ *
+ * Two-step (SELECT a candidate, then UPDATE ... WHERE id = ? AND
+ * status = 'pending') rather than the previous single UPDATE ... ORDER BY
+ * ... LIMIT 1 followed by a separate `SELECT ... WHERE status = 'running'
+ * ORDER BY id DESC LIMIT 1` to fetch "the row just claimed". That second
+ * query was never actually guaranteed to be the same row the UPDATE claimed
+ * -- it re-derived "most recent running job" from scratch, which happens to
+ * match under this function's own single-claim-at-a-time usage but is not
+ * what the UPDATE's rowCount() actually told the caller. Selecting by id
+ * from the start removes the gap between "what was claimed" and "what gets
+ * processed" entirely, rather than relying on the two queries agreeing.
+ *
+ * The lock is scoped to exactly this claim, not the caller's whole drain
+ * loop -- see run_cron_drain()'s docblock for why that distinction matters
+ * on SQLite specifically.
+ */
+function claim_next_job(PDO $pdo): ?int {
+    $lockToken = 'pm_cron_claim';
+    if (!db_acquire_lock($pdo, $lockToken, 5)) {
+        return null;
+    }
+
+    try {
+        $now = new DateTime('now', new DateTimeZone('UTC'));
+        $lockedAtThreshold = (clone $now)->modify('-10 minutes')->format('Y-m-d H:i:s');
+
+        $stmt = $pdo->prepare('
+            SELECT id FROM jobs
+            WHERE status = ? AND run_after <= ? AND (locked_at IS NULL OR locked_at < ?)
+            ORDER BY id ASC
+            LIMIT 1
+        ');
+        $stmt->execute(['pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
+        $candidateId = $stmt->fetchColumn();
+        if ($candidateId === false) {
+            return null;
+        }
+
+        $stmt = $pdo->prepare('
+            UPDATE jobs
+            SET status = ?, locked_at = ?, attempts = attempts + 1
+            WHERE id = ? AND status = ?
+        ');
+        $stmt->execute(['running', $now->format('Y-m-d H:i:s'), $candidateId, 'pending']);
+
+        // rowCount() === 0 means another process claimed this exact row
+        // between the SELECT and this UPDATE -- possible even with the lock
+        // above on MySQL, where GET_LOCK() is advisory and nothing stops a
+        // connection that never calls it from writing the same row. Treated
+        // as "nothing claimed", not an error: the caller's loop will try
+        // again next iteration and pick a different candidate.
+        return $stmt->rowCount() === 1 ? (int)$candidateId : null;
+    } finally {
+        db_release_lock($pdo, $lockToken);
     }
 }
 
@@ -265,6 +297,33 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
     $zip->close();
 
     return file_exists($zipPath);
+}
+
+/**
+ * Image tiering: deletes 1600px derivatives for photos older than 7 days
+ * to save storage space. Smaller 400/800px versions remain for gallery display.
+ */
+function process_cleanup_job(PDO $pdo, array $payload): bool {
+    $photoId = (int)($payload['photo_id'] ?? 0);
+    if ($photoId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT public_token FROM photos WHERE id = ?');
+    $stmt->execute([$photoId]);
+    $token = $stmt->fetchColumn();
+    if (!$token) {
+        return false;
+    }
+
+    $derivPath = __DIR__ . '/../../public/media/d';
+    $largePath = "{$derivPath}/{$token}-1600.jpg";
+
+    if (file_exists($largePath)) {
+        @unlink($largePath);
+    }
+
+    return true;
 }
 
 /**

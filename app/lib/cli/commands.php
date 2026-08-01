@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../email.php';
 require_once __DIR__ . '/../settings.php';
+require_once __DIR__ . '/../metadata.php';
 
 function cli_migrate(PDO $pdo, array $args): void {
     $direction = $args[0] ?? 'up';
@@ -112,6 +113,75 @@ function cli_photos_fix_watermarks(PDO $pdo, array $args): void {
     }
 
     cli_success('Watermark regeneration queued for cron worker');
+}
+
+/**
+ * Read EXIF for photos that predate app/controllers/admin/upload.php's
+ * handle_finalize() calling extract_exif_metadata()/save_photo_metadata() --
+ * every photo uploaded before that had its eight camera (make, model, lens),
+ * focal_length, aperture, shutter_speed, iso, taken_at columns silently left
+ * null. Runs synchronously rather than through the job queue: this is a
+ * one-time admin-run maintenance pass, not a recurring background task, and
+ * the queue's SQLite locking (cron.php) makes it the wrong tool for a batch
+ * that isn't per-request work.
+ *
+ * Only touches rows where camera_make IS NULL, so it is safe to re-run: a
+ * photo that already has EXIF (or genuinely has none to extract, and was
+ * already attempted) is skipped rather than re-read every time.
+ */
+function cli_photos_backfill_exif(PDO $pdo, array $args): void {
+    $eventId = (int)($args[0] ?? 0);
+
+    $sql = "SELECT id, event_id, public_token, file_extension FROM photos
+            WHERE status = 'live' AND media_type = 'photo' AND camera_make IS NULL";
+    $params = [];
+    if ($eventId > 0) {
+        $sql .= ' AND event_id = ?';
+        $params[] = $eventId;
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $photos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!$photos) {
+        cli_success('Nothing to backfill -- every photo already has camera_make set (or none exist).');
+        return;
+    }
+
+    cli_log('Backfilling EXIF for ' . count($photos) . ' photo(s)...');
+
+    $updated = 0;
+    $noExif = 0;
+    $missing = 0;
+
+    foreach ($photos as $photo) {
+        $ext = $photo['file_extension'] ?: 'jpg';
+        $hiresPath = __DIR__ . "/../../../storage/hires/{$photo['event_id']}/{$photo['public_token']}.{$ext}";
+
+        if (!file_exists($hiresPath)) {
+            $missing++;
+            continue;
+        }
+
+        $metadata = extract_exif_metadata($hiresPath);
+        if ($metadata === null || $metadata['make'] === null) {
+            // Genuinely no EXIF on this file (screenshot, re-saved without
+            // it, camera that doesn't write it) -- not an error, just
+            // nothing to store. camera_make stays null, so a second run
+            // would try this file again; acceptable, since the read is
+            // cheap and the alternative is a second column just to mark
+            // "already tried and found nothing."
+            $noExif++;
+            continue;
+        }
+
+        if (save_photo_metadata($pdo, (int)$photo['id'], $metadata)) {
+            $updated++;
+        }
+    }
+
+    cli_success("Backfilled {$updated} photo(s). {$noExif} had no EXIF to read. {$missing} original file(s) missing from storage/hires/.");
 }
 
 function cli_email_queue(PDO $pdo, array $args): void {

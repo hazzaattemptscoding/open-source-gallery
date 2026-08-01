@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/permissions.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/csrf.php';
+require_once __DIR__ . '/../../lib/settings.php';
 
 function admin_admins_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -41,8 +42,14 @@ function admin_admins_controller(PDO $pdo, array $config): void {
             if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Invalid email address';
             }
-            if (strlen($password) < 8) {
-                $errors[] = 'Password must be at least 8 characters';
+            // security.password_min_length was a dead setting (settings_registry
+            // had it; nothing read it) defaulting to 8, weaker than the 12 this
+            // file and the setup wizard both hardcoded. Migration 015 raises the
+            // stored default to 12 to match the existing policy rather than
+            // silently weakening it the moment this became live.
+            $minLength = (int) get_setting($pdo, 'security', 'password_min_length', 12);
+            if (strlen($password) < $minLength) {
+                $errors[] = "Password must be at least {$minLength} characters";
             }
 
             // Check email not already taken
