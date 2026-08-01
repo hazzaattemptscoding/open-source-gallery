@@ -165,15 +165,24 @@ function handle_chunk(PDO $pdo, int $adminId, string $ip): void {
     }
 
     $chunkPath = $tmpDir . '/chunk-' . $chunkIndex;
+
+    // Check if chunk already exists (dedupe retries)
+    $chunkAlreadyExists = file_exists($chunkPath);
+
     if (!@move_uploaded_file($chunk['tmp_name'], $chunkPath)) {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to save chunk']);
         return;
     }
 
-    $newChunksReceived = (int)$file['chunks_received'] + 1;
-    $stmt = $pdo->prepare('UPDATE upload_files SET chunks_received = ? WHERE id = ?');
-    $stmt->execute([$newChunksReceived, $fileId]);
+    // Only increment if this is a new chunk, not a retry
+    if (!$chunkAlreadyExists) {
+        $newChunksReceived = (int)$file['chunks_received'] + 1;
+        $stmt = $pdo->prepare('UPDATE upload_files SET chunks_received = ? WHERE id = ?');
+        $stmt->execute([$newChunksReceived, $fileId]);
+    } else {
+        $newChunksReceived = (int)$file['chunks_received'];
+    }
 
     audit_log($pdo, 'admin', 'upload_chunk_received', 'file', $fileId, ['chunk' => $chunkIndex, 'total' => $file['chunks_total']], $ip);
 
@@ -215,7 +224,18 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
         return;
     }
 
-    if ((int)$file['chunks_received'] !== (int)$file['chunks_total']) {
+    // Count actual chunk files instead of relying on chunks_received counter
+    // (more robust against retry edge cases)
+    $tmpDir = __DIR__ . '/../../../storage/tmp/uploads/' . $fileId;
+    if (!is_dir($tmpDir)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Upload directory not found']);
+        return;
+    }
+
+    $chunkFiles = glob($tmpDir . '/chunk-*', GLOB_NOSORT);
+    $actualChunksReceived = count($chunkFiles);
+    if ($actualChunksReceived < (int)$file['chunks_total']) {
         http_response_code(400);
         echo json_encode(['error' => 'Not all chunks received']);
         return;
@@ -232,7 +252,6 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
     }
 
     $eventId = (int)$session['event_id'];
-    $tmpDir = __DIR__ . '/../../../storage/tmp/uploads/' . $fileId;
     $assembledPath = $tmpDir . '/assembled.tmp';
 
     if (!assemble_chunks($tmpDir, (int)$file['chunks_total'], $assembledPath)) {
