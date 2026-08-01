@@ -138,7 +138,12 @@ async function uploadFiles(fileInfo) {
     const info = fileInfo[idx];
     if (!info) continue;
 
-    await uploadFile(idx, file, info);
+    try {
+      await uploadFile(idx, file, info);
+    } catch (err) {
+      // File upload failed, but continue with the rest of the batch
+      console.error(`File ${idx} (${file.name}) upload failed:`, err);
+    }
   }
 }
 
@@ -178,7 +183,7 @@ async function uploadFile(idx, file, fileInfo) {
         if (retries >= MAX_RETRIES) {
           statusEl.textContent = `Error: ${err.message}`;
           statusEl.className = 'upload-file-status status-error';
-          throw err;
+          throw err; // Rethrow to abort chunk loop and file
         }
         await sleep(2 ** retries * 1000);
       }
