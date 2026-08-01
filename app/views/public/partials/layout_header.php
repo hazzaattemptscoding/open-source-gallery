@@ -11,7 +11,7 @@ if (!isset($metaDescription)) {
     $metaDescription = 'Professional sports photography gallery and sales platform';
 }
 if (!isset($metaUrl)) {
-    $metaUrl = $GLOBALS['config']['site']['url'] ?? 'https://example.com';
+    $metaUrl = site_base_url($GLOBALS['config']) ?? 'https://example.com';
 }
 if (!isset($metaImageUrl)) {
     $metaImageUrl = '';

@@ -10,7 +10,7 @@ function public_sitemap_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/xml; charset=utf-8');
     header('Cache-Control: public, max-age=86400');
 
-    $baseUrl = rtrim($config['site']['url'] ?? 'https://example.com', '/');
+    $baseUrl = rtrim(site_base_url($config) ?? 'https://example.com', '/');
 
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";

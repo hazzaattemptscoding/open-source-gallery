@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../lib/seo.php';
 $pageTitle = $siteName;
 $metaDescription = 'Professional sports photography gallery and sales platform';
-$metaUrl = $GLOBALS['config']['site']['url'] ?? 'https://example.com';
+$metaUrl = site_base_url($GLOBALS['config']) ?? 'https://example.com';
 $metaImageUrl = '';
 $showCart = false; // home page doesn't show cart
 $extraStyles = generate_organization_schema($GLOBALS['config']) ?? '';

@@ -1,7 +1,7 @@
 <?php
 $pageTitle = e($event['title']) . ': ' . e($siteName);
 $metaDescription = isset($event['description']) ? $event['description'] : 'Event photography gallery';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/e/' . e($event['slug']);
+$metaUrl = site_base_url($GLOBALS['config']) . '/e/' . e($event['slug']);
 $metaImageUrl = $event['cover_token'] ? '/media/d/' . e($event['cover_token']) . '-1200.jpg' : '';
 $showCart = true;
 $pageScripts = '<script src="/assets/js/event.js" defer></script>';
