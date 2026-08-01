@@ -23,6 +23,50 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
+// Poll job drain to process derivative jobs while page is open
+let jobDrainInterval = null;
+
+async function startJobDrain() {
+  const jobDrainEl = document.getElementById('jobDrain');
+  if (!jobDrainEl) return;
+
+  jobDrainEl.style.display = 'block';
+
+  jobDrainInterval = setInterval(async () => {
+    try {
+      const response = await fetch('/admin/jobs/run', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        // Jobs were processed, refresh the file status list
+        await refreshFileStatusList();
+      }
+    } catch (err) {
+      console.error('Job drain error:', err);
+    }
+  }, 2000); // Poll every 2 seconds
+}
+
+function stopJobDrain() {
+  if (jobDrainInterval) {
+    clearInterval(jobDrainInterval);
+    jobDrainInterval = null;
+  }
+}
+
+async function refreshFileStatusList() {
+  const filesList = document.querySelector('.upload-files-list');
+  if (!filesList) return;
+
+  const recentSection = document.querySelector('.recent-uploads .upload-files-list');
+  if (recentSection) {
+    // Force a page reload to refresh the status list with current data
+    // (simpler than parsing DOM updates; in production might use AJAX to get fresh data)
+    location.reload();
+  }
+}
+
 const uploadZone = document.getElementById('uploadZone');
 uploadZone.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -139,6 +183,7 @@ async function initBatch() {
     uploadInProgress = true;
     await uploadFiles(fileInfoBySelectedIndex);
     uploadInProgress = false;
+    startJobDrain(); // Begin processing jobs while page is open
   } catch (err) {
     uploadInProgress = false;
     alert('Error: ' + err.message);
