@@ -8,6 +8,8 @@ require_once __DIR__ . '/../../lib/csrf.php';
 
 function admin_upload_controller(PDO $pdo, array $config): void {
     require_admin();
+    header('Content-Type: application/json');
+
     $adminId = current_admin_id();
     $ip = client_ip();
 
@@ -37,6 +39,20 @@ function admin_upload_controller(PDO $pdo, array $config): void {
 }
 
 function handle_init(PDO $pdo, int $adminId, string $ip): void {
+    // Detect post_max_size overflow: PHP silently drops POST data if Content-Length
+    // exceeds post_max_size, leaving $_POST empty. Check for this condition.
+    $contentLength = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+    $postMaxBytes = (int)ini_get('post_max_size');
+    if ($contentLength > 0 && $contentLength > $postMaxBytes && empty($_POST)) {
+        http_response_code(413);
+        echo json_encode([
+            'error' => 'File exceeds server limit',
+            'detail' => "Total size {$contentLength} bytes exceeds post_max_size {$postMaxBytes} bytes",
+            'limit_bytes' => $postMaxBytes
+        ]);
+        return;
+    }
+
     $sessionId = isset($_POST['session_id']) ? (int)$_POST['session_id'] : 0;
     $fileStrings = $_POST['files'] ?? [];
 
