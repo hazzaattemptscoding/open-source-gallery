@@ -66,6 +66,7 @@ function webhook_stripe_controller(PDO $pdo, array $config): void {
 
 function handle_checkout_completed(PDO $pdo, array $session): void {
     $checkoutId = (string)($session['id'] ?? '');
+    $paymentIntentId = (string)($session['payment_intent'] ?? '');
     $paymentStatus = (string)($session['payment_status'] ?? '');
 
     if (!$checkoutId || $paymentStatus !== 'paid') {
@@ -82,15 +83,10 @@ function handle_checkout_completed(PDO $pdo, array $session): void {
     }
 
     $orderId = (int)$order['id'];
+    update_order_stripe_ids($pdo, $orderId, $checkoutId, $paymentIntentId);
     mark_order_paid($pdo, $orderId);
     audit_log($pdo, 'system', 'webhook_payment_confirmed', 'order', $orderId, [
         'checkout_id' => $checkoutId,
-    ]);
-
-    // Queue order confirmation email
-    queue_job($pdo, 'email', [
-        'order_id' => $orderId,
-        'type' => 'order_confirmation',
     ]);
 }
 
