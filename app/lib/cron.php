@@ -73,6 +73,7 @@ function run_cron_drain(PDO $pdo): void {
                     $lastError = "Unknown job type \"{$type}\"";
                 }
             } catch (Throwable $e) {
+                error_log("Job {$jobId} ({$type}) failed: {$e->getMessage()}");
                 $success = false;
                 // Class name included because the message alone is often
                 // ambiguous (an out-of-memory Error and a PDOException read

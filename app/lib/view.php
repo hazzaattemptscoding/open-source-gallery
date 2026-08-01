@@ -34,3 +34,9 @@ function render_to_string(string $viewPath, array $vars = []): string
     require $viewPath;
     return (string)ob_get_clean();
 }
+
+/** Get the site base URL from config, with sensible default. */
+function site_base_url(array $config = []): string
+{
+    return rtrim($config['site']['base_url'] ?? 'https://example.com', '/');
+}
