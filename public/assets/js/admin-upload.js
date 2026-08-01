@@ -105,7 +105,28 @@ async function initBatch() {
     const data = await response.json();
     batchId = data.batch_id;
 
-    uploadFiles(data.accepted);
+    // Map accepted/rejected by filename to original selectedFiles positions
+    const acceptedByName = {};
+    data.accepted.forEach(f => acceptedByName[f.name] = f);
+
+    const rejectedByName = {};
+    data.rejected.forEach(f => rejectedByName[f.name] = f);
+
+    // Mark UI: show rejected files with error, queue accepted for upload
+    const fileInfoBySelectedIndex = [];
+    selectedFiles.forEach((file, idx) => {
+      const name = file.name;
+      if (rejectedByName[name]) {
+        const statusEl = document.getElementById(`status-${idx}`);
+        statusEl.textContent = `Rejected: ${rejectedByName[name].error}`;
+        statusEl.className = 'upload-file-status status-rejected';
+        fileInfoBySelectedIndex[idx] = null;
+      } else if (acceptedByName[name]) {
+        fileInfoBySelectedIndex[idx] = acceptedByName[name];
+      }
+    });
+
+    uploadFiles(fileInfoBySelectedIndex);
   } catch (err) {
     alert('Error: ' + err.message);
   }

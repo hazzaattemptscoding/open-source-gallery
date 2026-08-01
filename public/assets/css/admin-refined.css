@@ -902,6 +902,7 @@ details > summary:hover { color: var(--accent); }
 .upload-file-status.status-done,      .status-live       { color: var(--ok); }
 .upload-file-status.status-uploading, .status-processing { color: var(--accent); }
 .upload-file-status.status-error,     .status-failed     { color: var(--bad); }
+.upload-file-status.status-rejected,  .status-rejected   { color: var(--bad); }
 .upload-file-status.status-pending,   .status-idle       { color: var(--text-muted); }
 
 .bulk-panel {
