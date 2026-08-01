@@ -11,6 +11,52 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/placeholder.php';
+
+/**
+ * Write the on-disk media a seeded photo row claims to have: the hires
+ * original plus the three derivative widths the views request.
+ *
+ * Writes files directly rather than queueing derivative jobs, because a
+ * seeded install has no cron running and would otherwise sit empty until
+ * someone drained the queue by hand. The output is deliberately synthetic
+ * looking so seeded content is never mistaken for real photography.
+ *
+ * Videos get the 800px poster frame that app/views/public/event.php asks for,
+ * but no hires original, matching the real pipeline's decision not to build
+ * video derivatives.
+ */
+function dev_seed_media_files(int $eventId, string $token, bool $isVideo, string $label): void {
+    if (!function_exists('imagecreatetruecolor')) {
+        // GD absent: the seed still works, images just stay missing. The
+        // /media/d/ fallback route covers the gap, so this is degraded rather
+        // than broken, and worth one line in the log rather than a fatal.
+        error_log('dev_setup: GD unavailable, seeding database rows without image files');
+        return;
+    }
+
+    $derivDir = __DIR__ . '/../../public/media/d';
+
+    if ($isVideo) {
+        write_placeholder_jpeg("{$derivDir}/{$token}-800.jpg", 800, 533, $token, $label);
+        return;
+    }
+
+    foreach ([400 => 267, 800 => 533, 1600 => 1067] as $width => $height) {
+        write_placeholder_jpeg("{$derivDir}/{$token}-{$width}.jpg", $width, $height, $token, $label);
+    }
+
+    // The original is what a purchase delivers, so a seeded install needs one
+    // for the download and backup paths to have anything to act on.
+    write_placeholder_jpeg(
+        __DIR__ . "/../../storage/hires/{$eventId}/{$token}.jpg",
+        1920,
+        1280,
+        $token,
+        $label
+    );
+}
+
 /**
  * Auto-detect available database: MySQL (if running) or SQLite (fallback).
  * Prints error and exits if neither available.
@@ -305,11 +351,31 @@ function dev_seed_dummy_data(PDO $pdo): void {
                 $pdo->prepare('INSERT INTO photo_tags (photo_id, kart_number, driver_name, class) VALUES (?, ?, ?, ?)')
                     ->execute([$photoId, $entry['kart'], $entry['driver'], $entry['class']]);
 
+                // Write the image files these rows claim to have. Without this
+                // the seeder produced ~111 'live' photos with nothing on disk,
+                // so every gallery tile requested a derivative that could not
+                // exist and the whole seeded site 404'd on every image.
+                //
+                // Labelled with the kart number, not the driver name: seeded
+                // data must not put a name anywhere it could reach a public
+                // surface, and a derivative is served publicly.
+                dev_seed_media_files($eventId, $token, $isVideo, 'Kart ' . $entry['kart']);
+
                 if (!$isVideo) {
                     $photoIds[] = $photoId;
                 }
             }
             $eventPhotoIds[$eventId] = $photoIds;
+
+            // Give the event a cover. Without one, events.cover_photo_id stays
+            // NULL, and the home page's hero, its recent rail and every archive
+            // card render with no image at all, because each reads cover_token
+            // from that join. A seeded gallery with no cover photos looks
+            // broken in exactly the place a new install is judged first.
+            if ($photoIds) {
+                $pdo->prepare('UPDATE events SET cover_photo_id = ? WHERE id = ?')
+                    ->execute([$photoIds[array_rand($photoIds)], $eventId]);
+            }
 
             // Three weeks of view history so the analytics trend chart has
             // something to plot rather than a flat line.

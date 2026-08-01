@@ -1,11 +1,20 @@
 <?php
-$pageTitle = e($event['title']) . ': ' . e($siteName);
+// generate_meta_tags() escapes every value it is given (app/lib/seo.php),
+// so these are built raw. They were passed through e() as well, which
+// double-escaped any apostrophe in an event title.
+$pageTitle = $event['title'] . ': ' . $siteName;
 $metaDescription = isset($event['description']) ? $event['description'] : 'Event photography gallery';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/e/' . e($event['slug']);
-// 1600 is the largest derivative generated (400/800/1600, see
-// app/lib/derivatives.php). This asked for -1200, which does not exist, so
-// every social card and link preview for an event pointed at a 404.
-$metaImageUrl = $event['cover_token'] ? '/media/d/' . e($event['cover_token']) . '-1600.jpg' : '';
+
+$baseUrl = rtrim($GLOBALS['config']['site']['base_url'] ?? '', '/');
+$metaUrl = $baseUrl . '/e/' . $event['slug'];
+
+// $heroToken, not $event['cover_token']: the controller resolves the hero
+// separately (falling back to the event's first live photo when no cover is
+// set) and never selects a cover_token column at all, so this read was always
+// undefined and every event's social card went out with no image. Absolute,
+// because og:image is fetched by scrapers that have no page context to
+// resolve a relative path against.
+$metaImageUrl = $heroToken ? $baseUrl . '/media/d/' . $heroToken . '-1600.jpg' : '';
 $showCart = true;
 $pageScripts = '<script src="/assets/js/event.js" defer></script>';
 require __DIR__ . '/partials/layout_header.php';
