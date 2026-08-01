@@ -94,7 +94,14 @@ async function initBatch() {
       body: formData,
     });
 
-    if (!response.ok) throw new Error('Init failed');
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Server error: ${response.status}`);
+      } catch (parseErr) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+    }
     const data = await response.json();
     batchId = data.batch_id;
 
