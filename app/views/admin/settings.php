@@ -283,6 +283,17 @@ button.submit:active {
   <div class="success-msg">Settings updated successfully</div>
 <?php endif; ?>
 
+<?php if (!empty($errors)): ?>
+  <div class="alert alert-error">
+    <strong>Nothing was saved.</strong> Fix the following and try again:
+    <ul class="settings-error-list">
+      <?php foreach ($errors as $error): ?>
+        <li><?= e($error) ?></li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+
 <div class="mode-toggle">
   <button type="button" class="<?= $mode === 'basic' ? 'active' : '' ?>" data-href="/admin/settings/<?= e($category) ?>?mode=basic">
     Basic Settings
@@ -324,6 +335,12 @@ button.submit:active {
 
             <div class="setting-input">
               <?php if ($setting['type'] === 'boolean'): ?>
+                <?php /* An unchecked checkbox submits nothing, and the controller
+                        only collects keys present in $_POST, so without this hidden
+                        partner a boolean could be switched on but never off. Same
+                        name, declared first: PHP keeps the last value, so the
+                        checkbox wins when ticked and this stands alone when not. */ ?>
+                <input type="hidden" name="setting_<?= e($setting['key_name']) ?>" value="0">
                 <label>
                   <input type="checkbox" name="setting_<?= e($setting['key_name']) ?>" value="1" <?= $setting['value'] === '1' ? 'checked' : '' ?>>
                   Enable
