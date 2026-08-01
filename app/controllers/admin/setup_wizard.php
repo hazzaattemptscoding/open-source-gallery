@@ -15,17 +15,37 @@ require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/setup.php';
 require_once __DIR__ . '/../../lib/db_compat.php';
 require_once __DIR__ . '/../../lib/validation.php';
+require_once __DIR__ . '/../../lib/config_store.php';
 
 function admin_setup_wizard_controller(PDO $pdo, array $config): void {
-    // Redirect if setup already complete (has admin account)
-    $adminCount = (int)$pdo->query('SELECT COUNT(*) FROM admin_users')->fetchColumn();
-    if ($adminCount > 0) {
+    $adminExists = (int)$pdo->query('SELECT COUNT(*) FROM admin_users')->fetchColumn() > 0;
+
+    $step = $_GET['step'] ?? $_POST['step'] ?? 'admin_account';
+
+    // Lock the wizard once it is genuinely finished -- every step the
+    // checklist marks required is done or skipped -- rather than as soon as
+    // an admin account exists. handle_admin_account() inserts that row on
+    // the wizard's very first successful submission, so gating on it alone
+    // meant every installer was redirected here from step 1's own "next
+    // step" link straight into a 403, unable to reach business details,
+    // email, Stripe, or storage/admin mode through the web UI at all.
+    // $step !== 'summary' so the summary page itself can still render once
+    // finished, to show what was configured.
+    if (setup_wizard_is_complete($pdo) && $step !== 'summary') {
         http_response_code(403);
         echo 'Setup has already been completed. Go to /admin/login.';
         return;
     }
 
-    $step = $_GET['step'] ?? $_POST['step'] ?? 'admin_account';
+    // The one thing that must not repeat is creating a second admin account:
+    // route straight past that step if today's admin already exists, rather
+    // than showing the create-account form again (which would either fail
+    // confusingly on the email uniqueness constraint, or succeed and leave a
+    // stray second admin).
+    if ($step === 'admin_account' && $adminExists) {
+        header('Location: /admin/setup?step=business_details');
+        exit;
+    }
     $error = null;
     $success = null;
     $data = [];
@@ -118,9 +138,14 @@ function handle_business_details(PDO $pdo, array $config, array $post): array {
         return ['Currency must be a 3-letter ISO code (e.g., GBP, USD).', false];
     }
 
-    update_config_setting($pdo, 'site.name', $name);
-    update_config_setting($pdo, 'site.support_email', $email);
-    update_config_setting($pdo, 'currency', $currency);
+    $writeError = update_config_settings($pdo, [
+        'site.name' => $name,
+        'site.support_email' => $email,
+        'currency' => $currency,
+    ]);
+    if ($writeError) {
+        return [$writeError, false];
+    }
 
     mark_step_complete($pdo, 'business_details');
 
@@ -158,12 +183,17 @@ function handle_email_setup(PDO $pdo, array $config, array $post): array {
         return ['SMTP port must be between 1 and 65535.', false];
     }
 
-    update_config_setting($pdo, 'smtp.from_email', $fromEmail);
-    update_config_setting($pdo, 'smtp.from_name', $fromName);
-    update_config_setting($pdo, 'smtp.host', $host);
-    update_config_setting($pdo, 'smtp.port', (string)$port);
-    update_config_setting($pdo, 'smtp.user', $user);
-    update_config_setting($pdo, 'smtp.pass', $pass);
+    $writeError = update_config_settings($pdo, [
+        'smtp.from_email' => $fromEmail,
+        'smtp.from_name' => $fromName,
+        'smtp.host' => $host,
+        'smtp.port' => (string)$port,
+        'smtp.user' => $user,
+        'smtp.pass' => $pass,
+    ]);
+    if ($writeError) {
+        return [$writeError, false];
+    }
 
     mark_step_complete($pdo, 'email_setup');
 
@@ -198,8 +228,13 @@ function handle_stripe_keys(PDO $pdo, array $config, array $post): array {
         return ['Secret key must start with sk_.', false];
     }
 
-    update_config_setting($pdo, 'stripe.publishable_key', $publishable);
-    update_config_setting($pdo, 'stripe.secret_key', $secret);
+    $writeError = update_config_settings($pdo, [
+        'stripe.publishable_key' => $publishable,
+        'stripe.secret_key' => $secret,
+    ]);
+    if ($writeError) {
+        return [$writeError, false];
+    }
 
     mark_step_complete($pdo, 'stripe_keys');
 
@@ -215,7 +250,9 @@ function handle_storage_mode(PDO $pdo, array $config, array $post): array {
     if ($skip) {
         mark_step_skipped($pdo, 'storage_mode');
         // Ensure default is set
-        update_config_setting($pdo, 'storage_mode', 'local');
+        if ($writeError = update_config_settings($pdo, ['storage_mode' => 'local'])) {
+            return [$writeError, false];
+        }
         return [null, true];
     }
 
@@ -224,7 +261,9 @@ function handle_storage_mode(PDO $pdo, array $config, array $post): array {
         return ['Invalid storage mode.', false];
     }
 
-    update_config_setting($pdo, 'storage_mode', $mode);
+    if ($writeError = update_config_settings($pdo, ['storage_mode' => $mode])) {
+        return [$writeError, false];
+    }
 
     // If remote-nas, generate poller token
     if ($mode === 'remote-nas') {
@@ -247,7 +286,9 @@ function handle_admin_mode(PDO $pdo, array $config, array $post): array {
     if ($skip) {
         mark_step_skipped($pdo, 'admin_mode');
         // Ensure default is set
-        update_config_setting($pdo, 'admin_mode', 'local');
+        if ($writeError = update_config_settings($pdo, ['admin_mode' => 'local'])) {
+            return [$writeError, false];
+        }
         return [null, true];
     }
 
@@ -256,7 +297,9 @@ function handle_admin_mode(PDO $pdo, array $config, array $post): array {
         return ['Invalid admin mode.', false];
     }
 
-    update_config_setting($pdo, 'admin_mode', $mode);
+    if ($writeError = update_config_settings($pdo, ['admin_mode' => $mode])) {
+        return [$writeError, false];
+    }
 
     mark_step_complete($pdo, 'admin_mode');
 
@@ -320,24 +363,81 @@ function get_step_data(PDO $pdo, array $config, string $step): array {
     return $data;
 }
 
-function update_config_setting(PDO $pdo, string $key, string $value): void {
-    // Note: In production, this would write to config/config.php.
-    // For now, store in settings table as a reference.
-    // The actual config.php update is a manual step or done via
-    // a config manager in production.
-    $skey = 'setup_config_' . $key;
+/**
+ * Write one value into config/config.php.
+ *
+ * Previously wrote to a `setup_config_*` row in the legacy `settings` table
+ * -- its own comment admitted this was a placeholder ("the actual config.php
+ * update is a manual step... in production") -- and nothing anywhere ever
+ * read a `setup_config_*` key back. Every value collected across the wizard's
+ * business details, email, and Stripe steps was silently discarded; a fresh
+ * install's only working path to configuring any of it was hand-editing
+ * config.php over FTP.
+ *
+ * Delegates to config_write_to_file() (app/lib/config_store.php), the same
+ * writer the Settings page's secret fields use: read, splice, write to a
+ * temp file, atomic rename, .bak kept, opcache invalidated. Every wizard
+ * value the setup flow collects belongs in config.php rather than
+ * settings_registry -- these are first-run bootstrap values (site identity,
+ * mail transport, payment keys, storage/admin mode), not the day-to-day
+ * tunable preferences the Settings page manages, and several of them
+ * (stripe.secret_key, smtp.pass) are secrets that must never sit in the
+ * database per the same reasoning as config_store.php's CONFIG_SECRET_PATHS.
+ *
+ * Re-reads config.php itself on every call rather than trusting the $config
+ * a handler was invoked with: handle_email_setup() alone calls this six
+ * times in one request, and each write must build on the one before it, not
+ * on the snapshot the request started with.
+ *
+ * A write failure (unwritable file, no permission) is surfaced to the admin
+ * rather than silently discarded -- the stub's core failure -- by returning
+ * the problem list config_write_to_file() produces; callers below add the
+ * first one to the step's own $error rather than reporting success.
+ *
+ * @return list<string> problems, empty on success
+ */
+function update_config_setting(PDO $pdo, string $key, string $value): array {
+    $configPath = dirname(__DIR__, 3) . '/config/config.php';
+    $current = file_exists($configPath) ? require $configPath : [];
 
-    if (db_supports_on_duplicate_key($pdo)) {
-        $stmt = $pdo->prepare('
-            INSERT INTO settings (skey, svalue) VALUES (?, ?)
-            ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)
-        ');
-        $stmt->execute([$skey, $value]);
-    } else {
-        $stmt = $pdo->prepare('UPDATE settings SET svalue = ? WHERE skey = ?');
-        $stmt->execute([$value, $skey]);
-        if ($stmt->rowCount() === 0) {
-            $pdo->prepare('INSERT INTO settings (skey, svalue) VALUES (?, ?)')->execute([$skey, $value]);
+    return config_write_to_file($current, $key, $value);
+}
+
+/**
+ * Write several config.php values in one step, stopping at the first
+ * failure. Every step handler calls this instead of update_config_setting()
+ * directly so a step's several fields are written as one intent and the
+ * first human-readable problem (not an empty page reload) reaches the admin
+ * if any write fails partway through.
+ *
+ * @param array<string,string> $values dot-path => value
+ * @return string|null the first problem encountered, or null on success
+ */
+function update_config_settings(PDO $pdo, array $values): ?string {
+    foreach ($values as $key => $value) {
+        $problems = update_config_setting($pdo, $key, $value);
+        if ($problems) {
+            return $problems[0];
         }
     }
+    return null;
+}
+
+/**
+ * True once the admin has been through every step -- done or explicitly
+ * skipped, required or not. Checking only the two required steps
+ * (admin_account, business_details) was the first attempt at this and is
+ * wrong: those two are typically the first ones finished, so it locked the
+ * wizard out of the four optional steps (email, Stripe, storage mode, admin
+ * mode) for anyone who did not skip them, the same shape of bug as the
+ * admin_users-count check this replaced. "Finished" has to mean the whole
+ * walk, not just the mandatory part of it.
+ */
+function setup_wizard_is_complete(PDO $pdo): bool {
+    foreach (get_setup_checklist($pdo) as $step) {
+        if ($step['status'] === 'pending') {
+            return false;
+        }
+    }
+    return true;
 }
