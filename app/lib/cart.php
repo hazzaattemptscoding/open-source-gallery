@@ -129,7 +129,7 @@ function cart_price(PDO $pdo, array $items, array $config = []): array {
     foreach ($items as $item) {
         if ($item['type'] === 'photo') {
             $stmt = $pdo->prepare('
-                SELECT p.id, p.public_token, p.event_id, e.title AS event_title, e.price_single_pence
+                SELECT p.id, p.public_token, p.event_id, p.price_pence, e.title AS event_title, e.price_single_pence
                 FROM photos p
                 JOIN events e ON e.id = p.event_id
                 WHERE p.id = ? AND p.status = ? AND p.media_type = ?
@@ -139,7 +139,7 @@ function cart_price(PDO $pdo, array $items, array $config = []): array {
             if (!$row) {
                 continue;
             }
-            $price = (int)$row['price_single_pence'];
+            $price = (int)($row['price_pence'] !== null ? $row['price_pence'] : $row['price_single_pence']);
             $lines[] = [
                 'type' => 'photo',
                 'id' => (int)$row['id'],

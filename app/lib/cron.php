@@ -29,26 +29,31 @@ function run_cron_drain(PDO $pdo): void {
             $lockedAtThreshold = (clone $now)->modify('-10 minutes')->format('Y-m-d H:i:s');
 
             $stmt = $pdo->prepare('
-                UPDATE jobs
-                SET status = ?, locked_at = ?, attempts = attempts + 1
+                SELECT id, type, payload, attempts
+                FROM jobs
                 WHERE status = ? AND run_after <= ? AND (locked_at IS NULL OR locked_at < ?)
                 ORDER BY id ASC
                 LIMIT 1
             ');
-            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), 'pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
-
-            if ($stmt->rowCount() === 0) {
-                break;
-            }
-
-            $stmt = $pdo->prepare('SELECT id, type, payload, attempts FROM jobs WHERE status = ? ORDER BY id DESC LIMIT 1');
-            $stmt->execute(['running']);
+            $stmt->execute(['pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
             $job = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if (!$job) {
                 break;
             }
 
             $jobId = (int)$job['id'];
+            $stmt = $pdo->prepare('
+                UPDATE jobs
+                SET status = ?, locked_at = ?, attempts = attempts + 1
+                WHERE id = ?
+            ');
+            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), $jobId]);
+
+            if ($stmt->rowCount() === 0) {
+                break;
+            }
+
             $type = (string)$job['type'];
             $payload = json_decode((string)$job['payload'], true) ?? [];
             $attempts = (int)$job['attempts'];
