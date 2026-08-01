@@ -38,13 +38,14 @@ function generate_derivative_imagick(string $inputPath, string $outputPath, int 
     $width = $image->getImageWidth();
     $height = $image->getImageHeight();
     $smallestDim = min($width, $height);
+    $longestDim = max($width, $height);
     if ($smallestDim < 100) {
         throw new RuntimeException("Image too small: {$smallestDim}px");
     }
 
-    $scaledSize = min($smallestDim, max(1, (int)($size * $smallestDim / 1600)));
-    $thumbWidth = (int)($width * $scaledSize / $smallestDim);
-    $thumbHeight = (int)($height * $scaledSize / $smallestDim);
+    $scaledSize = min($longestDim, max(1, (int)($size * $longestDim / 1600)));
+    $thumbWidth = (int)($width * $scaledSize / $longestDim);
+    $thumbHeight = (int)($height * $scaledSize / $longestDim);
 
     $image->resizeImage($thumbWidth, $thumbHeight, Imagick::FILTER_LANCZOS, 1);
     $image->setImageFormat('jpeg');
@@ -93,14 +94,15 @@ function generate_derivative_gd(string $inputPath, string $outputPath, int $size
     $height = imagesy($image);
 
     $smallestDim = min($width, $height);
+    $longestDim = max($width, $height);
     if ($smallestDim < 100) {
         imagedestroy($image);
         throw new RuntimeException("Image too small: {$smallestDim}px");
     }
 
-    $scaledSize = min($smallestDim, max(1, (int)($size * $smallestDim / 1600)));
-    $thumbWidth = (int)($width * $scaledSize / $smallestDim);
-    $thumbHeight = (int)($height * $scaledSize / $smallestDim);
+    $scaledSize = min($longestDim, max(1, (int)($size * $longestDim / 1600)));
+    $thumbWidth = (int)($width * $scaledSize / $longestDim);
+    $thumbHeight = (int)($height * $scaledSize / $longestDim);
 
     $thumb = imagecreatetruecolor($thumbWidth, $thumbHeight);
     if (!$thumb) {

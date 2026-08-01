@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Page Not Found';
 $metaDescription = 'The page you\'re looking for doesn\'t exist';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/404';
+$metaUrl = site_base_url($GLOBALS['config']) . '/404';
 $showCart = false;
 require __DIR__ . '/partials/layout_header.php';
 ?>

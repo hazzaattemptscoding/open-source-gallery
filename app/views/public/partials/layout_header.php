@@ -20,10 +20,7 @@ if (!isset($metaDescription)) {
     $metaDescription = 'Professional sports photography gallery and sales platform';
 }
 if (!isset($metaUrl)) {
-    // base_url is the key bootstrap-config.php actually defines; 'url' never
-    // existed, so this silently fell back to example.com on every page that
-    // did not set $metaUrl itself.
-    $metaUrl = $GLOBALS['config']['site']['base_url'] ?? 'https://example.com';
+    $metaUrl = site_base_url($GLOBALS['config']) ?? 'https://example.com';
 }
 if (!isset($metaImageUrl)) {
     $metaImageUrl = '';

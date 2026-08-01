@@ -18,44 +18,55 @@ if (file_exists(APP_ROOT . '/.env.test')) {
     }
 }
 
-// Database config for tests (uses separate test database).
-$dbHost = getenv('TEST_DB_HOST') ?: 'localhost';
-$dbUser = getenv('TEST_DB_USER') ?: 'root';
-$dbPass = getenv('TEST_DB_PASSWORD') ?: '';
-$dbName = getenv('TEST_DB_NAME') ?: 'gallery_test';
+// Database config for tests. Default to SQLite for dev convenience;
+// override TEST_DB_DRIVER=mysql for CI/production environments.
+$dbDriver = getenv('TEST_DB_DRIVER') ?: 'sqlite';
 
-// The bootstrap drops and recreates $dbName on every run. Requiring "test" in
-// the name is a deliberate guard rail: a misconfigured TEST_DB_HOST/TEST_DB_NAME
-// (e.g. a copy-pasted production value in a shared-hosting cron or CI env) must
-// not be able to silently drop a real database.
-if (!str_contains(strtolower($dbName), 'test')) {
-    fwrite(STDERR, "Refusing to run: TEST_DB_NAME ('$dbName') doesn't contain \"test\". " .
-        "This bootstrap drops and recreates that database on every run.\n");
-    exit(1);
+if ($dbDriver === 'mysql') {
+    $dbHost = getenv('TEST_DB_HOST') ?: 'localhost';
+    $dbUser = getenv('TEST_DB_USER') ?: 'root';
+    $dbPass = getenv('TEST_DB_PASSWORD') ?: '';
+    $dbName = getenv('TEST_DB_NAME') ?: 'gallery_test';
+
+    if (!str_contains(strtolower($dbName), 'test')) {
+        fwrite(STDERR, "Refusing to run: TEST_DB_NAME ('$dbName') doesn't contain \"test\". " .
+            "This bootstrap drops and recreates that database on every run.\n");
+        exit(1);
+    }
+
+    $dsn = "mysql:host=$dbHost;charset=utf8mb4";
+    $pdo = new PDO($dsn, $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+
+    try {
+        $pdo->exec("DROP DATABASE IF EXISTS `$dbName`");
+        $pdo->exec("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    } catch (Exception $e) {
+        echo "Warning: Could not create test database. Tests may fail.\n";
+    }
+
+    $pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+} else {
+    // SQLite (default for dev)
+    $dbPath = getenv('TEST_DB_PATH') ?: '/tmp/gallery_test.db';
+    if (file_exists($dbPath)) {
+        unlink($dbPath);
+    }
+
+    $pdo = new PDO("sqlite:$dbPath", null, null, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
+    $pdo->exec('PRAGMA foreign_keys = ON');
 }
-
-// Create PDO instance for test database.
-$dsn = "mysql:host=$dbHost;charset=utf8mb4";
-$pdo = new PDO($dsn, $dbUser, $dbPass, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
-]);
-
-// Create test database (drop if exists).
-try {
-    $pdo->exec("DROP DATABASE IF EXISTS `$dbName`");
-    $pdo->exec("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-} catch (Exception $e) {
-    echo "Warning: Could not create test database. Tests may fail.\n";
-}
-
-// Connect to test database.
-$pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
-]);
 
 // Run migrations. 001 is a special case per app/lib/migrations.php's own
 // doc comment (it creates the `migrations` table the runner checks against),
@@ -64,10 +75,20 @@ $pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $db
 // to whatever subset of tables migration 001 alone happened to create.
 require_once APP_ROOT . '/app/lib/migrations.php';
 
-$migrationFile = APP_ROOT . '/migrations/001_initial_schema.sql';
+if ($dbDriver === 'sqlite') {
+    $migrationFile = APP_ROOT . '/migrations/001_initial_schema.sqlite.sql';
+} else {
+    $migrationFile = APP_ROOT . '/migrations/001_initial_schema.sql';
+}
+
 if (file_exists($migrationFile)) {
     $sql = file_get_contents($migrationFile);
-    $pdo->exec($sql);
+    $statements = array_filter(array_map('trim', preg_split('/;\s*(?=\n|$)/m', $sql)));
+    foreach ($statements as $stmt) {
+        if (!empty($stmt)) {
+            $pdo->exec($stmt . ';');
+        }
+    }
 }
 
 $migrationsDir = APP_ROOT . '/migrations';

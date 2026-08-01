@@ -29,7 +29,9 @@ session_start_secure();
 // /assets/fonts, and every style belongs in a stylesheet. Do NOT add
 // 'unsafe-inline' here to make a page render — that silently re-permits the
 // whole class of inline styling this codebase is moving away from.
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'");
+// script-src permits Stripe.js injection for checkout; frame-src permits the
+// Stripe hosted payment forms in the checkout page.
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self' https://js.stripe.com; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'; frame-src https://js.stripe.com https://hooks.stripe.com");
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');

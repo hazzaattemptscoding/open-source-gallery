@@ -117,6 +117,8 @@ function public_checkout_success_controller(PDO $pdo, array $config, string $ord
         return;
     }
 
+    setcookie('pm_cart', '', ['expires' => time() - 86400, 'path' => '/', 'httponly' => true]);
+
     $items = get_order_items($pdo, (int)$order['id']);
 
     $downloadLink = get_or_create_download_link($pdo, (int)$order['id'], $config);

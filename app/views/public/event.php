@@ -4,9 +4,7 @@
 // double-escaped any apostrophe in an event title.
 $pageTitle = $event['title'] . ': ' . $siteName;
 $metaDescription = isset($event['description']) ? $event['description'] : 'Event photography gallery';
-
-$baseUrl = rtrim($GLOBALS['config']['site']['base_url'] ?? '', '/');
-$metaUrl = $baseUrl . '/e/' . $event['slug'];
+$metaUrl = site_base_url($GLOBALS['config']) . '/e/' . $event['slug'];
 
 // $heroToken, not $event['cover_token']: the controller resolves the hero
 // separately (falling back to the event's first live photo when no cover is
@@ -14,7 +12,7 @@ $metaUrl = $baseUrl . '/e/' . $event['slug'];
 // undefined and every event's social card went out with no image. Absolute,
 // because og:image is fetched by scrapers that have no page context to
 // resolve a relative path against.
-$metaImageUrl = $heroToken ? $baseUrl . '/media/d/' . $heroToken . '-1600.jpg' : '';
+$metaImageUrl = $heroToken ? site_base_url($GLOBALS['config']) . '/media/d/' . $heroToken . '-1600.jpg' : '';
 $showCart = true;
 $pageScripts = '<script src="/assets/js/event.js" defer></script>';
 

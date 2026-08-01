@@ -112,7 +112,8 @@ function attachCheckoutHandler() {
         stripe.redirectToCheckout({ sessionId: data.session_id });
       };
       script.onerror = () => {
-        throw new Error('Failed to load Stripe');
+        showFormError(errorDiv, 'Failed to load Stripe payment form. Please check your internet connection and try again.');
+        console.error('Failed to load Stripe.js from CDN');
       };
       document.head.appendChild(script);
     } catch (err) {
