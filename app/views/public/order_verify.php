@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'View Order: ' . e($siteName);
 $metaDescription = 'Verify your order email';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/order/verify';
+$metaUrl = site_base_url($GLOBALS['config']) . '/order/verify';
 $showCart = false;
 require __DIR__ . '/partials/layout_header.php';
 ?>

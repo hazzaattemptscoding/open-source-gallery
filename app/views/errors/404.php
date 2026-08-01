@@ -2,7 +2,7 @@
 $siteName = $GLOBALS['config']['site']['name'] ?? 'Gallery';
 $pageTitle = 'Page Not Found';
 $metaDescription = 'The page you\'re looking for doesn\'t exist';
-$metaUrl = ($GLOBALS['config']['site']['url'] ?? '') . '/errors/404';
+$metaUrl = (site_base_url($GLOBALS['config']) ?? '') . '/errors/404';
 $showCart = false;
 require __DIR__ . '/../public/partials/layout_header.php';
 ?>

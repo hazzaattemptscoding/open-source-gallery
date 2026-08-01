@@ -2,7 +2,7 @@
 $siteName = $GLOBALS['config']['site']['name'] ?? 'Gallery';
 $pageTitle = 'Server Error';
 $metaDescription = 'Something went wrong on our end';
-$metaUrl = ($GLOBALS['config']['site']['url'] ?? '') . '/errors/500';
+$metaUrl = (site_base_url($GLOBALS['config']) ?? '') . '/errors/500';
 $showCart = false;
 require __DIR__ . '/../public/partials/layout_header.php';
 ?>

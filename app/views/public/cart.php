@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Cart: ' . e($siteName);
 $metaDescription = 'Shopping cart - add photos and checkout';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/cart';
+$metaUrl = site_base_url($GLOBALS['config']) . '/cart';
 $showCart = false; // we're on the cart page itself
 $pageScripts = '<script src="/assets/js/cart.js" defer></script>';
 require __DIR__ . '/partials/layout_header.php';

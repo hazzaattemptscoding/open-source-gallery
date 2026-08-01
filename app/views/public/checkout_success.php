@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Order confirmed: ' . e($siteName);
 $metaDescription = 'Your order has been confirmed';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/checkout/success';
+$metaUrl = site_base_url($GLOBALS['config']) . '/checkout/success';
 $showCart = false;
 require __DIR__ . '/partials/layout_header.php';
 ?>
