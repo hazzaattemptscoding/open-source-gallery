@@ -25,26 +25,30 @@ function admin_jobs_run_controller(PDO $pdo, array $config): void {
         while ((microtime(true) - $startTime) < $budget) {
             $now = new DateTime('now', new DateTimeZone('UTC'));
             $stmt = $pdo->prepare('
-                UPDATE jobs
-                SET status = ?, locked_at = ?
+                SELECT id, type, payload
+                FROM jobs
                 WHERE status = ? AND run_after <= ?
                 ORDER BY id ASC
                 LIMIT 1
             ');
-            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), 'pending', $now->format('Y-m-d H:i:s')]);
+            $stmt->execute(['pending', $now->format('Y-m-d H:i:s')]);
+            $job = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt->rowCount() === 0) {
-            break;
-        }
+            if (!$job) {
+                break;
+            }
 
-        $stmt = $pdo->prepare('SELECT id, type, payload FROM jobs WHERE status = ? ORDER BY id DESC LIMIT 1');
-        $stmt->execute(['running']);
-        $job = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$job) {
-            break;
-        }
+            $jobId = (int)$job['id'];
+            $stmt = $pdo->prepare('
+                UPDATE jobs
+                SET status = ?, locked_at = ?
+                WHERE id = ?
+            ');
+            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), $jobId]);
 
-        $jobId = (int)$job['id'];
+            if ($stmt->rowCount() === 0) {
+                break;
+            }
         $type = (string)$job['type'];
         $payload = json_decode((string)$job['payload'], true) ?? [];
 
