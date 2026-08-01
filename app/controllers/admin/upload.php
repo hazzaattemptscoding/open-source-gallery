@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../lib/auth.php';
 require_once __DIR__ . '/../../lib/upload.php';
 require_once __DIR__ . '/../../lib/audit.php';
 require_once __DIR__ . '/../../lib/csrf.php';
+require_once __DIR__ . '/../../lib/settings.php';
 
 function admin_upload_controller(PDO $pdo, array $config): void {
     require_admin();
@@ -118,6 +119,20 @@ function handle_init(PDO $pdo, int $adminId, string $ip): void {
 
         if ($fileSize <= 0) {
             $response['rejected'][] = ['name' => $fileName ?: '(empty name)', 'error' => 'File size is 0 or missing'];
+            continue;
+        }
+
+        // Reject oversized files before a batch/row is even created for them,
+        // rather than letting every chunk upload succeed and only discovering
+        // the limit was exceeded at finalize. photos.max_upload_size_mb is
+        // itself capped at save time (settings_guardrail_check() in
+        // app/controllers/admin/settings.php) to what this host's PHP will
+        // actually accept, so this check can never promise more than the
+        // server allows.
+        $maxUploadBytes = (int) get_setting($pdo, 'photos', 'max_upload_size_mb', 100) * 1024 * 1024;
+        if ($fileSize > $maxUploadBytes) {
+            $maxMb = (int) ($maxUploadBytes / (1024 * 1024));
+            $response['rejected'][] = ['name' => $fileName ?: '(unnamed)', 'error' => "File exceeds the {$maxMb}MB upload limit."];
             continue;
         }
 
@@ -293,7 +308,8 @@ function handle_finalize(PDO $pdo, int $adminId, string $ip): void {
         return;
     }
 
-    $validationError = validate_image_file($assembledPath);
+    $allowedFormats = explode(',', (string) get_setting($pdo, 'photos', 'allowed_formats', 'jpg,jpeg,png'));
+    $validationError = validate_image_file($assembledPath, $allowedFormats);
     if ($validationError) {
         @unlink($assembledPath);
         $pdo->prepare('UPDATE upload_files SET status = ?, error = ? WHERE id = ?')

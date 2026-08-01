@@ -11,8 +11,15 @@ require_once __DIR__ . '/../../lib/search.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/validation.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
+require_once __DIR__ . '/../../lib/settings.php';
 
 function public_search_controller(PDO $pdo, array $config): void {
+    if (!get_setting($pdo, 'search', 'enabled', true)) {
+        http_response_code(404);
+        render(__DIR__ . '/../../views/errors/404.php', []);
+        return;
+    }
+
     $clientIp = get_client_ip();
     if (!check_rate_limit($pdo, 'search', 'ip:' . $clientIp, 60, 30)) {
         http_response_code(429);
@@ -55,7 +62,9 @@ function public_search_controller(PDO $pdo, array $config): void {
     }
 
     // Perform search
-    $results = search_photos($pdo, $query, $filters, $page, 20);
+    $perPage = (int) get_setting($pdo, 'search', 'results_per_page', 20);
+    $minQueryLength = (int) get_setting($pdo, 'search', 'min_query_length', 2);
+    $results = search_photos($pdo, $query, $filters, $page, $perPage, $minQueryLength);
 
     set_cache_headers('short');
 
@@ -70,6 +79,12 @@ function public_search_controller(PDO $pdo, array $config): void {
 
 function public_search_api_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
+
+    if (!get_setting($pdo, 'search', 'enabled', true)) {
+        http_response_code(404);
+        echo json_encode(['error' => 'search is disabled']);
+        return;
+    }
 
     $clientIp = get_client_ip();
     if (!check_rate_limit($pdo, 'search_api', 'ip:' . $clientIp, 60, 30)) {
@@ -94,7 +109,9 @@ function public_search_api_controller(PDO $pdo, array $config): void {
     }
 
     // Perform search
-    $results = search_photos($pdo, $query, $filters, $page, 20);
+    $perPage = (int) get_setting($pdo, 'search', 'results_per_page', 20);
+    $minQueryLength = (int) get_setting($pdo, 'search', 'min_query_length', 2);
+    $results = search_photos($pdo, $query, $filters, $page, $perPage, $minQueryLength);
 
     set_cache_headers('short');
 

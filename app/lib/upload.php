@@ -18,7 +18,16 @@ function register_upload_file(PDO $pdo, int $batchId, string $clientName, int $s
     return (int)$pdo->lastInsertId();
 }
 
-function validate_image_file(string $filePath): string {
+/**
+ * @param list<string>|null $allowedFormats File extensions (e.g. ['jpg','png'])
+ *        the admin has chosen to accept, from photos.allowed_formats. Only
+ *        ever narrows the effective set: intersected with the MIME types this
+ *        function actually decodes, never widens past them. The MIME check
+ *        below is the real security boundary and a settings value must not be
+ *        able to move it -- an admin cannot enable HEIC uploads by typing
+ *        "heic" into a text field, since nothing downstream can decode one.
+ */
+function validate_image_file(string $filePath, ?array $allowedFormats = null): string {
     if (!file_exists($filePath)) {
         return 'File not found.';
     }
@@ -31,8 +40,20 @@ function validate_image_file(string $filePath): string {
     $mimeType = $finfo ? (string)finfo_file($finfo, $filePath) : null;
     finfo_close($finfo);
 
-    if (!$mimeType || !in_array($mimeType, ['image/jpeg', 'image/png'], true)) {
-        return "Invalid file type: {$mimeType}. Only JPEG and PNG allowed.";
+    $decodable = ['image/jpeg', 'image/png'];
+    $accepted = $decodable;
+    if ($allowedFormats !== null) {
+        $extToMime = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png'];
+        $requested = array_filter(array_map(fn($ext) => $extToMime[strtolower(trim($ext))] ?? null, $allowedFormats));
+        // Intersect, never union: an unrecognised or undecodable extension in
+        // the setting (heic, webp, ...) is silently dropped rather than
+        // widening what this function will accept.
+        $accepted = array_values(array_intersect($decodable, $requested)) ?: $decodable;
+    }
+
+    if (!$mimeType || !in_array($mimeType, $accepted, true)) {
+        $allowedList = implode(' or ', array_map(fn($m) => strtoupper(str_replace('image/', '', $m)), $accepted));
+        return "Invalid file type: {$mimeType}. Only {$allowedList} allowed.";
     }
 
     $info = @getimagesize($filePath);
