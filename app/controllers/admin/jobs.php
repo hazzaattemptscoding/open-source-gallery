@@ -121,7 +121,7 @@ function send_order_confirmation_email(PDO $pdo, array $order): bool {
 
     $orderId = (int)$order['id'];
     $stmt = $pdo->prepare('
-        SELECT p.public_token, e.title as event_title, oi.quantity, oi.price_pence
+        SELECT p.public_token, e.title as event_title, oi.quantity, oi.unit_price_pence
         FROM order_items oi
         JOIN photos p ON oi.photo_id = p.id
         JOIN events e ON p.event_id = e.id

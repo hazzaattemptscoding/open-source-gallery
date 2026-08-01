@@ -53,7 +53,7 @@ function public_order_tracking_controller(PDO $pdo, array $config, string $order
 
     // Load items
     $stmt = $pdo->prepare('
-        SELECT p.public_token, p.width, p.height, e.title as event_title, oi.quantity, oi.price_pence
+        SELECT p.public_token, p.width, p.height, e.title as event_title, oi.quantity, oi.unit_price_pence
         FROM order_items oi
         JOIN photos p ON oi.photo_id = p.id
         JOIN events e ON p.event_id = e.id
