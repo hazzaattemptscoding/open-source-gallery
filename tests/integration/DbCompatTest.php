@@ -27,7 +27,8 @@ final class DbCompatTest extends TestCase {
         // Regression guard: before 'minute' was added to the unit map, an
         // unrecognized unit silently fell back to DAY/days, so a 15-minute
         // stall check would have compared against 15 days instead.
-        $stmt = $this->pdo->query('SELECT ' . db_date_sub_sql($this->pdo, 'NOW()', 15, 'minute'));
+        $dateExpr = is_mysql($this->pdo) ? 'NOW()' : "datetime('now')";
+        $stmt = $this->pdo->query('SELECT ' . db_date_sub_sql($this->pdo, $dateExpr, 15, 'minute'));
         $result = strtotime((string)$stmt->fetchColumn());
         $expected = time() - (15 * 60);
 

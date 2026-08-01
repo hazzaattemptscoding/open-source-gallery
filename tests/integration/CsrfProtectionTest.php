@@ -55,13 +55,14 @@ final class CsrfProtectionTest extends TestCase {
         $this->assertSame(1, (int)$stmt->fetchColumn(), 'the event must NOT be deleted when the CSRF token is wrong');
     }
 
-    public function testCsrfVerifyIsOneTimeUse(): void {
+    public function testCsrfVerifyIsReusable(): void {
         $this->assertTrue(csrf_verify('a-real-session-token'));
-        // Same token, second call: must fail, since the first call
-        // invalidates it (replay protection).
+        // Same token, second call: must pass. One-time-use invalidation was
+        // removed in Stage 1.2.2 because it broke concurrent admin requests
+        // (form submission in one tab invalidated the token for other tabs).
         $_SESSION['csrf_token'] = 'a-real-session-token';
         $this->assertTrue(csrf_verify('a-real-session-token'));
-        $this->assertFalse(csrf_verify('a-real-session-token'));
+        $this->assertTrue(csrf_verify('a-real-session-token'));
     }
 
     public function testCsrfVerifyReusableDoesNotInvalidateToken(): void {

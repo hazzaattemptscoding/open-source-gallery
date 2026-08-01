@@ -13,6 +13,7 @@ namespace Tests\Integration;
 
 use Tests\TestCase;
 
+require_once __DIR__ . '/../../app/lib/db_compat.php';
 require_once __DIR__ . '/../../app/controllers/webhook/stripe.php';
 
 final class WebhookTest extends TestCase {
@@ -26,9 +27,10 @@ final class WebhookTest extends TestCase {
     }
 
     private function createPaidOrderWithPaymentIntent(string $paymentIntentId): int {
+        $timestampSql = is_mysql($this->pdo) ? 'NOW()' : "datetime('now')";
         $stmt = $this->pdo->prepare(
             "INSERT INTO orders (public_token, email, currency, total_pence, status, stripe_payment_intent, paid_at)
-             VALUES (?, 'buyer@example.com', 'GBP', 2000, 'paid', ?, NOW())"
+             VALUES (?, 'buyer@example.com', 'GBP', 2000, 'paid', ?, {$timestampSql})"
         );
         $stmt->execute([bin2hex(random_bytes(11)), $paymentIntentId]);
         return (int)$this->pdo->lastInsertId();

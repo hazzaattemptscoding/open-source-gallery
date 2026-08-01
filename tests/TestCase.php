@@ -11,6 +11,8 @@ namespace Tests;
 use PDO;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
+require_once __DIR__ . '/../app/lib/db_compat.php';
+
 class TestCase extends BaseTestCase {
     protected PDO $pdo;
     protected array $config;
@@ -49,6 +51,13 @@ class TestCase extends BaseTestCase {
             $this->pdo->rollBack();
         }
         parent::tearDown();
+    }
+
+    /**
+     * Get the current timestamp SQL expression for the database driver.
+     */
+    protected function currentTimestampSql(): string {
+        return is_mysql($this->pdo) ? 'NOW()' : "datetime('now')";
     }
 
     /**
