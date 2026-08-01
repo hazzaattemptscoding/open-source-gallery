@@ -37,7 +37,7 @@ function public_order_tracking_controller(PDO $pdo, array $config, string $order
 
     // Load order
     $stmt = $pdo->prepare('
-        SELECT id, email, total_pence, paid_at, status, stripe_session_id
+        SELECT id, email, total_pence, paid_at, status, stripe_checkout_id
         FROM orders
         WHERE public_token = ? AND email = ?
         LIMIT 1
