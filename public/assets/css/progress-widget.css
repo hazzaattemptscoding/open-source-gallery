@@ -227,3 +227,59 @@
     transition: none;
   }
 }
+
+/* ---- Cross-page upload bar ----
+   Drawn by upload-monitor.js on every admin page. The floating widget below
+   is the detail view on the upload page itself; this is the thin persistent
+   signal that follows the admin around while a transfer runs in the worker. */
+
+.upload-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 10001; /* above the floating widget, which is 10000 */
+  background: var(--border);
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+  pointer-events: none;
+}
+
+.upload-topbar.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.upload-topbar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 240ms var(--ease-out);
+}
+
+.upload-topbar.has-error .upload-topbar-fill {
+  background: var(--error);
+}
+
+.upload-topbar-label {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-topbar,
+  .upload-topbar-fill {
+    transition: none;
+  }
+}

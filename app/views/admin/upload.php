@@ -69,14 +69,10 @@ require_once __DIR__ . '/partials/layout_header.php';
     </div>
   <?php endif; ?>
 </div>
+<?php /* Registration moved to /assets/js/upload-monitor.js, loaded for every
+        admin page from the shared footer. It was an inline <script> here,
+        which the app's own Content-Security-Policy (default-src 'self')
+        refuses to execute, so the worker was never registered at all. */ ?>
 <script src="/assets/js/admin-upload.js" defer></script>
-<script>
-  // Register Service Worker for upload persistence
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/assets/js/service-worker-upload.js').catch(() => {
-      // Silently fail if Service Worker is not available; uploads still work without it
-    });
-  }
-</script>
 
 <?php require_once __DIR__ . '/partials/layout_footer.php'; ?>
