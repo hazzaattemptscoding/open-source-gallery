@@ -17,6 +17,19 @@ $metaUrl = $baseUrl . '/e/' . $event['slug'];
 $metaImageUrl = $heroToken ? $baseUrl . '/media/d/' . $heroToken . '-1600.jpg' : '';
 $showCart = true;
 $pageScripts = '<script src="/assets/js/event.js" defer></script>';
+
+// rel=prev/next belong in <head>, not the body content further down where
+// $page/$hasMorePhotos become known -- $extraStyles is layout_header.php's
+// existing head-injection slot, reused here for link tags rather than adding
+// a second slot for the same purpose.
+$extraStyles = '';
+if ($page > 1) {
+    $extraStyles .= '<link rel="prev" href="' . e($basePath) . '?page=' . ((int)$page - 1) . '">' . "\n";
+}
+if ($hasMorePhotos) {
+    $extraStyles .= '<link rel="next" href="' . e($basePath) . '?page=' . ((int)$page + 1) . '">' . "\n";
+}
+
 require __DIR__ . '/partials/layout_header.php';
 ?>
 
@@ -85,10 +98,13 @@ $hasAnyFilter = $hasKartFilter || $hasClassFilter;
 <?php endif; ?>
 
 <main id="photos">
+  <?php if ($totalPhotos > GALLERY_PAGE_SIZE): ?>
+    <p class="photo-count">Showing <?= (int)min($page * GALLERY_PAGE_SIZE, $totalPhotos) ?> of <?= (int)$totalPhotos ?> photos</p>
+  <?php endif; ?>
+
   <!-- Photo grid with empty state -->
   <div class="photo-grid" id="photoGrid"
-       data-photo-ids='<?= htmlspecialchars(json_encode(array_map('intval', array_column($photos, 'id'))), ENT_QUOTES, 'UTF-8') ?>'
-       data-photo-tokens='<?= htmlspecialchars(json_encode(array_column($photos, 'public_token')), ENT_QUOTES, 'UTF-8') ?>'>
+       data-page="<?= (int)$page ?>">
     <?php if (!empty($photos)): ?>
       <?php require __DIR__ . '/_photo_grid_items.php'; ?>
     <?php else: ?>
@@ -105,6 +121,15 @@ $hasAnyFilter = $hasKartFilter || $hasClassFilter;
       ?>
     <?php endif; ?>
   </div>
+
+  <?php if ($hasMorePhotos): ?>
+    <div class="load-more-row">
+      <button type="button" id="loadMoreBtn"
+              data-base-path="<?= e($basePath) ?>"
+              data-event-slug="<?= e($event['slug']) ?>"
+              data-session-slug="<?= e($activeSession['slug'] ?? '') ?>">Load more</button>
+    </div>
+  <?php endif; ?>
 
   <!-- Videos section -->
   <?php if (!empty($videos)): ?>

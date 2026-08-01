@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
+require_once __DIR__ . '/../../lib/validation.php';
 require_once __DIR__ . '/event.php';
 
 /**
@@ -54,12 +55,28 @@ function public_api_photos_controller(PDO $pdo, array $config): void {
     $filters = [
         'kart' => trim((string)($_GET['kart'] ?? '')),
         'class' => trim((string)($_GET['class'] ?? '')),
+        'date_start' => trim((string)($_GET['date_start'] ?? '')),
+        'date_end' => trim((string)($_GET['date_end'] ?? '')),
     ];
 
-    $photos = fetch_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
+    // Same endpoint serves two different client actions (see event.js): a
+    // filter change replaces #photoGrid's contents entirely and always wants
+    // page 1, while "Load more" appends the next page of the same filtered
+    // set. Both just pass whatever page they want; this endpoint doesn't
+    // need to know which case it's in.
+    $page = validate_page($_GET['page'] ?? 1);
+    $photos = fetch_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters, $page, GALLERY_PAGE_SIZE);
+    $totalPhotos = count_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
+    $hasMorePhotos = ($page * GALLERY_PAGE_SIZE) < $totalPhotos;
 
     set_cache_headers('short');
     header('Content-Type: text/html; charset=utf-8');
+    // Read by event.js to decide whether to keep showing "Load more" or hide
+    // it, without needing the fragment response to be JSON (which would
+    // complicate the plain-HTML-fragment contract every other caller of this
+    // endpoint already relies on).
+    header('X-Has-More: ' . ($hasMorePhotos ? '1' : '0'));
+    header('X-Total-Photos: ' . $totalPhotos);
     render(__DIR__ . '/../../views/public/_photo_grid_items.php', compact('photos'));
 }
 

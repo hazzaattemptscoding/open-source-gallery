@@ -12,9 +12,10 @@ require_once __DIR__ . '/../../lib/seo.php';
     <button type="button" class="clear-filters" data-reset-filters>Clear filters</button>
   </div>
 <?php else: ?>
-  <?php foreach ($photos as $index => $photo): ?>
+  <?php foreach ($photos as $photo): ?>
     <div class="photo-thumb"
-         data-index="<?= (int)$index ?>"
+         data-photo-id="<?= (int)$photo['id'] ?>"
+         data-token="<?= e($photo['public_token']) ?>"
          data-kart-tags="<?= e($photo['kart_tags'] ?? '') ?>"
          data-class-tags="<?= e($photo['class_tags'] ?? '') ?>">
       <img

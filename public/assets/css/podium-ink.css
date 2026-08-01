@@ -1120,6 +1120,39 @@ body.lightbox-open {
   opacity: 0.4;
 }
 
+.photo-count {
+  padding: 0 1.5rem;
+  margin: 1.5rem 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.load-more-row {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 1.5rem;
+}
+
+.load-more-row button {
+  padding: 0.75rem 2rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+
+.load-more-row button:hover:not(:disabled) {
+  border-color: var(--text);
+}
+
+.load-more-row button:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
 .photo-thumb {
   position: relative;
   aspect-ratio: 1;

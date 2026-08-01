@@ -7,9 +7,17 @@
  */
 
 const photoGrid = document.getElementById('photoGrid');
-const photoIds = JSON.parse(photoGrid.dataset.photoIds || '[]');
-const photoTokens = JSON.parse(photoGrid.dataset.photoTokens || '[]');
 let lightboxIndex = -1;
+
+// The source of truth for "what photos exist right now" is the DOM, not a
+// JSON blob parsed once at load. Two things change the grid's contents after
+// load -- a filter change replaces it entirely, "Load more" appends to it --
+// and a snapshot taken once at module load would go stale the moment either
+// happens. Re-querying is cheap at gallery sizes (tens to low hundreds of
+// thumbs) and means the lightbox is automatically correct after both.
+function currentThumbs() {
+  return Array.from(photoGrid.querySelectorAll('.photo-thumb'));
+}
 
 function openLightbox(index) {
   lightboxIndex = index;
@@ -17,10 +25,12 @@ function openLightbox(index) {
   const lightbox = document.getElementById('lightbox');
   requestAnimationFrame(() => lightbox.classList.add('is-open'));
   document.body.classList.add('lightbox-open');
+  const thumb = currentThumbs()[lightboxIndex];
+  if (!thumb) return;
   fetch('/api/photos/view', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ photo_id: photoIds[lightboxIndex] }),
+    body: JSON.stringify({ photo_id: parseInt(thumb.dataset.photoId, 10) }),
   }).catch(() => {});
 }
 
@@ -32,10 +42,11 @@ function closeLightbox() {
 // `immediate` skips the crossfade for the first image of a session, so
 // opening the lightbox doesn't add extra latency before the first paint.
 function updateLightbox(immediate) {
-  if (lightboxIndex < 0 || lightboxIndex >= photoTokens.length) return;
+  const thumbs = currentThumbs();
+  if (lightboxIndex < 0 || lightboxIndex >= thumbs.length) return;
 
   const img = document.getElementById('lightboxImage');
-  const token = photoTokens[lightboxIndex];
+  const token = thumbs[lightboxIndex].dataset.token;
 
   if (immediate) {
     img.src = `/media/d/${token}-1600.jpg`;
@@ -48,14 +59,14 @@ function updateLightbox(immediate) {
   }
 
   [lightboxIndex - 1, lightboxIndex + 1].forEach(i => {
-    if (i >= 0 && i < photoTokens.length) {
-      new Image().src = `/media/d/${photoTokens[i]}-1600.jpg`;
+    if (i >= 0 && i < thumbs.length) {
+      new Image().src = `/media/d/${thumbs[i].dataset.token}-1600.jpg`;
     }
   });
 }
 
 function nextPhoto() {
-  if (lightboxIndex < photoTokens.length - 1) {
+  if (lightboxIndex < currentThumbs().length - 1) {
     lightboxIndex++;
     updateLightbox(false);
   }
@@ -88,7 +99,7 @@ photoGrid.addEventListener('click', (e) => {
   }
   const thumb = e.target.closest('.photo-thumb');
   if (thumb) {
-    openLightbox(parseInt(thumb.dataset.index, 10));
+    openLightbox(currentThumbs().indexOf(thumb));
   }
 });
 
@@ -177,8 +188,9 @@ function showToast(message) {
 }
 
 document.getElementById('lightboxCart').addEventListener('click', () => {
-  if (lightboxIndex >= 0 && lightboxIndex < photoIds.length) {
-    addToCart('photo', photoIds[lightboxIndex], null);
+  const thumbs = currentThumbs();
+  if (lightboxIndex >= 0 && lightboxIndex < thumbs.length) {
+    addToCart('photo', parseInt(thumbs[lightboxIndex].dataset.photoId, 10), null);
   }
 });
 
@@ -206,10 +218,63 @@ if (filterForm) {
       const html = await response.text();
       photoGrid.innerHTML = html;
       history.pushState({}, '', url);
+      // A filter change is a new result set, so pagination restarts at 1
+      // regardless of where the previous set's "Load more" had gotten to.
+      currentPage = 1;
+      syncLoadMoreState(response.headers.get('X-Has-More') === '1');
     } catch (err) {
       window.location.href = url;
     } finally {
       photoGrid.classList.remove('is-loading');
+    }
+  });
+}
+
+// "Load more": appends rather than replaces, so the lightbox (which reads
+// the live DOM, see currentThumbs() above) picks up the new photos for free.
+let currentPage = parseInt(photoGrid.dataset.page || '1', 10);
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+function syncLoadMoreState(hasMore) {
+  if (!loadMoreBtn) return;
+  loadMoreBtn.hidden = !hasMore;
+}
+
+if (loadMoreBtn) {
+  loadMoreBtn.addEventListener('click', async () => {
+    const basePath = filterForm ? filterForm.dataset.basePath : loadMoreBtn.dataset.basePath;
+    const eventSlug = filterForm ? filterForm.dataset.eventSlug : loadMoreBtn.dataset.eventSlug;
+    const sessionSlug = filterForm ? filterForm.dataset.sessionSlug : loadMoreBtn.dataset.sessionSlug;
+
+    // Carry whatever filters are currently applied, read from the live filter
+    // form if present rather than a stale copy, so "Load more" after a filter
+    // change fetches the next page of the FILTERED set, not the full gallery.
+    const params = filterForm ? new URLSearchParams(new FormData(filterForm)) : new URLSearchParams();
+    params.set('event', eventSlug);
+    if (sessionSlug) params.set('session', sessionSlug);
+    params.set('page', String(currentPage + 1));
+
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading…';
+
+    try {
+      const response = await fetch(`/api/photos?${params.toString()}`);
+      if (!response.ok) throw new Error('Load more failed');
+      const html = await response.text();
+
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      // The fragment can be the empty-state markup if a race lands here with
+      // nothing left; only append real thumbs.
+      temp.querySelectorAll('.photo-thumb').forEach(node => photoGrid.appendChild(node));
+
+      currentPage++;
+      syncLoadMoreState(response.headers.get('X-Has-More') === '1');
+    } catch (err) {
+      showToast('Could not load more photos. Please try again.');
+    } finally {
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.textContent = 'Load more';
     }
   });
 }
