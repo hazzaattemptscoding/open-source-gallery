@@ -4,14 +4,18 @@
  * Integrates with floating progress widget for real-time upload tracking.
  */
 
-const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
-const MAX_RETRIES = 3;
+// Chunking, retries and the transfer itself now live in /upload-worker.js.
+// This file only prepares the batch and renders its rows.
 const CSRF_TOKEN = document.getElementById('uploadZone').dataset.csrfToken;
 
 let selectedFiles = [];
 let batchId = null;
 let sessionId = null;
 let progressWidget = null;
+
+// file_id -> index in selectedFiles, so worker broadcasts (which know only the
+// server-side id) can find the row they belong to.
+const fileIndexById = new Map();
 
 const uploadZone = document.getElementById('uploadZone');
 uploadZone.addEventListener('dragover', (e) => {
@@ -104,99 +108,93 @@ async function initBatch() {
   }
 }
 
+/**
+ * Hand the batch to the Service Worker and stop being responsible for it.
+ *
+ * The chunk loop used to live here, in page context, which is why navigating
+ * away killed the upload: the loop, the File handles and the widget state all
+ * belonged to one document. Now the files go into IndexedDB and the worker
+ * drives the transfer, so this page is just one of several possible viewers
+ * of an upload that is already independent of it.
+ */
 async function uploadFiles(fileInfo) {
+  const records = [];
+
   for (let idx = 0; idx < selectedFiles.length; idx++) {
-    const file = selectedFiles[idx];
     const info = fileInfo[idx];
     if (!info) continue;
 
-    await uploadFile(idx, file, info);
-  }
-}
-
-async function uploadFile(idx, file, fileInfo) {
-  const fileId = fileInfo.file_id;
-  const chunksTotal = fileInfo.chunks_total;
-  const chunksReceived = fileInfo.chunks_received || 0;
-  const statusEl = document.getElementById(`status-${idx}`);
-  const progressEl = document.getElementById(`progress-${idx}`);
-
-  statusEl.textContent = chunksReceived > 0 ? 'Resuming...' : 'Uploading';
-  statusEl.className = 'upload-file-status status-uploading';
-
-  // Resume from where we left off, or start from 0 if this is a new upload
-  for (let chunkIndex = chunksReceived; chunkIndex < chunksTotal; chunkIndex++) {
-    const start = chunkIndex * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, file.size);
-    const chunk = file.slice(start, end);
-
-    let retries = 0;
-    let success = false;
-    while (retries < MAX_RETRIES && !success) {
-      try {
-        const fd = new FormData();
-        fd.append('csrf_token', CSRF_TOKEN);
-        fd.append('file_id', fileId);
-        fd.append('chunk_index', chunkIndex);
-        fd.append('chunk', chunk);
-
-        const response = await fetch('/admin/upload/chunk', {
-          method: 'POST',
-          body: fd,
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        success = true;
-      } catch (err) {
-        retries++;
-        if (retries >= MAX_RETRIES) {
-          statusEl.textContent = `Error: ${err.message}`;
-          statusEl.className = 'upload-file-status status-error';
-          throw err;
-        }
-        await sleep(2 ** retries * 1000);
-      }
-    }
-
-    const totalUploaded = chunkIndex + 1;
-    const progress = (totalUploaded / chunksTotal) * 100;
-    progressEl.style.width = progress + '%';
-
-    if (progressWidget) {
-      progressWidget.updateProgress(idx, progress);
-    }
-  }
-
-  await finalizeUpload(idx, fileId, statusEl, progressEl);
-}
-
-async function finalizeUpload(idx, fileId, statusEl, progressEl) {
-  try {
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_TOKEN);
-    fd.append('file_id', fileId);
-    fd.append('session_id', sessionId);
-
-    const response = await fetch('/admin/upload/finalize', {
-      method: 'POST',
-      body: fd,
+    records.push({
+      fileId: info.file_id,
+      name: selectedFiles[idx].name,
+      size: selectedFiles[idx].size,
+      blob: selectedFiles[idx],
+      chunksTotal: info.chunks_total,
+      chunksReceived: info.chunks_received || 0,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Finalize failed');
-    }
+    fileIndexById.set(String(info.file_id), idx);
 
-    const data = await response.json();
-    statusEl.textContent = `Done: ${escapeHtml(data.public_token)}`;
-    statusEl.className = 'upload-file-status status-done';
-    progressEl.style.width = '100%';
-  } catch (err) {
-    statusEl.textContent = `Error: ${err.message}`;
-    statusEl.className = 'upload-file-status status-error';
-    throw err;
+    const statusEl = document.getElementById(`status-${idx}`);
+    statusEl.textContent = (info.chunks_received || 0) > 0 ? 'Resuming' : 'Queued';
+    statusEl.className = 'upload-file-status status-uploading';
+  }
+
+  if (!records.length) return;
+
+  await self.UploadStore.putFiles(batchId, sessionId, CSRF_TOKEN, records);
+  await self.UploadStore.setActiveBatch(batchId);
+
+  const worker = navigator.serviceWorker.controller
+    || (await navigator.serviceWorker.ready).active;
+
+  if (worker) {
+    worker.postMessage({ type: 'start', batchId: batchId });
+  } else {
+    alert('Upload could not start: the background uploader is unavailable. Reload the page and try again.');
   }
 }
+
+/**
+ * Mirror worker broadcasts onto this page's per-file rows. The top bar in
+ * upload-monitor.js covers every other admin page; this only adds the
+ * detail view that makes sense while you are still looking at the picker.
+ */
+function watchWorkerProgress() {
+  let channel;
+  try {
+    channel = new BroadcastChannel(self.UPLOAD_CHANNEL || 'gallery-upload-progress');
+  } catch (err) {
+    return; // monitor already warns; per-file detail is a nicety
+  }
+
+  channel.addEventListener('message', (event) => {
+    const data = event.data || {};
+    const idx = fileIndexById.get(String(data.fileId));
+    if (idx === undefined) return;
+
+    const statusEl = document.getElementById(`status-${idx}`);
+    const progressEl = document.getElementById(`progress-${idx}`);
+    if (!statusEl || !progressEl) return;
+
+    if (data.type === 'progress') {
+      statusEl.textContent = 'Uploading';
+      statusEl.className = 'upload-file-status status-uploading';
+      progressEl.style.width = data.percent + '%';
+      if (progressWidget) progressWidget.updateProgress(idx, data.percent);
+    } else if (data.type === 'file-done') {
+      statusEl.textContent = `Done: ${escapeHtml(data.token || '')}`;
+      statusEl.className = 'upload-file-status status-done';
+      progressEl.style.width = '100%';
+      if (progressWidget) progressWidget.updateProgress(idx, 100);
+    } else if (data.type === 'file-error') {
+      statusEl.textContent = `Error: ${data.message}`;
+      statusEl.className = 'upload-file-status status-error';
+    }
+  });
+}
+
+watchWorkerProgress();
 
 function escapeHtml(str) {
   const div = document.createElement('div');

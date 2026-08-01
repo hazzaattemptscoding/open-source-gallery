@@ -721,6 +721,17 @@ td.value,
   margin: var(--stack-tight) 0;
 }
 
+/* Per-field reasons under a save-failed alert. Indented to the alert's own
+   text rather than the browser default, which overhangs the padding. */
+.settings-error-list {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+}
+
+.settings-error-list li {
+  margin-top: var(--space-1);
+}
+
 .alert.alert-error,
 .error-box,
 .error-message {

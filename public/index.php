@@ -404,6 +404,16 @@ switch ($path) {
         } elseif ($path === '/api/v1/photos') {
             require __DIR__ . '/../app/controllers/api/photos.php';
             api_v1_photos_controller($pdo);
+        } elseif (preg_match('#^/media/d/([a-z0-9]+)-(400|800|1600)\.jpg$#', $path, $m)) {
+            // Only reached when the derivative is absent: .htaccess serves the
+            // real file directly when it exists. That gap is normal in
+            // production between upload and the cron run that builds
+            // derivatives. Without this branch the request fell through to the
+            // HTML 404 page, so an <img> received a text/html body and rendered
+            // as a broken image with no clue why.
+            require __DIR__ . '/../app/lib/placeholder.php';
+            $placeholderWidth = (int) $m[2];
+            serve_placeholder_jpeg($placeholderWidth, (int) round($placeholderWidth * 2 / 3), $m[1]);
         } else {
             http_response_code(404);
             render(__DIR__ . '/../app/views/errors/404.php', []);

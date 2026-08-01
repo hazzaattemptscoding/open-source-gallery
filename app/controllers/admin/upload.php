@@ -30,10 +30,53 @@ function admin_upload_controller(PDO $pdo, array $config): void {
         handle_chunk($pdo, $adminId, $ip);
     } elseif ($path === '/admin/upload/finalize' && $method === 'POST') {
         handle_finalize($pdo, $adminId, $ip);
+    } elseif ($path === '/admin/upload/status' && $method === 'GET') {
+        handle_status($pdo);
     } else {
         http_response_code(404);
         echo json_encode(['error' => 'Not found']);
     }
+}
+
+/**
+ * Server-side view of the current upload, for a page that loads mid-transfer.
+ *
+ * The browser's IndexedDB copy is the primary source for the progress bar, but
+ * it is per-browser: it says nothing about an upload started elsewhere, and it
+ * is gone entirely if site data was cleared. This answers from upload_files,
+ * which is the record that actually decides what a resume would skip.
+ *
+ * Read-only, so no CSRF check: it mutates nothing and require_admin() has
+ * already run in the controller entry point.
+ */
+function handle_status(PDO $pdo): void {
+    // No filter by browser session. upload_batches.session_id is a foreign key
+    // to sessions.id, the event session a photo belongs to (Heat 1, Final) --
+    // not the PHP session. There is no per-browser column to filter on, and
+    // under the single-admin model there should not be: an upload started in
+    // one tab ought to show its progress in every other one.
+    $stmt = $pdo->query("
+        SELECT f.id, f.client_name, f.size_bytes, f.chunks_received, f.chunks_total, f.status
+        FROM upload_files f
+        WHERE f.status = 'uploading'
+        ORDER BY f.id ASC
+        LIMIT 200
+    ");
+    $files = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    $chunksTotal = 0;
+    $chunksDone = 0;
+    foreach ($files as $file) {
+        $chunksTotal += (int) $file['chunks_total'];
+        $chunksDone += (int) $file['chunks_received'];
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'active' => $files !== [],
+        'files' => $files,
+        'percent' => $chunksTotal > 0 ? round(($chunksDone / $chunksTotal) * 100, 1) : 0.0,
+    ]);
 }
 
 function handle_init(PDO $pdo, int $adminId, string $ip): void {
