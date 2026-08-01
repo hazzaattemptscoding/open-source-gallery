@@ -347,6 +347,15 @@ button.submit:active {
                 </label>
               <?php elseif ($setting['type'] === 'text'): ?>
                 <textarea name="setting_<?= e($setting['key_name']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>"><?= e($setting['value']) ?></textarea>
+              <?php elseif (!empty($setting['is_secret'])): ?>
+                <?php /* Never render the real value: this field's row['value'] is
+                        already blanked in normalise_setting_row(), and even the
+                        blank still goes through as type="password" so a browser's
+                        saved-password manager doesn't offer to fill it as text. A
+                        blank submission here means "leave unchanged" (see
+                        settings.php controller), never "clear it". */ ?>
+                <input type="password" name="setting_<?= e($setting['key_name']) ?>" value="" autocomplete="off"
+                       placeholder="<?= $setting['is_set'] ? 'Set — leave blank to keep' : 'Not set' ?>">
               <?php else: ?>
                 <input type="<?= $setting['type'] === 'email' ? 'email' : 'text' ?>" name="setting_<?= e($setting['key_name']) ?>" value="<?= e($setting['value']) ?>" placeholder="<?= e($setting['placeholder'] ?? '') ?>" <?= $setting['required'] ? 'required' : '' ?>>
               <?php endif; ?>
