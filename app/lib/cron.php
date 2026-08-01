@@ -66,8 +66,6 @@ function run_cron_drain(PDO $pdo): void {
                     $success = process_email_job($pdo, $payload);
                 } elseif ($type === 'zip_build') {
                     $success = process_zip_build_job($pdo, $payload);
-                } elseif ($type === 'cleanup') {
-                    $success = process_cleanup_job($pdo, $payload);
                 } elseif ($type === 'view_count') {
                     $success = process_view_count_job($pdo, $payload);
                 }
@@ -87,8 +85,40 @@ function run_cron_drain(PDO $pdo): void {
                     ->execute(['pending', $runAfter, $jobId]);
             }
         }
+
+        cleanup_orphaned_upload_dirs($pdo);
     } finally {
         db_release_lock($pdo, $lockToken);
+    }
+}
+
+/**
+ * Clean up orphaned upload directories older than 24 hours. These accumulate
+ * when uploads are interrupted, timed out, or abandoned mid-batch.
+ */
+function cleanup_orphaned_upload_dirs(PDO $pdo): void {
+    $uploadDir = __DIR__ . '/../../storage/tmp/uploads';
+    if (!is_dir($uploadDir)) {
+        return;
+    }
+
+    $now = time();
+    $ageThreshold = 24 * 3600; // 24 hours in seconds
+    $dirs = @glob($uploadDir . '/*', GLOB_ONLYDIR);
+
+    if (!$dirs) {
+        return;
+    }
+
+    foreach ($dirs as $dirPath) {
+        $dirMtime = @filemtime($dirPath);
+        if ($dirMtime === false) {
+            continue;
+        }
+
+        if ($now - $dirMtime > $ageThreshold) {
+            @system("rm -rf " . escapeshellarg($dirPath));
+        }
     }
 }
 
@@ -208,33 +238,6 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
     $zip->close();
 
     return file_exists($zipPath);
-}
-
-/**
- * Image tiering: deletes 1600px derivatives for photos older than 7 days
- * to save storage space. Smaller 400/800px versions remain for gallery display.
- */
-function process_cleanup_job(PDO $pdo, array $payload): bool {
-    $photoId = (int)($payload['photo_id'] ?? 0);
-    if ($photoId <= 0) {
-        return false;
-    }
-
-    $stmt = $pdo->prepare('SELECT public_token FROM photos WHERE id = ?');
-    $stmt->execute([$photoId]);
-    $token = $stmt->fetchColumn();
-    if (!$token) {
-        return false;
-    }
-
-    $derivPath = __DIR__ . '/../../public/media/d';
-    $largePath = "{$derivPath}/{$token}-1600.jpg";
-
-    if (file_exists($largePath)) {
-        @unlink($largePath);
-    }
-
-    return true;
 }
 
 /**

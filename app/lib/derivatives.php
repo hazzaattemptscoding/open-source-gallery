@@ -34,7 +34,7 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
     // Include photo ID in watermark text so previews can be identified by buyers
     $settings['text'] = "ID: {$photoId}";
 
-    $sizes = [400, 800, 1600];
+    $sizes = [400, 800, 1200, 1600];
     $derivPath = __DIR__ . '/../../public/media/d';
 
     if (!is_dir($derivPath)) {
@@ -59,15 +59,6 @@ function process_derivative_job(PDO $pdo, array $payload): bool {
 
     $pdo->prepare('UPDATE photos SET status = ?, deriv_size_bytes = ? WHERE id = ?')
         ->execute(['live', $derivBytes, $photoId]);
-
-    $cleanupAt = (new DateTime('now', new DateTimeZone('UTC')))
-        ->modify('+7 days')
-        ->format('Y-m-d H:i:s');
-
-    $pdo->prepare('
-        INSERT INTO jobs (type, payload, run_after, status)
-        VALUES (?, ?, ?, ?)
-    ')->execute(['cleanup', json_encode(['photo_id' => $photoId]), $cleanupAt, 'pending']);
 
     return true;
 }
