@@ -43,22 +43,27 @@ function admin_settings_controller(PDO $pdo, array $config): void {
         }
 
         if (!empty($updates)) {
-            // Secrets (Stripe secret keys, the SMTP password) route to
-            // config.php via config_set() instead of settings_registry: a
-            // live key sitting in the database sits in every mysqldump the
-            // backup job (app/lib/backup.php) archives to storage/backups/.
-            // A blank submission is treated as "leave unchanged" rather than
-            // "clear it" -- the field is rendered blank on every load
-            // regardless of whether a value is set (see below), so there is
-            // no other way to distinguish "admin left this alone" from
-            // "admin wants to erase it".
-            $secretUpdates = [];
+            // config.php-native fields (Stripe, SMTP, currency) route through
+            // config_set() to config.php instead of settings_registry -- see
+            // CONFIG_FILE_PATHS in config_store.php for why these specifically,
+            // not "everything sensitive": a value settings_registry has no real
+            // claim on is a stale duplicate waiting to happen the moment
+            // someone edits config.php by hand, which is the exact failure this
+            // whole file exists to close off, not just a secrecy concern.
+            //
+            // Within that set, secrets (Stripe secret key, webhook secret, SMTP
+            // password) get additional treatment: a blank submission means
+            // "leave unchanged" rather than "clear it", since the field always
+            // renders blank regardless of whether a value is set (see
+            // normalise_setting_row() below) and there is no other way to tell
+            // those two intents apart.
+            $fileUpdates = [];
             $normalUpdates = [];
             foreach ($updates as $settingKey => $value) {
-                $path = "{$category}.{$settingKey}";
-                if (in_array($path, CONFIG_SECRET_PATHS, true)) {
-                    if ($value !== '') {
-                        $secretUpdates[$settingKey] = $value;
+                $path = settings_field_to_config_path($category, $settingKey);
+                if (in_array($path, CONFIG_FILE_PATHS, true)) {
+                    if (!config_path_is_secret($path) || $value !== '') {
+                        $fileUpdates[$settingKey] = $value;
                     }
                 } else {
                     $normalUpdates[$settingKey] = $value;
@@ -78,6 +83,19 @@ function admin_settings_controller(PDO $pdo, array $config): void {
                     $errors[] = $settingKey . ': ' . $message;
                 }
             }
+            // config_set() writes CONFIG_FILE_PATHS straight to config.php with
+            // no format check of its own -- validate_setting() only knows
+            // settings_registry rows, and config.php is a different destination
+            // entirely. A malformed value here breaks Stripe or SMTP silently at
+            // the next checkout or email send rather than at save time.
+            foreach ($fileUpdates as $settingKey => $value) {
+                if ($value === '') {
+                    continue; // secrets: blank means "leave unchanged", nothing to validate
+                }
+                foreach (config_field_validate($category, $settingKey, $value) as $message) {
+                    $errors[] = $settingKey . ': ' . $message;
+                }
+            }
 
             $updated = 0;
             if (empty($errors)) {
@@ -88,8 +106,9 @@ function admin_settings_controller(PDO $pdo, array $config): void {
                         $errors[] = $settingKey . ': could not be saved.';
                     }
                 }
-                foreach ($secretUpdates as $settingKey => $value) {
-                    $writeErrors = config_set($config, $pdo, "{$category}.{$settingKey}", $value);
+                foreach ($fileUpdates as $settingKey => $value) {
+                    $path = settings_field_to_config_path($category, $settingKey);
+                    $writeErrors = config_set($config, $pdo, $path, $value);
                     if ($writeErrors) {
                         array_push($errors, ...$writeErrors);
                     } else {
@@ -137,18 +156,19 @@ function admin_settings_controller(PDO $pdo, array $config): void {
 
 /**
  * Bridge the settings_registry column names to the names the view reads, and
- * for secrets (Stripe/SMTP), replace the display value with nothing at all.
+ * for config.php-native fields, read the real value from config.php instead
+ * of the (stale, unused) settings_registry column.
  *
  * The table stores display_label/help_text; the view asks for label/description.
  * Mapping here rather than in the view keeps the view free of schema knowledge,
  * and keeps the original keys available for anything that wants them.
  *
- * A secret's row['value'] in settings_registry is stale/irrelevant after the
- * config_store.php change (secrets live in config.php, not this table), so it
- * is overwritten here regardless of what the row actually contains. Blank on
- * every load, never the real value: type="password" still round-trips into
- * the DOM in view-source, and a config.php secret has no business appearing
- * in a settings_registry row anyway.
+ * A CONFIG_FILE_PATHS row's settings_registry `value` column is never written
+ * to after this change (config_set() routes it to config.php instead), so
+ * displaying it would show whatever was left over from before this file
+ * existed rather than the value actually in effect. Secrets go further:
+ * blanked entirely rather than shown, with only an is_set hint, since
+ * type="password" still round-trips its value attribute into view-source.
  *
  * @param array<string,mixed> $row
  * @return array<string,mixed>
@@ -158,12 +178,17 @@ function normalise_setting_row(array $row, array $config, PDO $pdo): array
     $row['label'] = $row['display_label'] ?? $row['key_name'];
     $row['description'] = $row['help_text'] ?? '';
 
-    $path = "{$row['category']}.{$row['key_name']}";
-    $row['is_secret'] = in_array($path, CONFIG_SECRET_PATHS, true);
+    $path = settings_field_to_config_path($row['category'], $row['key_name']);
+    $row['is_secret'] = config_path_is_secret($path);
 
-    if ($row['is_secret']) {
-        $row['is_set'] = config_get($config, $pdo, $path, '') !== '';
-        $row['value'] = '';
+    if (in_array($path, CONFIG_FILE_PATHS, true)) {
+        $real = config_get($config, $pdo, $path, '');
+        if ($row['is_secret']) {
+            $row['is_set'] = $real !== '';
+            $row['value'] = '';
+        } else {
+            $row['value'] = (string) $real;
+        }
     }
 
     return $row;
@@ -222,6 +247,35 @@ function settings_guardrail_check(PDO $pdo, string $category, string $key, mixed
 
     if ($category === 'security' && $key === 'session_timeout_minutes' && (int)$value < 5) {
         return ['Session timeout must be at least 5 minutes. Anything shorter is indistinguishable from being logged out immediately.'];
+    }
+
+    return [];
+}
+
+/**
+ * Format checks for CONFIG_FILE_PATHS fields, mirroring what the setup
+ * wizard already checks inline (app/controllers/admin/setup_wizard.php's
+ * handle_stripe_keys()/handle_business_details()) so the same mistake is
+ * caught whether it's made during first-run setup or a later Settings edit.
+ *
+ * @return list<string>
+ */
+function config_field_validate(string $category, string $key, string $value): array
+{
+    if ($category === 'stripe' && $key === 'mode' && !in_array($value, ['test', 'live'], true)) {
+        return ["Must be 'test' or 'live'."];
+    }
+    if ($category === 'stripe' && $key === 'publishable_key' && !str_starts_with($value, 'pk_')) {
+        return ['Stripe publishable keys start with pk_.'];
+    }
+    if ($category === 'stripe' && $key === 'secret_key' && !str_starts_with($value, 'sk_')) {
+        return ['Stripe secret keys start with sk_.'];
+    }
+    if ($category === 'stripe' && $key === 'webhook_secret' && !str_starts_with($value, 'whsec_')) {
+        return ['Stripe webhook signing secrets start with whsec_.'];
+    }
+    if ($category === 'currency' && $key === 'code' && !preg_match('/^[A-Z]{3}$/', $value)) {
+        return ['Currency must be a 3-letter ISO code (e.g., GBP, USD).'];
     }
 
     return [];

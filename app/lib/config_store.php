@@ -28,16 +28,39 @@ declare(strict_types=1);
 require_once __DIR__ . '/settings.php';
 
 /**
- * Dot-path keys that must never be written to the database. A live Stripe
- * secret key or an SMTP password in settings_registry would sit in cleartext
- * in every mysqldump the backup job (app/lib/backup.php) archives to
- * storage/backups/. These always resolve through config.php instead: if
- * config.php doesn't have them, they are simply unset rather than falling
- * back to a database value that should never exist.
+ * Dot-path keys that live in config.php rather than settings_registry,
+ * whether or not they're secret. This must match config.php's *real* shape
+ * exactly, not the shape a settings_registry row happens to describe --
+ * settings_registry's original stripe category offered mode/
+ * test_publishable_key/test_secret_key/live_publishable_key/live_secret_key,
+ * a test-vs-live pair the runtime does not have: app/lib/stripe.php,
+ * app/controllers/public/checkout.php and the webhook controller read a
+ * single config['stripe']['secret_key']/['publishable_key']/
+ * ['webhook_secret'], gated by a single config['stripe']['mode']
+ * ('test'|'live', checked in app/lib/cli/commands.php). A save through the
+ * old field names moved a secret safely out of the database but into a
+ * config.php key nothing consumed -- the same "control does nothing" shape
+ * as the watermark bug, just not yet caught. Migration 013 renames the
+ * settings_registry rows to match.
+ */
+const CONFIG_FILE_PATHS = [
+    'stripe.mode',
+    'stripe.publishable_key',
+    'stripe.secret_key',
+    'stripe.webhook_secret',
+    'smtp.pass',
+    'currency',
+];
+
+/**
+ * Subset of CONFIG_FILE_PATHS masked in the Settings UI and never
+ * round-tripped into HTML. A live Stripe secret key or an SMTP password in
+ * settings_registry would sit in cleartext in every mysqldump the backup
+ * job (app/lib/backup.php) archives to storage/backups/; config.php never
+ * enters that archive.
  */
 const CONFIG_SECRET_PATHS = [
-    'stripe.test_secret_key',
-    'stripe.live_secret_key',
+    'stripe.secret_key',
     'stripe.webhook_secret',
     'smtp.pass',
 ];
@@ -45,20 +68,23 @@ const CONFIG_SECRET_PATHS = [
 /**
  * Read a config value by dot path, e.g. config_get('stripe.mode', 'test').
  *
- * Checks config.php's in-memory $config first (already loaded once per
- * request by bootstrap.php), then settings_registry, then returns $default.
- * A secret path that is absent from config.php returns $default without
- * ever touching the database, per CONFIG_SECRET_PATHS above.
+ * A CONFIG_FILE_PATHS key resolves from config.php only -- no database
+ * fallback -- since a settings_registry row for one of these paths is by
+ * definition a stale duplicate, not an alternate source of truth (this is
+ * the exact bug CONFIG_FILE_PATHS exists to prevent, one file up). Every
+ * other path checks config.php's in-memory $config first, then
+ * settings_registry, then returns $default.
  */
 function config_get(array $config, PDO $pdo, string $path, mixed $default = null): mixed
 {
+    if (in_array($path, CONFIG_FILE_PATHS, true)) {
+        $fromFile = array_get_dot($config, $path);
+        return $fromFile ?? $default;
+    }
+
     $fromFile = array_get_dot($config, $path);
     if ($fromFile !== null) {
         return $fromFile;
-    }
-
-    if (in_array($path, CONFIG_SECRET_PATHS, true)) {
-        return $default;
     }
 
     [$category, $key] = config_path_to_setting($path);
@@ -73,18 +99,18 @@ function config_get(array $config, PDO $pdo, string $path, mixed $default = null
 }
 
 /**
- * Write a config value, routed by sensitivity: secrets to config.php,
- * everything else to settings_registry. Returns an array of human-readable
- * problems; empty means the write succeeded. The caller (admin/settings.php)
- * shows these instead of a false "saved" message, which is the exact failure
- * update_config_setting() had — it always returned void and always looked
- * like it worked.
+ * Write a config value, routed by where it actually lives: CONFIG_FILE_PATHS
+ * to config.php, everything else to settings_registry. Returns an array of
+ * human-readable problems; empty means the write succeeded. The caller
+ * (admin/settings.php) shows these instead of a false "saved" message,
+ * which is the exact failure update_config_setting() had -- it always
+ * returned void and always looked like it worked.
  *
  * @return list<string> problems, empty on success
  */
 function config_set(array &$config, PDO $pdo, string $path, mixed $value): array
 {
-    if (in_array($path, CONFIG_SECRET_PATHS, true)) {
+    if (in_array($path, CONFIG_FILE_PATHS, true)) {
         return config_write_to_file($config, $path, $value);
     }
 
@@ -103,6 +129,29 @@ function config_set(array &$config, PDO $pdo, string $path, mixed $value): array
     }
 
     return [];
+}
+
+/** Whether a CONFIG_FILE_PATHS key should be masked in the Settings UI. */
+function config_path_is_secret(string $path): bool
+{
+    return in_array($path, CONFIG_SECRET_PATHS, true);
+}
+
+/**
+ * settings_registry's category.key_name -> the real config.php dot path.
+ *
+ * Identity for almost everything (stripe.mode, smtp.pass, ...). The one
+ * exception: config.php stores currency as a bare top-level string, not
+ * nested under a 'currency' category the way every other config.php-native
+ * group is, so the Settings UI's currency.code field needs a translation
+ * rather than a literal match against CONFIG_FILE_PATHS.
+ */
+function settings_field_to_config_path(string $category, string $key): string
+{
+    if ($category === 'currency' && $key === 'code') {
+        return 'currency';
+    }
+    return "{$category}.{$key}";
 }
 
 /** 'stripe.live_secret_key' -> ['stripe', 'live_secret_key']. */
