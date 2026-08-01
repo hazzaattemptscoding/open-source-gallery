@@ -193,9 +193,12 @@ function cart_price(PDO $pdo, array $items, array $config = []): array {
     $discounts = $config['discounts'] ?? [];
     if ($discountPence === 0 && !empty($discounts)) {
         // Find highest applicable discount tier
-        foreach (array_keys($discounts) as $threshold) {
+        $thresholds = array_keys($discounts);
+        rsort($thresholds);
+        foreach ($thresholds as $threshold) {
             if ($photoCount >= $threshold) {
                 $discountPercent = (float)$discounts[$threshold];
+                break;
             }
         }
         if ($discountPercent > 0) {

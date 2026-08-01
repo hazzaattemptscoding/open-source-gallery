@@ -67,6 +67,7 @@ function run_cron_drain(PDO $pdo): void {
                     $success = process_view_count_job($pdo, $payload);
                 }
             } catch (Throwable $e) {
+                error_log("Job {$jobId} ({$type}) failed: {$e->getMessage()}");
                 $success = false;
             }
 

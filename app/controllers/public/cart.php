@@ -50,14 +50,19 @@ function public_cart_add_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    $result = cart_add($config, $type, $id);
-    if ($result['duplicate']) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Photo already in cart']);
-        return;
-    }
+    try {
+        $result = cart_add($config, $type, $id);
+        if ($result['duplicate']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Photo already in cart']);
+            return;
+        }
 
-    echo json_encode(['ok' => true, 'count' => count($result['items'])]);
+        echo json_encode(['ok' => true, 'count' => count($result['items'])]);
+    } catch (RuntimeException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Cart unavailable: ' . $e->getMessage()]);
+    }
 }
 
 /** POST /cart/remove {type, id} */
@@ -74,8 +79,13 @@ function public_cart_remove_controller(PDO $pdo, array $config): void {
         return;
     }
 
-    $items = cart_remove($config, $type, $id);
-    echo json_encode(['ok' => true, 'count' => count($items)]);
+    try {
+        $items = cart_remove($config, $type, $id);
+        echo json_encode(['ok' => true, 'count' => count($items)]);
+    } catch (RuntimeException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Cart unavailable: ' . $e->getMessage()]);
+    }
 }
 
 function cart_item_exists(PDO $pdo, string $type, int $id): bool {

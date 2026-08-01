@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/currency.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
+require_once __DIR__ . '/../../lib/orders.php';
 
 function public_order_tracking_controller(PDO $pdo, array $config, string $orderToken): void {
     $siteName = $config['site']['name'] ?? 'Gallery';
@@ -63,13 +64,10 @@ function public_order_tracking_controller(PDO $pdo, array $config, string $order
     $stmt->execute([(int)$order['id']]);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Generate download URLs for items (if order status is paid)
-    $downloadUrls = [];
+    // Generate download link for the order (if paid)
+    $downloadLink = '';
     if ($order['status'] === 'paid') {
-        foreach ($items as $item) {
-            $token = $item['public_token'];
-            $downloadUrls[$token] = generate_signed_download_url($pdo, $token, 7); // 7-day expiry
-        }
+        $downloadLink = get_or_create_download_link($pdo, (int)$order['id'], $config);
     }
 
     // Download expiry
@@ -77,15 +75,6 @@ function public_order_tracking_controller(PDO $pdo, array $config, string $order
 
     render(__DIR__ . '/../../views/public/order_tracking.php', compact(
         'siteName', 'currencyCode', 'order', 'items', 'orderToken', 'email',
-        'downloadUrls', 'downloadExpiry'
+        'downloadLink', 'downloadExpiry'
     ));
-}
-
-/**
- * Generate a signed download URL (HMAC-verified, short-lived).
- */
-function generate_signed_download_url(PDO $pdo, string $photoToken, int $expiryDays = 7): string {
-    $expiryTimestamp = time() + ($expiryDays * 24 * 60 * 60);
-    $signature = hash_hmac('sha256', "{$photoToken}:{$expiryTimestamp}", getenv('APP_SECRET') ?: 'fallback-key');
-    return "/api/download/{$photoToken}?sig={$signature}&exp={$expiryTimestamp}";
 }
