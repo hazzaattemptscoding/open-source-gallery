@@ -30,26 +30,31 @@ function run_cron_drain(PDO $pdo): void {
             $lockedAtThreshold = (clone $now)->modify('-10 minutes')->format('Y-m-d H:i:s');
 
             $stmt = $pdo->prepare('
-                UPDATE jobs
-                SET status = ?, locked_at = ?, attempts = attempts + 1
+                SELECT id, type, payload, attempts
+                FROM jobs
                 WHERE status = ? AND run_after <= ? AND (locked_at IS NULL OR locked_at < ?)
                 ORDER BY id ASC
                 LIMIT 1
             ');
-            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), 'pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
-
-            if ($stmt->rowCount() === 0) {
-                break;
-            }
-
-            $stmt = $pdo->prepare('SELECT id, type, payload, attempts FROM jobs WHERE status = ? ORDER BY id DESC LIMIT 1');
-            $stmt->execute(['running']);
+            $stmt->execute(['pending', $now->format('Y-m-d H:i:s'), $lockedAtThreshold]);
             $job = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if (!$job) {
                 break;
             }
 
             $jobId = (int)$job['id'];
+            $stmt = $pdo->prepare('
+                UPDATE jobs
+                SET status = ?, locked_at = ?, attempts = attempts + 1
+                WHERE id = ?
+            ');
+            $stmt->execute(['running', $now->format('Y-m-d H:i:s'), $jobId]);
+
+            if ($stmt->rowCount() === 0) {
+                break;
+            }
+
             $type = (string)$job['type'];
             $payload = json_decode((string)$job['payload'], true) ?? [];
             $attempts = (int)$job['attempts'];
@@ -63,8 +68,6 @@ function run_cron_drain(PDO $pdo): void {
                     $success = process_email_job($pdo, $payload);
                 } elseif ($type === 'zip_build') {
                     $success = process_zip_build_job($pdo, $payload);
-                } elseif ($type === 'cleanup') {
-                    $success = process_cleanup_job($pdo, $payload);
                 } elseif ($type === 'view_count') {
                     $success = process_view_count_job($pdo, $payload);
                 } elseif ($type === 'backup') {
@@ -73,6 +76,7 @@ function run_cron_drain(PDO $pdo): void {
                     $lastError = "Unknown job type \"{$type}\"";
                 }
             } catch (Throwable $e) {
+                error_log("Job {$jobId} ({$type}) failed: {$e->getMessage()}");
                 $success = false;
                 // Class name included because the message alone is often
                 // ambiguous (an out-of-memory Error and a PDOException read
@@ -108,8 +112,40 @@ function run_cron_drain(PDO $pdo): void {
                 }
             }
         }
+
+        cleanup_orphaned_upload_dirs($pdo);
     } finally {
         db_release_lock($pdo, $lockToken);
+    }
+}
+
+/**
+ * Clean up orphaned upload directories older than 24 hours. These accumulate
+ * when uploads are interrupted, timed out, or abandoned mid-batch.
+ */
+function cleanup_orphaned_upload_dirs(PDO $pdo): void {
+    $uploadDir = __DIR__ . '/../../storage/tmp/uploads';
+    if (!is_dir($uploadDir)) {
+        return;
+    }
+
+    $now = time();
+    $ageThreshold = 24 * 3600; // 24 hours in seconds
+    $dirs = @glob($uploadDir . '/*', GLOB_ONLYDIR);
+
+    if (!$dirs) {
+        return;
+    }
+
+    foreach ($dirs as $dirPath) {
+        $dirMtime = @filemtime($dirPath);
+        if ($dirMtime === false) {
+            continue;
+        }
+
+        if ($now - $dirMtime > $ageThreshold) {
+            @system("rm -rf " . escapeshellarg($dirPath));
+        }
     }
 }
 
@@ -229,33 +265,6 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
     $zip->close();
 
     return file_exists($zipPath);
-}
-
-/**
- * Image tiering: deletes 1600px derivatives for photos older than 7 days
- * to save storage space. Smaller 400/800px versions remain for gallery display.
- */
-function process_cleanup_job(PDO $pdo, array $payload): bool {
-    $photoId = (int)($payload['photo_id'] ?? 0);
-    if ($photoId <= 0) {
-        return false;
-    }
-
-    $stmt = $pdo->prepare('SELECT public_token FROM photos WHERE id = ?');
-    $stmt->execute([$photoId]);
-    $token = $stmt->fetchColumn();
-    if (!$token) {
-        return false;
-    }
-
-    $derivPath = __DIR__ . '/../../public/media/d';
-    $largePath = "{$derivPath}/{$token}-1600.jpg";
-
-    if (file_exists($largePath)) {
-        @unlink($largePath);
-    }
-
-    return true;
 }
 
 /**

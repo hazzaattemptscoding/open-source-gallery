@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Order ' . e(substr($orderToken, 0, 8)) . ': ' . e($siteName);
 $metaDescription = 'Track your order';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/order/' . e($orderToken);
+$metaUrl = site_base_url($GLOBALS['config']) . '/order/' . e($orderToken);
 $showCart = false;
 require __DIR__ . '/partials/layout_header.php';
 ?>

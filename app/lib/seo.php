@@ -70,7 +70,7 @@ function generate_event_schema(
     array $event,
     string $imageUrl = ''
 ): string {
-    $baseUrl = rtrim($config['site']['url'] ?? 'https://example.com', '/');
+    $baseUrl = rtrim(site_base_url($config) ?? 'https://example.com', '/');
     $siteName = $config['site']['name'] ?? 'Gallery';
 
     $eventDate = $event['event_date'] ?? '';
@@ -110,7 +110,7 @@ function generate_event_schema(
  * @return string JSON-LD script tag
  */
 function generate_organization_schema(array $config): string {
-    $baseUrl = rtrim($config['site']['url'] ?? 'https://example.com', '/');
+    $baseUrl = rtrim(site_base_url($config) ?? 'https://example.com', '/');
     $siteName = $config['site']['name'] ?? 'Gallery';
 
     $schema = [
