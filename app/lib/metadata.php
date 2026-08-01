@@ -7,6 +7,15 @@ declare(strict_types=1);
 
 /**
  * Extract EXIF metadata from photo file.
+ *
+ * 'date' prefers DateTimeOriginal (when the shutter actually fired) over
+ * DateTime (when the file was last saved/edited, which can be hours or
+ * days later after processing in a camera app or Lightroom). This was the
+ * one thing the app's other, now-removed EXIF reader
+ * (extract_exif_taken_at(), formerly in app/lib/upload.php) got right that
+ * this function didn't: it fell back through both fields in that order,
+ * this one only ever read DateTime. Matched here so the single remaining
+ * reader keeps the more correct behaviour rather than the more limited one.
  */
 function extract_exif_metadata(string $filepath): ?array {
     if (!extension_loaded('exif')) {
@@ -22,7 +31,7 @@ function extract_exif_metadata(string $filepath): ?array {
         return [
             'make' => $exif['Make'] ?? null,
             'model' => $exif['Model'] ?? null,
-            'date' => $exif['DateTime'] ?? null,
+            'date' => $exif['DateTimeOriginal'] ?? $exif['DateTime'] ?? null,
             'focal_length' => $exif['FocalLength'] ?? null,
             'f_number' => $exif['FNumber'] ?? null,
             'iso' => $exif['ISOSpeedRatings'] ?? null,

@@ -3,6 +3,14 @@ declare(strict_types=1);
 
 const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
 
+/**
+ * $sessionId here is a row in the `sessions` table (an event's Heat 1,
+ * Final, ...) -- upload_batches.session_id is a foreign key to that, not to
+ * a PHP session. The same name meaning two different things in this
+ * codebase already caused one wrong query (see the comment on handle_status()
+ * in app/controllers/admin/upload.php); worth remembering here too, since
+ * this is where that column is actually written.
+ */
 function init_upload_batch(PDO $pdo, int $sessionId): int {
     $stmt = $pdo->prepare('INSERT INTO upload_batches (session_id) VALUES (?)');
     $stmt->execute([$sessionId]);
@@ -76,25 +84,6 @@ function validate_image_file(string $filePath, ?array $allowedFormats = null): s
     }
 
     return '';
-}
-
-function extract_exif_taken_at(string $filePath): ?string {
-    if (!extension_loaded('exif')) {
-        return null;
-    }
-
-    $exif = @exif_read_data($filePath);
-    if (!$exif) {
-        return null;
-    }
-
-    foreach (['DateTimeOriginal', 'DateTime'] as $field) {
-        if (isset($exif[$field]) && preg_match('/^(\d{4}):(\d{2}):(\d{2}) (\d{2}:\d{2}:\d{2})$/', $exif[$field], $m)) {
-            return "{$m[1]}-{$m[2]}-{$m[3]} {$m[4]}";
-        }
-    }
-
-    return null;
 }
 
 /**

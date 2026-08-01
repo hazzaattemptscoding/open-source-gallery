@@ -40,7 +40,15 @@ function validate_api_key(PDO $pdo, string $providedKey): ?array {
             SELECT id, admin_id, name, permissions, enabled, created_at, last_used_at FROM api_keys WHERE key_hash = ? AND enabled = 1
         SQL);
         $stmt->execute([$hash]);
-        $key = $stmt->fetch(PDO::FETCH_ASSOC);
+        // PDO::fetch() returns false, not null, when no row matches -- an
+        // unknown or disabled key, which is the ordinary case on every
+        // failed auth attempt, not a failure of this function. Coerced to
+        // null so the ?array return type is honoured; without this, PHP's
+        // own type check threw a TypeError on every single invalid-key
+        // request, which the catch below then logged as if validating the
+        // key had actually failed, burying the real signal (a genuine query
+        // failure) under one spurious line per wrong password guess.
+        $key = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
         if ($key) {
             $stmt = $pdo->prepare('UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?');
@@ -90,7 +98,9 @@ function api_get_photos(PDO $pdo, int $page = 1, int $perPage = 50): array {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT p.id, p.public_token, p.original_filename,
                    COALESCE(p.price_pence, e.price_single_pence) AS price_pence,
-                   p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model
+                   p.width, p.height, p.view_count, p.created_at,
+                   p.camera_make, p.camera_model, p.lens, p.focal_length,
+                   p.aperture, p.shutter_speed, p.iso, p.taken_at
             FROM photos p
             JOIN events e ON p.event_id = e.id
             WHERE p.status = 'live' AND e.is_published = 1
@@ -113,7 +123,9 @@ function api_get_photo(PDO $pdo, int $photoId): ?array {
         $stmt = $pdo->prepare(<<<'SQL'
             SELECT p.id, p.public_token, p.original_filename,
                    COALESCE(p.price_pence, e.price_single_pence) AS price_pence,
-                   p.width, p.height, p.view_count, p.created_at, p.camera_make, p.camera_model
+                   p.width, p.height, p.view_count, p.created_at,
+                   p.camera_make, p.camera_model, p.lens, p.focal_length,
+                   p.aperture, p.shutter_speed, p.iso, p.taken_at
             FROM photos p
             JOIN events e ON p.event_id = e.id
             WHERE p.id = ? AND p.status = 'live' AND e.is_published = 1
