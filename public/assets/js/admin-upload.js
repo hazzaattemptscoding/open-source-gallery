@@ -12,6 +12,16 @@ let selectedFiles = [];
 let batchId = null;
 let sessionId = null;
 let progressWidget = null;
+let uploadInProgress = false;
+
+// Warn if user tries to leave while upload is in progress
+window.addEventListener('beforeunload', (e) => {
+  if (uploadInProgress) {
+    e.preventDefault();
+    e.returnValue = 'Upload in progress. Leaving will interrupt the upload.';
+    return e.returnValue;
+  }
+});
 
 const uploadZone = document.getElementById('uploadZone');
 uploadZone.addEventListener('dragover', (e) => {
@@ -126,8 +136,11 @@ async function initBatch() {
       }
     });
 
-    uploadFiles(fileInfoBySelectedIndex);
+    uploadInProgress = true;
+    await uploadFiles(fileInfoBySelectedIndex);
+    uploadInProgress = false;
   } catch (err) {
+    uploadInProgress = false;
     alert('Error: ' + err.message);
   }
 }
