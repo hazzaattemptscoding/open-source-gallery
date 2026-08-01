@@ -1,7 +1,10 @@
 <?php
 $pageTitle = 'Cart: ' . e($siteName);
 $metaDescription = 'Shopping cart - add photos and checkout';
-$metaUrl = $GLOBALS['config']['site']['url'] . '/cart';
+// 'url' is not a real config.php key; base_url is (same fix as event.php
+// and seo.php). This one had no ?? fallback at all, so it would have thrown
+// on an undefined array key rather than merely defaulting wrong.
+$metaUrl = rtrim($GLOBALS['config']['site']['base_url'] ?? 'https://example.com', '/') . '/cart';
 $showCart = false; // we're on the cart page itself
 $pageScripts = '<script src="/assets/js/cart.js" defer></script>';
 require __DIR__ . '/partials/layout_header.php';

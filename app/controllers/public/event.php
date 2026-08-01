@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../lib/cart.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/db_compat.php';
 require_once __DIR__ . '/../../lib/validation.php';
+require_once __DIR__ . '/../../lib/wishlist.php';
 
 /**
  * Event page, matching both /e/{event-slug} (full-event grid across all
@@ -96,6 +97,14 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     // keep a single generous page rather than the same load-more UI.
     $videos = fetch_gallery_media($pdo, $eventId, $sessionId, 'video', $filters, 1, 500);
 
+    // Only looks up an existing cookie -- never mints one just to render a
+    // page, which would set a cookie on every visitor regardless of whether
+    // they ever touch favourites.
+    $favoriteToken = $_COOKIE[FAVORITES_COOKIE_NAME] ?? '';
+    $favoritedIds = $favoriteToken !== ''
+        ? get_wishlisted_photo_ids($pdo, $favoriteToken, array_column($photos, 'id'))
+        : [];
+
     $stmt = $pdo->prepare('SELECT DISTINCT kart_number FROM event_entries WHERE event_id = ? AND kart_number <> \'\' ORDER BY kart_number ASC');
     $stmt->execute([$eventId]);
     $kartOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -137,7 +146,7 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
     render(__DIR__ . '/../../views/public/event.php', compact(
         'siteName', 'currencyCode', 'event', 'sessions', 'activeSession', 'sessionId',
         'filters', 'heroToken', 'photos', 'videos', 'kartOptions', 'classOptions',
-        'basePath', 'cartCount', 'page', 'totalPhotos', 'hasMorePhotos'
+        'basePath', 'cartCount', 'page', 'totalPhotos', 'hasMorePhotos', 'favoritedIds'
     ));
 }
 

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/cache_headers.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
 require_once __DIR__ . '/../../lib/validation.php';
+require_once __DIR__ . '/../../lib/wishlist.php';
 require_once __DIR__ . '/event.php';
 
 /**
@@ -69,6 +70,11 @@ function public_api_photos_controller(PDO $pdo, array $config): void {
     $totalPhotos = count_gallery_media($pdo, $eventId, $sessionId, 'photo', $filters);
     $hasMorePhotos = ($page * GALLERY_PAGE_SIZE) < $totalPhotos;
 
+    $favoriteToken = $_COOKIE[FAVORITES_COOKIE_NAME] ?? '';
+    $favoritedIds = $favoriteToken !== ''
+        ? get_wishlisted_photo_ids($pdo, $favoriteToken, array_column($photos, 'id'))
+        : [];
+
     set_cache_headers('short');
     header('Content-Type: text/html; charset=utf-8');
     // Read by event.js to decide whether to keep showing "Load more" or hide
@@ -77,7 +83,7 @@ function public_api_photos_controller(PDO $pdo, array $config): void {
     // endpoint already relies on).
     header('X-Has-More: ' . ($hasMorePhotos ? '1' : '0'));
     header('X-Total-Photos: ' . $totalPhotos);
-    render(__DIR__ . '/../../views/public/_photo_grid_items.php', compact('photos'));
+    render(__DIR__ . '/../../views/public/_photo_grid_items.php', compact('photos', 'favoritedIds'));
 }
 
 /**

@@ -1219,6 +1219,136 @@ body.lightbox-open {
   100% { transform: scale(1); }
 }
 
+/* Opposite corner from .add-to-cart so the two single-tap actions never
+   collide on a dense grid. Unfilled/filled heart via color alone, not a
+   second icon swap — restraint over a second asset to load. */
+.favorite-btn {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  background: var(--surface-on-media);
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: transform 160ms var(--ease-out), color 160ms var(--ease-out);
+  box-shadow: var(--shadow-sm);
+}
+
+.favorite-btn:active {
+  transform: scale(0.92);
+}
+
+.favorite-btn.is-favorited {
+  color: var(--accent);
+}
+
+/* Favourites page */
+
+.favorites-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.favorites-page h1 {
+  margin: 0 0 2rem;
+  font-size: 2rem;
+}
+
+.favorites-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 0;
+  margin: 0 0 2rem;
+}
+
+.favorites-item {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.favorites-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.favorites-item-price {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--surface-on-media);
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  border-radius: 2px;
+}
+
+.favorites-item-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  background: var(--surface-on-media);
+  color: var(--text);
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.favorites-item-remove:hover {
+  color: var(--error);
+}
+
+.favorites-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.favorites-actions button {
+  padding: 0.75rem 2rem;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out);
+}
+
+.favorites-actions button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.favorites-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* Video section */
 
 .video-section {

@@ -70,7 +70,10 @@ function generate_event_schema(
     array $event,
     string $imageUrl = ''
 ): string {
-    $baseUrl = rtrim($config['site']['url'] ?? 'https://example.com', '/');
+    // 'url' is not a real config.php key (see bootstrap-config.php); base_url
+    // is, matching the fix already made in app/views/public/event.php and
+    // partials/layout_header.php for the same wrong key.
+    $baseUrl = rtrim($config['site']['base_url'] ?? 'https://example.com', '/');
     $siteName = $config['site']['name'] ?? 'Gallery';
 
     $eventDate = $event['event_date'] ?? '';
@@ -110,7 +113,7 @@ function generate_event_schema(
  * @return string JSON-LD script tag
  */
 function generate_organization_schema(array $config): string {
-    $baseUrl = rtrim($config['site']['url'] ?? 'https://example.com', '/');
+    $baseUrl = rtrim($config['site']['base_url'] ?? 'https://example.com', '/');
     $siteName = $config['site']['name'] ?? 'Gallery';
 
     $schema = [

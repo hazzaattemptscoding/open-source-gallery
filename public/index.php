@@ -175,6 +175,31 @@ switch ($path) {
         }
         break;
 
+    case '/favorites':
+        require __DIR__ . '/../app/controllers/public/favorites.php';
+        public_favorites_page_controller($pdo, $config);
+        break;
+
+    case '/favorites/add':
+        require __DIR__ . '/../app/controllers/public/favorites.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_favorites_add_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
+    case '/favorites/remove':
+        require __DIR__ . '/../app/controllers/public/favorites.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_favorites_remove_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
     case '/api/photos':
         require __DIR__ . '/../app/controllers/public/api_photos.php';
         public_api_photos_controller($pdo, $config);

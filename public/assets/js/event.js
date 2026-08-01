@@ -86,6 +86,12 @@ photoGrid.addEventListener('click', (e) => {
     addToCart('photo', parseInt(cartBtn.dataset.photoId, 10), cartBtn);
     return;
   }
+  const favoriteBtn = e.target.closest('.favorite-btn');
+  if (favoriteBtn) {
+    e.stopPropagation();
+    toggleFavorite(favoriteBtn);
+    return;
+  }
   // The empty-state's "Clear filters" button, when this grid was populated
   // by the /api/photos AJAX fragment rather than a full page load: the
   // fragment has no server-rendered $basePath to inline into an onclick,
@@ -160,6 +166,35 @@ async function addToCart(type, id, btn) {
   } catch (err) {
     console.error(err);
     showToast('Failed to add to cart. Please try again.');
+  }
+}
+
+/**
+ * Single tap, no confirm step, per CLAUDE.md's product rules for cart AND
+ * favourites. Toggles from the button's own current .is-favorited class
+ * rather than a server round-trip to check state first, matching
+ * addToCart()'s optimistic-update shape above.
+ */
+async function toggleFavorite(btn) {
+  const photoId = parseInt(btn.dataset.photoId, 10);
+  const wasFavorited = btn.classList.contains('is-favorited');
+  const url = wasFavorited ? '/favorites/remove' : '/favorites/add';
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_id: photoId }),
+      credentials: 'same-origin',
+    });
+    if (!response.ok) throw new Error('Failed to update favourite');
+
+    btn.classList.toggle('is-favorited', !wasFavorited);
+    btn.setAttribute('aria-pressed', String(!wasFavorited));
+    btn.setAttribute('aria-label', wasFavorited ? 'Add to favourites' : 'Remove from favourites');
+  } catch (err) {
+    console.error(err);
+    showToast('Could not update favourites. Please try again.');
   }
 }
 
