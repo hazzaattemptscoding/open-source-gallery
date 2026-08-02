@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setup Required</title>
-    <link rel="stylesheet" href="/assets/css/podium-ink.css">
-    <link rel="stylesheet" href="/assets/css/admin-refined.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Setup Required';
+$includeAdminStyles = true;
+require_once __DIR__ . '/../admin/partials/minimal_header.php';
+?>
     <div class="container">
         <div class="header">
             <h1><?= e($config['site']['name'] ?? 'Photo Gallery') ?></h1>
@@ -157,5 +151,4 @@
             </p>
         </div>
     </div>
-</body>
-</html>
+<?php require_once __DIR__ . '/../admin/partials/minimal_footer.php'; ?>

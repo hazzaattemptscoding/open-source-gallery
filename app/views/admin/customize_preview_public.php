@@ -1,13 +1,6 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Public Preview: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<style>
-<?= $cssOverrides ?>
-
+<?php
+$pageTitle = 'Public Preview';
+$extraStyles = '<style>' . "\n" . $cssOverrides . "\n" . <<<'CSS'
 .preview-banner {
   position: fixed;
   top: 0;
@@ -29,10 +22,9 @@ body {
   color: #ffff00;
   text-decoration: underline;
 }
-</style>
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
+CSS . "\n</style>\n";
+require_once __DIR__ . '/partials/minimal_header.php';
+?>
 <div class="preview-banner">
   📐 PREVIEW MODE — Customizations applied. <a href="/admin/customize">Back to editor</a>
 </div>
@@ -113,5 +105,4 @@ body {
     <p><a href="/admin/customize" style="color: #ffff00; text-decoration: underline;">← Return to customization editor</a></p>
   </div>
 </main>
-</body>
-</html>
+<?php require_once __DIR__ . '/partials/minimal_footer.php'; ?>
