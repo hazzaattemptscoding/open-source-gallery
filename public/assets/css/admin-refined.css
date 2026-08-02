@@ -10,21 +10,6 @@
    0. FOUNDATIONAL COMPONENTS (merged from admin.css)
    ═══════════════════════════════════════════════════════════════ */
 
-/* Basic button styles - vocabulary unified in section 4 */
-.btn-pill,
-.btn-choose,
-.btn-start-upload {
-  display: inline-block;
-  margin: 1rem 0;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0;
-  text-decoration: none;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
 /* Basic panel and list styles */
 .panel {
   padding-top: var(--stack);
@@ -306,12 +291,8 @@ p, li, td { text-wrap: pretty; }
    ═══════════════════════════════════════════════════════════════ */
 
 .btn-primary,
+.btn-secondary,
 .btn-danger,
-.btn-pill,
-.btn-choose,
-.btn-start-upload,
-.btn-add-tag,
-.btn-apply,
 .export-button,
 .clear-filter,
 .tag-remove-btn,
@@ -338,8 +319,6 @@ button[type="submit"],
 
 /* Committed action — one per view */
 .btn-primary,
-.btn-start-upload,
-.btn-apply,
 .export-button,
 button[type="submit"],
 .submit {
@@ -349,8 +328,6 @@ button[type="submit"],
 }
 
 .btn-primary:hover:not(:disabled),
-.btn-start-upload:hover:not(:disabled),
-.btn-apply:hover:not(:disabled),
 .export-button:hover:not(:disabled),
 button[type="submit"]:hover:not(:disabled),
 .submit:hover:not(:disabled) {
@@ -359,9 +336,6 @@ button[type="submit"]:hover:not(:disabled),
 }
 
 /* Supporting */
-.btn-pill,
-.btn-choose,
-.btn-add-tag,
 .btn-secondary,
 .clear-filter {
   background: transparent;
@@ -369,9 +343,6 @@ button[type="submit"]:hover:not(:disabled),
   color: var(--text);
 }
 
-.btn-pill:hover,
-.btn-choose:hover,
-.btn-add-tag:hover,
 .btn-secondary:hover,
 .clear-filter:hover {
   background: var(--bg-alt);
@@ -390,22 +361,16 @@ button[type="submit"]:hover:not(:disabled),
 .tag-remove-btn:hover { background: var(--bad); color: var(--bg); }
 
 .btn-primary:active,
+.btn-secondary:active,
 .btn-danger:active,
-.btn-pill:active,
-.btn-choose:active,
-.btn-start-upload:active,
-.btn-add-tag:active,
-.btn-apply:active,
 .export-button:active,
 .clear-filter:active,
 button[type="submit"]:active,
 .submit:active { transform: scale(0.97); }
 
 .btn-primary:disabled,
+.btn-secondary:disabled,
 .btn-danger:disabled,
-.btn-apply:disabled,
-.btn-add-tag:disabled,
-.btn-start-upload:disabled,
 button[type="submit"]:disabled {
   background: var(--bg-alt);
   border-color: var(--divider);
@@ -1478,7 +1443,7 @@ details > summary:focus-visible {
 
 @media (hover: none) {
   .stat-card:hover, .metric-card:hover, .export-card:hover { transform: none; }
-  .btn-pill:hover, .btn-choose:hover, .btn-add-tag:hover, .upload-zone:hover {
+  .btn-secondary:hover, .upload-zone:hover {
     background: transparent;
     border-color: var(--divider-strong);
   }
@@ -1491,7 +1456,7 @@ details > summary:focus-visible {
     transition-duration: 1ms !important;
   }
   .stat-card:hover, .metric-card:hover, .export-card:hover,
-  .btn-primary:active, .btn-danger:active, .btn-apply:active,
+  .btn-primary:active, .btn-secondary:active, .btn-danger:active,
   .tag-photo-thumb:active { transform: none; }
 }
 

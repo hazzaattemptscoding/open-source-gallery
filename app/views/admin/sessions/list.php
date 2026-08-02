@@ -11,7 +11,7 @@ require_once __DIR__ . '/../partials/layout_header.php';
     <div class="error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <a href="/admin/sessions/new?event=<?= e($eventId) ?>" class="btn-pill">+ Create session</a>
+  <a href="/admin/sessions/new?event=<?= e($eventId) ?>" class="btn-secondary">+ Create session</a>
 
   <?php if (empty($sessions)): ?>
     <p>No sessions yet.</p>
