@@ -11,7 +11,7 @@ require_once __DIR__ . '/../partials/layout_header.php';
     <div class="error"><?= e($error) ?></div>
   <?php endif; ?>
 
-  <a href="/admin/events/new" class="btn-pill">+ Create event</a>
+  <a href="/admin/events/new" class="btn-secondary">+ Create event</a>
 
   <?php if (empty($events)): ?>
     <p>No events yet.</p>

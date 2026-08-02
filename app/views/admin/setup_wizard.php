@@ -1,17 +1,9 @@
 <?php
 declare(strict_types=1);
+$pageTitle = 'Setup Wizard';
+$includeAdminStyles = true;
+require_once __DIR__ . '/partials/minimal_header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Setup Wizard — <?= htmlspecialchars($siteName) ?></title>
-    <link rel="stylesheet" href="/assets/css/podium-ink.css">
-    <link rel="stylesheet" href="/assets/css/admin-refined.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
     <div class="wizard-container">
         <div class="wizard-header">
             <h1>Welcome to <?= htmlspecialchars($siteName) ?></h1>
@@ -84,5 +76,4 @@ declare(strict_types=1);
         <?php endif; ?>
     </div>
 <script src="/assets/js/admin-wizard.js" defer></script>
-</body>
-</html>
+<?php require_once __DIR__ . '/partials/minimal_footer.php'; ?>

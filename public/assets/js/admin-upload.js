@@ -1,7 +1,6 @@
 /**
  * Chunked upload UI: drag-drop or file picker, 2MB chunks with retry,
  * then finalize. Talks to /admin/upload/init, /chunk, /finalize.
- * Integrates with floating progress widget for real-time upload tracking.
  */
 
 // Chunking, retries and the transfer itself now live in /upload-worker.js.
@@ -11,7 +10,6 @@ const CSRF_TOKEN = document.getElementById('uploadZone').dataset.csrfToken;
 let selectedFiles = [];
 let batchId = null;
 let sessionId = null;
-let progressWidget = null;
 
 // file_id -> index in selectedFiles, so worker broadcasts (which know only the
 // server-side id) can find the row they belong to.
@@ -71,12 +69,6 @@ function startUpload() {
     alert('Please select a session');
     return;
   }
-
-  progressWidget = getProgressWidget('Uploading photos');
-  progressWidget.show();
-  selectedFiles.forEach((file) => {
-    progressWidget.addFile(file.name, file.size);
-  });
 
   initBatch();
 }
@@ -181,12 +173,10 @@ function watchWorkerProgress() {
       statusEl.textContent = 'Uploading';
       statusEl.className = 'upload-file-status status-uploading';
       progressEl.style.width = data.percent + '%';
-      if (progressWidget) progressWidget.updateProgress(idx, data.percent);
     } else if (data.type === 'file-done') {
       statusEl.textContent = `Done: ${escapeHtml(data.token || '')}`;
       statusEl.className = 'upload-file-status status-done';
       progressEl.style.width = '100%';
-      if (progressWidget) progressWidget.updateProgress(idx, 100);
     } else if (data.type === 'file-error') {
       statusEl.textContent = `Error: ${data.message}`;
       statusEl.className = 'upload-file-status status-error';

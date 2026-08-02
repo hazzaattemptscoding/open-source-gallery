@@ -38,9 +38,9 @@
     <?php endif; ?>
 </div>
 
-<div style="background: #f0f8f4; border: 1px solid #d6e5d2; border-radius: 6px; padding: 20px; margin: 32px 0; color: #346538;">
+<div class="wizard-next-steps">
     <strong>Next steps:</strong>
-    <ul style="margin: 12px 0 0 20px; padding: 0;">
+    <ul>
         <li>Create your first event and upload photos</li>
         <li>Customize watermark settings</li>
         <li>Set up your payment processing (if skipped)</li>

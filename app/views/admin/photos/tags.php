@@ -29,9 +29,9 @@ require_once __DIR__ . '/../partials/layout_header.php';
 
     <ul class="tag-list" id="pendingTags"></ul>
 
-    <button type="button" id="addTagBtn" class="btn-add-tag">+ Add tag</button>
+    <button type="button" id="addTagBtn" class="btn-secondary">+ Add tag</button>
 
-    <button type="button" id="applyBtn" class="btn-apply" disabled>Apply to <?php echo count($selectedPhotos ?? []) > 0 ? count($selectedPhotos) : '0'; ?> photo(s)</button>
+    <button type="button" id="applyBtn" class="btn-primary" disabled>Apply to <?php echo count($selectedPhotos ?? []) > 0 ? count($selectedPhotos) : '0'; ?> photo(s)</button>
   </div>
 
   <h3>Photos in this session</h3>

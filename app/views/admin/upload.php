@@ -27,14 +27,14 @@ require_once __DIR__ . '/partials/layout_header.php';
     <span class="step-label">Add photos</span>
 
     <div class="upload-zone" id="uploadZone" data-csrf-token="<?= e($csrfToken) ?>">
-      <p>Drag photos here or <button type="button" id="chooseFileBtn" class="btn-choose">choose from folder</button></p>
+      <p>Drag photos here or <button type="button" id="chooseFileBtn" class="btn-secondary">choose from folder</button></p>
       <p class="hint">JPEG or PNG. Recommended: 2000&times;2000 px minimum. Max 16384&times;16384 px.</p>
       <input type="file" id="fileInput" multiple accept="image/jpeg,image/png">
     </div>
 
     <ul class="upload-files-list" id="filesList"></ul>
 
-    <button type="button" id="startUploadBtn" class="btn-start-upload">Start upload</button>
+    <button type="button" id="startUploadBtn" class="btn-primary">Start upload</button>
   </div>
 
   <p id="jobDrain" class="job-drain-notice">

@@ -8,14 +8,14 @@
         <span>Where do I find my Stripe API keys?</span>
     </div>
     <div class="help-content hidden">
-        <ol style="margin: 8px 0 8px 20px;">
-            <li>Log in to <a href="https://dashboard.stripe.com" target="_blank" style="color: #111; text-decoration: underline;">Stripe Dashboard →</a></li>
+        <ol>
+            <li>Log in to <a href="https://dashboard.stripe.com" target="_blank">Stripe Dashboard →</a></li>
             <li>Click <strong>Developers</strong> (top left menu)</li>
             <li>Click <strong>API keys</strong></li>
             <li>Copy your <code>Publishable key</code> (starts with <code>pk_</code>)</li>
             <li>Copy your <code>Secret key</code> (starts with <code>sk_</code>) — keep this secure!</li>
         </ol>
-        <strong>Don't have a Stripe account?</strong> <a href="https://dashboard.stripe.com/register" target="_blank" style="color: #111; text-decoration: underline;">Create one free →</a> Takes 5 minutes.
+        <strong>Don't have a Stripe account?</strong> <a href="https://dashboard.stripe.com/register" target="_blank">Create one free →</a> Takes 5 minutes.
     </div>
 </div>
 
@@ -35,6 +35,6 @@
     <div class="help-text">Starts with <code>sk_</code> — keep this secret! Paste here, not shared anywhere</div>
 </div>
 
-<div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
-    <button type="submit" name="skip" class="button button-secondary" style="width: 100%; margin-bottom: 12px;">Skip for now</button>
+<div class="wizard-skip-section">
+    <button type="submit" name="skip" class="button button-secondary wizard-skip-button">Skip for now</button>
 </div>

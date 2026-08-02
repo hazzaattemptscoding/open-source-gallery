@@ -53,7 +53,7 @@ require_once __DIR__ . '/partials/layout_header.php';
   <?php endforeach; ?>
 
   <?php if (empty($eventStats)): ?>
-    <p class="empty-section" style="text-align: center; padding: 2rem;">
+    <p class="empty-section empty-section-centered">
       No events yet. <a href="/admin/events/new">Create your first event.</a>
     </p>
   <?php endif; ?>

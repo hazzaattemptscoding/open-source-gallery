@@ -8,7 +8,7 @@
         <span>How to find your email provider's SMTP settings</span>
     </div>
     <div class="help-content hidden">
-        <strong>Gmail:</strong> Use your full Gmail address. <a href="https://support.google.com/accounts/answer/185833" target="_blank" style="color: #111; text-decoration: underline;">Create an App Password</a> (not your regular password).
+        <strong>Gmail:</strong> Use your full Gmail address. <a href="https://support.google.com/accounts/answer/185833" target="_blank">Create an App Password</a> (not your regular password).
         <br><br>
         <strong>Outlook:</strong> Use your full Outlook/Hotmail address and regular password.
         <br><br>
@@ -72,6 +72,6 @@
     <div class="help-text">For Gmail: use an App Password, not your account password</div>
 </div>
 
-<div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
-    <button type="submit" name="skip" class="button button-secondary" style="width: 100%; margin-bottom: 12px;">Skip for now</button>
+<div class="wizard-skip-section">
+    <button type="submit" name="skip" class="button button-secondary wizard-skip-button">Skip for now</button>
 </div>

@@ -7,7 +7,7 @@ require_once __DIR__ . '/../partials/layout_header.php';
   <h1>Photos in "<?= e($sessionSlug) ?>"</h1>
   <p><a href="/admin/sessions?event=<?= e($eventId) ?>">← Back to sessions</a></p>
 
-  <a href="/admin/photos/tags?session=<?= e($sessionId) ?>" class="btn-pill">Tag photos</a>
+  <a href="/admin/photos/tags?session=<?= e($sessionId) ?>" class="btn-secondary">Tag photos</a>
 
   <?php if (empty($photos)): ?>
     <p>No photos in this session yet.</p>

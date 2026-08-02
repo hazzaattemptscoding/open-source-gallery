@@ -76,7 +76,7 @@ require_once __DIR__ . '/partials/layout_header.php';
 
         <div>
           <?php if ($admin['id'] != $currentAdminId): ?>
-            <form method="post" style="display: inline;">
+            <form method="post" class="form-inline">
               <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
               <input type="hidden" name="action" value="update_role">
               <input type="hidden" name="admin_id" value="<?= e($admin['id']) ?>">
@@ -97,14 +97,14 @@ require_once __DIR__ . '/partials/layout_header.php';
 
         <div class="admin-actions">
           <?php if ($admin['id'] != $currentAdminId): ?>
-            <form method="post" style="display: inline;" data-confirm="Delete this admin?">
+            <form method="post" class="form-inline" data-confirm="Delete this admin?">
               <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="admin_id" value="<?= e($admin['id']) ?>">
               <button type="submit" class="btn-danger">Delete</button>
             </form>
           <?php else: ?>
-            <span style="color: #999;">—</span>
+            <span class="text-muted">—</span>
           <?php endif; ?>
         </div>
       </div>
@@ -112,8 +112,8 @@ require_once __DIR__ . '/partials/layout_header.php';
   </div>
 
   <!-- Role Guide -->
-  <div style="margin-top: 3rem; padding: 1.5rem; background: #f9f9f9; border-radius: 4px;">
-    <h3 style="margin-top: 0;">Role Permissions Guide</h3>
+  <div class="info-box">
+    <h3>Role Permissions Guide</h3>
     <ul>
       <li><strong>Admin:</strong> Full access to all features (settings, exports, admin management)</li>
       <li><strong>Uploader:</strong> Can create events, upload photos, view analytics</li>

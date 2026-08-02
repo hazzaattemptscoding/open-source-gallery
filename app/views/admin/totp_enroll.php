@@ -1,13 +1,7 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Set up two-factor authentication: <?= e($siteName) ?></title>
-<link rel="stylesheet" href="/assets/css/podium-ink.css">
-<link rel="stylesheet" href="/api/styles.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Set up two-factor authentication';
+require_once __DIR__ . '/partials/minimal_header.php';
+?>
 <div class="auth-page">
   <div class="auth-card">
     <h1>Set up two-factor authentication</h1>
@@ -31,5 +25,4 @@
     </form>
   </div>
 </div>
-</body>
-</html>
+<?php require_once __DIR__ . '/partials/minimal_footer.php'; ?>

@@ -10,21 +10,6 @@
    0. FOUNDATIONAL COMPONENTS (merged from admin.css)
    ═══════════════════════════════════════════════════════════════ */
 
-/* Basic button styles - vocabulary unified in section 4 */
-.btn-pill,
-.btn-choose,
-.btn-start-upload {
-  display: inline-block;
-  margin: 1rem 0;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0;
-  text-decoration: none;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
 /* Basic panel and list styles */
 .panel {
   padding-top: var(--stack);
@@ -306,12 +291,8 @@ p, li, td { text-wrap: pretty; }
    ═══════════════════════════════════════════════════════════════ */
 
 .btn-primary,
+.btn-secondary,
 .btn-danger,
-.btn-pill,
-.btn-choose,
-.btn-start-upload,
-.btn-add-tag,
-.btn-apply,
 .export-button,
 .clear-filter,
 .tag-remove-btn,
@@ -338,8 +319,6 @@ button[type="submit"],
 
 /* Committed action — one per view */
 .btn-primary,
-.btn-start-upload,
-.btn-apply,
 .export-button,
 button[type="submit"],
 .submit {
@@ -349,8 +328,6 @@ button[type="submit"],
 }
 
 .btn-primary:hover:not(:disabled),
-.btn-start-upload:hover:not(:disabled),
-.btn-apply:hover:not(:disabled),
 .export-button:hover:not(:disabled),
 button[type="submit"]:hover:not(:disabled),
 .submit:hover:not(:disabled) {
@@ -359,9 +336,6 @@ button[type="submit"]:hover:not(:disabled),
 }
 
 /* Supporting */
-.btn-pill,
-.btn-choose,
-.btn-add-tag,
 .btn-secondary,
 .clear-filter {
   background: transparent;
@@ -369,9 +343,6 @@ button[type="submit"]:hover:not(:disabled),
   color: var(--text);
 }
 
-.btn-pill:hover,
-.btn-choose:hover,
-.btn-add-tag:hover,
 .btn-secondary:hover,
 .clear-filter:hover {
   background: var(--bg-alt);
@@ -390,22 +361,16 @@ button[type="submit"]:hover:not(:disabled),
 .tag-remove-btn:hover { background: var(--bad); color: var(--bg); }
 
 .btn-primary:active,
+.btn-secondary:active,
 .btn-danger:active,
-.btn-pill:active,
-.btn-choose:active,
-.btn-start-upload:active,
-.btn-add-tag:active,
-.btn-apply:active,
 .export-button:active,
 .clear-filter:active,
 button[type="submit"]:active,
 .submit:active { transform: scale(0.97); }
 
 .btn-primary:disabled,
+.btn-secondary:disabled,
 .btn-danger:disabled,
-.btn-apply:disabled,
-.btn-add-tag:disabled,
-.btn-start-upload:disabled,
 button[type="submit"]:disabled {
   background: var(--bg-alt);
   border-color: var(--divider);
@@ -479,7 +444,6 @@ button[type="submit"]:disabled {
 }
 
 .status-badge,
-.action-badge,
 .advanced-badge {
   display: inline-block;
   padding: 0.2rem 0.55rem;
@@ -869,8 +833,8 @@ td.value,
 .admin-form input,
 .admin-form select,
 .admin-form textarea,
-.filter-form input,
-.filter-form select,
+.audit-filter-form input,
+.audit-filter-form select,
 .customize-form input,
 .step-form input,
 .admin-role-select {
@@ -889,7 +853,7 @@ td.value,
 .setting-input select:focus,
 .setting-input textarea:focus,
 .admin-form input:focus,
-.filter-form input:focus { border-color: var(--accent); }
+.audit-filter-form input:focus { border-color: var(--accent); }
 
 .mode-toggle {
   display: inline-flex;
@@ -909,8 +873,7 @@ td.value,
 .mode-toggle a.active,
 .mode-toggle .active { background: var(--accent); color: var(--accent-text); }
 
-.form-actions,
-.filter-form {
+.form-actions {
   display: flex;
   gap: var(--space-3);
   align-items: center;
@@ -1432,10 +1395,10 @@ details > summary:focus-visible {
 
 .table-order-id code { font-size: 0.85rem; }
 .table-status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 3px; font-size: 0.85rem; font-weight: 500; }
-.table-status.paid { background: rgba(81, 207, 102, 0.2); color: #51cf66; }
-.table-status.refunded { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
-.table-status.partial_refund { background: rgba(255, 159, 64, 0.2); color: #ff9f40; }
-.table-status.pending { background: rgba(153, 153, 153, 0.2); color: #999999; }
+.table-status.paid { background: var(--ok-quiet); color: var(--ok); }
+.table-status.refunded { background: var(--bad-quiet); color: var(--bad); }
+.table-status.partial_refund { background: var(--warn-quiet); color: var(--warn); }
+.table-status.pending { background: var(--bg-alt); color: var(--text-muted); }
 
 .table-date { color: var(--text-muted); font-size: 0.9rem; }
 .table-pagination { margin-top: 2rem; text-align: center; }
@@ -1461,12 +1424,219 @@ details > summary:focus-visible {
 .top-selling-meta { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; }
 
 .empty-section { color: var(--text-muted); font-size: 0.9rem; }
+.empty-section-centered { text-align: center; padding: 2rem; }
+
+/* ═══════════════════════════════════════════════════════════════
+   13b. CUSTOMIZE PREVIEW
+   The public-preview page injects the admin's live customization
+   settings as CSS custom properties, so these rules read the same
+   --text/--bg/--border/--accent tokens the rest of the admin uses.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Fixed colours, not tokens: this banner sits on top of a page whose --text/
+   --bg/--border have been overridden to the admin's own customization
+   settings, so it needs a chrome that reads regardless of what they picked. */
+.preview-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #333333;
+  color: #ffffff;
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+  z-index: 10000;
+}
+
+.preview-banner a { color: #ffff00; text-decoration: underline; }
+
+.preview-main { padding: 2rem; max-width: 100%; }
+.preview-lede { color: var(--text-muted); margin-bottom: 3rem; }
+.preview-section-title { margin-bottom: 2rem; }
+
+.preview-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.preview-event-card { background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
+
+.preview-event-thumb {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--bg-alt) 0%, var(--border) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.preview-event-body { padding: 1rem; }
+.preview-event-body h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+.preview-event-body p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+
+.preview-event-empty {
+  grid-column: 1 / -1;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+  border-radius: 4px;
+}
+.preview-event-empty p { color: var(--text-muted); }
+
+.preview-components {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.preview-component-block {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.preview-component-block h3 { margin-top: 0; }
+
+.preview-component-block code {
+  background: var(--bg-alt);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+}
+
+.preview-button-primary {
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.preview-button-secondary {
+  background: var(--bg-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.875rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.preview-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.preview-swatch {
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+.preview-swatch code { font-size: 0.75rem; }
+
+.preview-swatch-text { background: var(--text); color: var(--bg); }
+.preview-swatch-bg { background: var(--bg); border: 1px solid var(--border); color: var(--text); }
+.preview-swatch-bg-alt { background: var(--bg-alt); border: 1px solid var(--border); color: var(--text); }
+.preview-swatch-border { background: var(--border); color: var(--text); }
+
+.preview-cta {
+  background: var(--text);
+  color: var(--bg);
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+.preview-cta h2 { margin-top: 0; }
+.preview-cta a { color: inherit; text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════
+   13c. AUDIT LOG
+   ═══════════════════════════════════════════════════════════════ */
+
+.audit-stat-bar {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.audit-filter-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-alt);
+  border-radius: 4px;
+}
+
+.filter-actions { display: flex; gap: 0.5rem; }
+
+.table-scroll { overflow-x: auto; }
+
+.log-table thead { background: var(--bg-alt); }
+
+.log-col-when, .log-col-action, .log-col-admin { width: 15%; }
+.log-col-details { width: 25%; }
+.log-col-ip { width: 15%; }
+
+.log-cell-muted { color: var(--text-muted); }
+.log-details-cell { color: var(--text-muted); font-size: 0.85rem; }
+.log-ip-cell { font-family: var(--font-mono, monospace); font-size: 0.85rem; color: var(--text-muted); }
+.log-empty { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+/* Nine action types collapse onto the three status tokens plus a neutral
+   bucket rather than carrying their own nine-colour palette: destructive
+   actions read as --bad, creations/successful auth as --ok, modifications
+   as --warn, everything else (logout, webhook, unmatched) stays neutral. */
+.action-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.action-login, .action-create { background: var(--ok-quiet); color: var(--ok); }
+.action-update { background: var(--warn-quiet); color: var(--warn); }
+.action-delete, .action-failed { background: var(--bad-quiet); color: var(--bad); }
+.action-logout, .action-export, .action-webhook, .action-default {
+  background: var(--bg-alt);
+  color: var(--text-muted);
+}
+
+.pagination { display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: center; }
+.pagination a,
+.pagination span {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  text-decoration: none;
+  color: inherit;
+}
+.pagination a:hover { background: var(--bg-alt); }
+.pagination .current { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+.audit-about { margin-top: 3rem; padding: 1.5rem; background: var(--bg-alt); border-radius: 4px; }
+.audit-about h3 { margin-top: 0; }
 
 /* ═══════════════════════════════════════════════════════════════
    14. RESPONSIVE & ACCESSIBILITY
    ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .setting-field { grid-template-columns: 1fr; gap: var(--space-2); }
   .setting-label { padding-top: 0; }
   .admin-row { grid-template-columns: 1fr auto; gap: var(--space-2); }
@@ -1478,7 +1648,7 @@ details > summary:focus-visible {
 
 @media (hover: none) {
   .stat-card:hover, .metric-card:hover, .export-card:hover { transform: none; }
-  .btn-pill:hover, .btn-choose:hover, .btn-add-tag:hover, .upload-zone:hover {
+  .btn-secondary:hover, .upload-zone:hover {
     background: transparent;
     border-color: var(--divider-strong);
   }
@@ -1491,7 +1661,7 @@ details > summary:focus-visible {
     transition-duration: 1ms !important;
   }
   .stat-card:hover, .metric-card:hover, .export-card:hover,
-  .btn-primary:active, .btn-danger:active, .btn-apply:active,
+  .btn-primary:active, .btn-secondary:active, .btn-danger:active,
   .tag-photo-thumb:active { transform: none; }
 }
 
@@ -2004,6 +2174,33 @@ details > summary:focus-visible {
   transform: scale(0.98);
 }
 
+/* Repeats across every skippable wizard step (Stripe, email, storage mode,
+   admin mode): a divider above a full-width "skip for now" button. */
+.wizard-skip-section {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--divider);
+}
+
+.wizard-skip-button { width: 100%; margin-bottom: 12px; }
+
+/* Repeats across audit log, admins, and print orders: a muted callout box
+   explaining the page above it. */
+.info-box { margin-top: 3rem; padding: 1.5rem; background: var(--bg-alt); border-radius: 4px; }
+.info-box h3 { margin-top: 0; }
+
+.wizard-next-steps {
+  background: var(--ok-quiet);
+  border: 1px solid var(--ok);
+  border-radius: 6px;
+  padding: 20px;
+  margin: 32px 0;
+  color: var(--ok);
+}
+.wizard-next-steps ul { margin: 12px 0 0 20px; padding: 0; }
+
+.text-muted { color: var(--text-muted); }
+
 .checklist {
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -2135,7 +2332,8 @@ details > summary:focus-visible {
   max-height: 0;
 }
 
-.help-content ul {
+.help-content ul,
+.help-content ol {
   margin: 8px 0 8px 20px;
   padding: 0;
 }
@@ -2151,6 +2349,8 @@ details > summary:focus-visible {
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+.help-content a { color: var(--text); text-decoration: underline; }
 
 /* ═══════════════════════════════════════════════════════════════
    16. SETUP DIAGNOSTIC (merged from admin.css)
@@ -2233,6 +2433,9 @@ details > summary:focus-visible {
   color: var(--text-muted);
 }
 
+.diagnostic-step ul { margin: 0 0 12px 20px; color: var(--text-muted); }
+.diagnostic-step code { background: var(--bg-alt); padding: 2px 4px; border-radius: 3px; }
+
 .code-block {
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -2278,6 +2481,21 @@ details > summary:focus-visible {
 .diagnostic-section {
   margin-bottom: 48px;
 }
+
+.diagnostic-section h2 { margin-bottom: 16px; }
+.diagnostic-section > p { margin-bottom: 16px; color: var(--text-muted); }
+
+.diagnostic-substeps { display: grid; gap: 12px; }
+.diagnostic-substep-label { font-weight: 500; margin-bottom: 8px; }
+
+.diagnostic-cards { display: grid; gap: 16px; }
+
+.diagnostic-card { border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+.diagnostic-card h3 { font-size: 14px; margin-bottom: 12px; }
+.diagnostic-card .code-block { margin: 0; }
+.diagnostic-card-note { margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+
+.diagnostic-footer { color: var(--text-muted); font-size: 13px; }
 
 .divider {
   border: none;
