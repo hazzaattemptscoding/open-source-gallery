@@ -3412,3 +3412,82 @@ body:has(.cart-tray.is-visible) { padding-bottom: 5.5rem; }
 @media (prefers-reduced-motion: reduce) {
   .cart-tray { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   WAYS TO BUY
+   ═══════════════════════════════════════════════════════════════
+   Ordered widest bundle first, single photo last. The first row is the
+   headline product and is styled as such: at grassroots volumes a flat
+   "all of it, one price" outperforms per-photo pricing, and a bundle shown
+   underneath a single-photo price reads as an upsell rather than as the
+   normal way to buy. */
+
+.buy-options {
+  max-width: 46rem;
+  margin: 3rem auto 0;
+  padding: 0 1.25rem;
+}
+
+.buy-options-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+.buy-options-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.6rem; }
+
+.buy-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.1rem 1.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+/* The headline option carries the accent border and a slightly heavier label.
+   Deliberately not a filled accent block: the accent is reserved for actions,
+   and this row is information with an action inside it. */
+.buy-option.is-headline {
+  border-color: var(--accent);
+  background: var(--accent-quiet);
+}
+
+.buy-option-main { flex: 1; min-width: 10rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.buy-option-label { font-size: var(--text-base); }
+.buy-option.is-headline .buy-option-label { font-weight: 600; }
+.buy-option-covers { font-size: var(--text-xs); color: var(--text-muted); }
+
+.buy-option-pricing { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; }
+.buy-option-price { font-size: var(--text-md); font-weight: 600; font-variant-numeric: tabular-nums; }
+.buy-option-each { font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.buy-option-saving { font-size: var(--text-xs); color: var(--success); font-weight: 500; }
+
+.buy-option-add {
+  padding: 0.7rem 1.25rem;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms var(--ease-out);
+}
+.buy-option-add:hover:not(:disabled) { background: var(--accent-hover); }
+.buy-option-add:disabled { background: var(--bg-alt); border-color: var(--border); color: var(--text-muted); cursor: default; }
+
+.buy-option-note { font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .buy-option { gap: 0.6rem; }
+  .buy-option-main { min-width: 100%; }
+  .buy-option-pricing { align-items: flex-start; flex: 1; }
+  .buy-option-add, .buy-option-note { width: 100%; text-align: center; }
+}
