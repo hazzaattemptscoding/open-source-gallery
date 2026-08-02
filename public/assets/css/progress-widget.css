@@ -194,7 +194,7 @@
 }
 
 /* Responsive: stack on mobile */
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .progress-widget {
     bottom: 1rem;
     right: 1rem;
