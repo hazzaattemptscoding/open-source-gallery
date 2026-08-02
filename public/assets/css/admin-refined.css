@@ -1424,6 +1424,7 @@ details > summary:focus-visible {
 .top-selling-meta { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; }
 
 .empty-section { color: var(--text-muted); font-size: 0.9rem; }
+.empty-section-centered { text-align: center; padding: 2rem; }
 
 /* ═══════════════════════════════════════════════════════════════
    13b. CUSTOMIZE PREVIEW
@@ -2173,6 +2174,33 @@ details > summary:focus-visible {
   transform: scale(0.98);
 }
 
+/* Repeats across every skippable wizard step (Stripe, email, storage mode,
+   admin mode): a divider above a full-width "skip for now" button. */
+.wizard-skip-section {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--divider);
+}
+
+.wizard-skip-button { width: 100%; margin-bottom: 12px; }
+
+/* Repeats across audit log, admins, and print orders: a muted callout box
+   explaining the page above it. */
+.info-box { margin-top: 3rem; padding: 1.5rem; background: var(--bg-alt); border-radius: 4px; }
+.info-box h3 { margin-top: 0; }
+
+.wizard-next-steps {
+  background: var(--ok-quiet);
+  border: 1px solid var(--ok);
+  border-radius: 6px;
+  padding: 20px;
+  margin: 32px 0;
+  color: var(--ok);
+}
+.wizard-next-steps ul { margin: 12px 0 0 20px; padding: 0; }
+
+.text-muted { color: var(--text-muted); }
+
 .checklist {
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -2304,7 +2332,8 @@ details > summary:focus-visible {
   max-height: 0;
 }
 
-.help-content ul {
+.help-content ul,
+.help-content ol {
   margin: 8px 0 8px 20px;
   padding: 0;
 }
@@ -2320,6 +2349,8 @@ details > summary:focus-visible {
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+.help-content a { color: var(--text); text-decoration: underline; }
 
 /* ═══════════════════════════════════════════════════════════════
    16. SETUP DIAGNOSTIC (merged from admin.css)
@@ -2402,6 +2433,9 @@ details > summary:focus-visible {
   color: var(--text-muted);
 }
 
+.diagnostic-step ul { margin: 0 0 12px 20px; color: var(--text-muted); }
+.diagnostic-step code { background: var(--bg-alt); padding: 2px 4px; border-radius: 3px; }
+
 .code-block {
   background: var(--bg-alt);
   border: 1px solid var(--border);
@@ -2447,6 +2481,21 @@ details > summary:focus-visible {
 .diagnostic-section {
   margin-bottom: 48px;
 }
+
+.diagnostic-section h2 { margin-bottom: 16px; }
+.diagnostic-section > p { margin-bottom: 16px; color: var(--text-muted); }
+
+.diagnostic-substeps { display: grid; gap: 12px; }
+.diagnostic-substep-label { font-weight: 500; margin-bottom: 8px; }
+
+.diagnostic-cards { display: grid; gap: 16px; }
+
+.diagnostic-card { border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+.diagnostic-card h3 { font-size: 14px; margin-bottom: 12px; }
+.diagnostic-card .code-block { margin: 0; }
+.diagnostic-card-note { margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+
+.diagnostic-footer { color: var(--text-muted); font-size: 13px; }
 
 .divider {
   border: none;

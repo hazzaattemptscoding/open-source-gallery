@@ -68,7 +68,7 @@ require_once __DIR__ . '/partials/layout_header.php';
                   <?= e(substr($order['tracking_number'], 0, 20)) ?>...
                 </a>
               <?php else: ?>
-                <span style="color: #999;">—</span>
+                <span class="text-muted">—</span>
               <?php endif; ?>
             </td>
             <td><?= e(date('M d, Y', strtotime($order['created_at']))) ?></td>
@@ -84,8 +84,8 @@ require_once __DIR__ . '/partials/layout_header.php';
   <?php endif; ?>
 
   <!-- Help Section -->
-  <div style="margin-top: 3rem; padding: 1.5rem; background: #f9f9f9; border-radius: 4px;">
-    <h3 style="margin-top: 0;">About Print Fulfillment</h3>
+  <div class="info-box">
+    <h3>About Print Fulfillment</h3>
     <p>
       Print fulfillment allows customers to order printed versions of photos. Orders are automatically
       routed to your configured print provider (Printful, Printware, etc.) and tracked here.

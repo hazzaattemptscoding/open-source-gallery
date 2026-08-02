@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../lib/seo.php';
 $favoritedIds = $favoritedIds ?? [];
 ?>
 <?php if (empty($photos)): ?>
-  <div class="empty-state" style="grid-column: 1 / -1;">
+  <div class="empty-state">
     <p>No photos match these filters.</p>
     <button type="button" class="clear-filters" data-reset-filters>Clear filters</button>
   </div>

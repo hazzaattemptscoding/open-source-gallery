@@ -30,6 +30,6 @@
     </div>
 </div>
 
-<div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
-    <button type="submit" name="skip" class="button button-secondary" style="width: 100%; margin-bottom: 12px;">Skip for now (use Local)</button>
+<div class="wizard-skip-section">
+    <button type="submit" name="skip" class="button button-secondary wizard-skip-button">Skip for now (use Local)</button>
 </div>

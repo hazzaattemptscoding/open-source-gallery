@@ -21,7 +21,7 @@ require __DIR__ . '/partials/layout_header.php';
       <div class="search-layout">
         <!-- Sidebar: Filters -->
         <aside class="search-sidebar">
-          <h2 style="font-size: 1rem; margin-top: 0;">Filters</h2>
+          <h2 class="search-sidebar-title">Filters</h2>
 
           <?php if (!empty($results['facets']['events'])): ?>
             <div class="filter-group">
@@ -63,7 +63,7 @@ require __DIR__ . '/partials/layout_header.php';
 
         <!-- Main: Results -->
         <main>
-          <p style="color: #666; margin-bottom: 2rem;">
+          <p class="search-results-count">
             Found <strong><?= e($results['total']) ?></strong> photo<?= $results['total'] != 1 ? 's' : '' ?>
             <?php if (!empty($query)): ?>
               matching "<?= e($query) ?>"
