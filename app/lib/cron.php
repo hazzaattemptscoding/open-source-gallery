@@ -300,8 +300,19 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
 }
 
 /**
- * Image tiering: deletes 1600px derivatives for photos older than 7 days
- * to save storage space. Smaller 400/800px versions remain for gallery display.
+ * Deletes the 1600px derivative for one photo.
+ *
+ * Retained as a handler, but nothing enqueues 'cleanup' jobs any more and
+ * nothing should. Derivative generation used to queue one of these per photo
+ * to delete the 1600px version after 7 days, which was a conversion leak:
+ * motorsport galleries are frequently discovered late by word of mouth, and a
+ * degraded preview at the moment of discovery loses the sale. That policy was
+ * dropped in Stage 2.4.2 (all sizes now kept for the life of the photo) and
+ * migration 011_purge_cleanup_jobs cleared the queued rows.
+ *
+ * This remains only so that any 'cleanup' row still sitting in an old database
+ * drains cleanly instead of failing the job forever. Do not wire it back up
+ * without revisiting the retention decision above.
  */
 function process_cleanup_job(PDO $pdo, array $payload): bool {
     $photoId = (int)($payload['photo_id'] ?? 0);
