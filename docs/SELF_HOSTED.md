@@ -84,7 +84,7 @@ The installer asks for your database details and creates everything automaticall
 5. **Set up cron** for the background image processing job (5-minute intervals)
 6. **Visit** your domain and create your admin account
 
-See **[INSTALL.md](INSTALL.md)** for detailed shared hosting instructions.
+See **[INSTALL.md](../INSTALL.md)** for detailed shared hosting instructions.
 
 ---
 
@@ -164,7 +164,7 @@ A: Yes, but upload/processing will be slower. Docker or a VPS is better.
 A: No. The installer handles everything. You just need to follow the prompts.
 
 **Q: What if I need help?**  
-A: See [INSTALL.md](INSTALL.md) for setup troubleshooting. Check [docs/architecture.md](docs/architecture.md) for technical details.
+A: See [INSTALL.md](../INSTALL.md) for setup troubleshooting. Check [docs/architecture.md](architecture.md) for technical details.
 
 **Q: Can I customize the design?**  
 A: The public gallery design is fixed (minimalist, black and white). You can customize the admin panel.
@@ -192,15 +192,15 @@ No Node, no webpack, no Docker required (though Docker is available).
 
 ## Next Steps
 
-1. **Quick Start:** See [QUICK_START.md](QUICK_START.md) for the fastest path
-2. **Full Docs:** See [INSTALL.md](INSTALL.md) for detailed setup options
-3. **Deployment:** See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for going live
+1. **Quick Start:** See [QUICK-START.md](../QUICK-START.md) for the fastest path
+2. **Full Docs:** See [INSTALL.md](../INSTALL.md) for detailed setup options
+3. **Deployment:** See [docs/DEPLOYMENT.md](DEPLOYMENT.md) for going live
 4. **Troubleshooting:** Run `php verify-setup.php` to diagnose issues
 
 ---
 
 ## License
 
-AGPL-3.0. See [LICENSE](LICENSE) for details.
+AGPL-3.0. See [LICENSE](../LICENSE) for details.
 
 This means: you can run it privately on your own server. If you modify the code and share it with others, you must share your modifications too.

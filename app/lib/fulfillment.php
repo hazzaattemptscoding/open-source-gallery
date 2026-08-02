@@ -62,7 +62,7 @@ function mark_fulfilled(PDO $pdo, int $jobId): bool {
  */
 /**
  * NOTE (found while fixing this function's MySQL-only date syntax, not
- * itself fixed in this pass — flagged in PROGRESS.md): the jobs table
+ * itself fixed in this pass — flagged in docs/archive/PROGRESS.md): the jobs table
  * (migrations/001_initial_schema.sql) has no wol_sent_at, alert_sent_at,
  * or fulfilled_at columns, and its status ENUM is only
  * pending|running|done|failed. This function's WHERE clause and the

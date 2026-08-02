@@ -2,7 +2,7 @@
 /**
  * Covers checkout's rate-limit key (app/controllers/public/checkout.php).
  * It rate-limited on a bare email with no IP component at all — worse than
- * AUDIT.md's original L3 finding (which flagged an "{email}:{ip}" key as
+ * docs/archive/AUDIT.md's original L3 finding (which flagged an "{email}:{ip}" key as
  * inconsistent with other buckets, not missing entirely). An attacker
  * sharing a victim's email in the checkout form from many IPs would share
  * one 5-attempts-per-hour budget with the real customer; conversely one
