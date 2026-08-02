@@ -3189,3 +3189,65 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .entrant-maybe-tile { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MARKETING CONSENT AND UNSUBSCRIBE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* The opt-in sits quietly beside the checkout button. It is optional and must
+   not read as a required step, but the label has to stay fully legible: a
+   consent notice in faint 10px type is not "clear and plain language". */
+.form-consent { margin-top: 1.25rem; }
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.consent-label input[type="checkbox"] {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.consent-label:hover { color: var(--text); }
+
+.unsubscribe-page {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 4rem 1.25rem;
+}
+
+.unsubscribe-page h1 { font-size: var(--text-xl); margin: 0 0 1rem; }
+
+.unsubscribe-form { margin: 2rem 0; }
+
+.unsubscribe-button {
+  padding: 0.9rem 1.75rem;
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out);
+}
+.unsubscribe-button:hover { background: var(--accent-hover); }
+
+.unsubscribe-note {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}

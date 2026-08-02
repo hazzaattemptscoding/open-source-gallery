@@ -68,6 +68,34 @@ function public_checkout_controller(PDO $pdo, array $config): void {
         'total_pence' => $priced['total_pence'],
     ], $ip);
 
+    /*
+     * Record the contact and, if they ticked the box, their marketing consent.
+     *
+     * Consent is only taken from an explicit, affirmative tick. A pre-ticked
+     * box or an "unless you object" default is not consent under UK GDPR, so
+     * the checkbox in the cart view ships unchecked and this reads it strictly:
+     * anything other than a truthy value means no.
+     *
+     * Soft opt-in is deliberately NOT applied here. At this point the customer
+     * has started a checkout, not completed one, so they are not yet an
+     * existing customer in the PECR sense. Whether to apply soft opt-in on
+     * successful payment is a decision for whoever builds the campaign sends,
+     * and it belongs in the webhook that confirms payment, not here.
+     *
+     * Wrapped so that a consent-table problem can never break a checkout. A
+     * failed sale is worse than a missed mailing-list signup.
+     */
+    try {
+        require_once __DIR__ . '/../../lib/consent.php';
+        ensure_contact($pdo, $email);
+
+        if (!empty($input['marketing_consent'])) {
+            record_consent($pdo, $email, CONSENT_BASIS_EXPLICIT, $ip);
+        }
+    } catch (Throwable $e) {
+        error_log('checkout consent capture failed: ' . $e->getMessage());
+    }
+
     // Create Stripe session
     try {
         $baseUrl = $config['site']['base_url'] ?? 'https://example.com';

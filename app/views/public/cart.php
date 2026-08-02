@@ -64,6 +64,21 @@ require __DIR__ . '/partials/layout_header.php';
           aria-describedby="email-helper">
         <span id="email-helper" class="form-helper">Your receipt will be sent to this email</span>
       </div>
+
+      <?php /*
+        Unchecked by default, and it must stay that way. A pre-ticked box is not
+        consent under UK GDPR: consent has to be a positive, affirmative action.
+        The label says what they are agreeing to receive rather than a vague
+        "keep me updated", because consent has to be specific and informed to
+        count. Ticking this is optional and has no effect on the purchase.
+      */ ?>
+      <div class="form-group form-consent">
+        <label class="consent-label" for="marketing-consent">
+          <input type="checkbox" id="marketing-consent" name="marketing_consent" value="1">
+          <span>Email me when new galleries from this photographer go live. You can unsubscribe from any email.</span>
+        </label>
+      </div>
+
       <button type="submit" class="checkout-button" id="checkout-submit">Checkout</button>
       <div id="checkout-error" class="error-message" style="display: none;"></div>
     </form>

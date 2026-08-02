@@ -87,11 +87,17 @@ function attachCheckoutHandler() {
 
     hideFormError(errorDiv);
 
+    // Read the box rather than assuming: consent has to reflect what the
+    // customer actually did. The element is absent on any page that does not
+    // offer the option, so guard before touching .checked.
+    const consentBox = checkoutForm.elements.marketing_consent;
+    const marketingConsent = Boolean(consentBox && consentBox.checked);
+
     try {
       const response = await fetch('/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, marketing_consent: marketingConsent }),
         credentials: 'same-origin',
       });
 

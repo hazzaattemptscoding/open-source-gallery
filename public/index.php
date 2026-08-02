@@ -202,6 +202,16 @@ switch ($path) {
         }
         break;
 
+    case '/unsubscribe':
+        require __DIR__ . '/../app/controllers/public/unsubscribe.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_unsubscribe_submit_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
     case '/entrant/review':
         require __DIR__ . '/../app/controllers/public/entrant.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -432,6 +442,9 @@ switch ($path) {
         } elseif (preg_match('#^/order/([a-z0-9-]+)$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/order_tracking.php';
             public_order_tracking_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/unsubscribe/([0-9a-f]{32})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/unsubscribe.php';
+            public_unsubscribe_page_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/e/([a-z0-9-]+)/find$#', $path, $m)) {
             // Must precede the generic /e/{event}/{session} pattern below,
             // which would otherwise match this and go looking for a session
