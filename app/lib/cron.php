@@ -40,6 +40,28 @@ function run_cron_drain(PDO $pdo, float $budget = 50.0): int {
     $processed = 0;
     $startTime = microtime(true);
 
+    /*
+     * Campaign scans run before the job queue, not as queued jobs.
+     *
+     * They are scans over current state ("which galleries went live recently",
+     * "which checkouts were abandoned") rather than units of work someone
+     * enqueued, so there is nothing to put in the queue in the first place, and
+     * enqueueing them would need a scheduler this app does not have.
+     *
+     * Running first means they cannot be starved by a long backlog of
+     * derivative jobs eating the whole budget. They are cheap: two indexed
+     * queries when the campaigns are switched off, which is the default.
+     *
+     * Wrapped because nothing about marketing email is important enough to stop
+     * derivative generation, which is what customers are actually waiting for.
+     */
+    try {
+        require_once __DIR__ . '/campaigns.php';
+        run_campaign_scans($pdo, $GLOBALS['config'] ?? []);
+    } catch (Throwable $e) {
+        error_log('campaign scans failed: ' . $e->getMessage());
+    }
+
     while ((microtime(true) - $startTime) < $budget) {
         $jobId = claim_next_job($pdo);
         if ($jobId === null) {

@@ -183,6 +183,27 @@ function update_event(PDO $pdo, int $adminId, string $ip, string $siteName, stri
     $stmt = $pdo->prepare('UPDATE events SET slug = ?, title = ?, venue = ?, event_date = ?, is_published = ?, price_single_pence = ?, price_session_pence = ?, price_event_pence = ? WHERE id = ?');
     $stmt->execute([$slug, $title, $venue, $eventDate, $isPublished, $priceSingle, $priceSession, $priceEvent, $eventId]);
 
+    /*
+     * Stamp published_at the first time an event actually goes live.
+     *
+     * Only on the unpublished-to-published transition, and only when it is not
+     * already set. Re-stamping on every save would let an admin fixing a typo
+     * on a month-old gallery make it look freshly published, and the
+     * gallery-live campaign would then announce it a second time to everyone.
+     *
+     * Leaving it in place when an event is unpublished and republished is
+     * deliberate for the same reason: the gallery was already announced, and
+     * toggling the checkbox twice should not send it again.
+     */
+    if ($isPublished === 1 && (int)($current['is_published'] ?? 0) === 0) {
+        try {
+            $pdo->prepare('UPDATE events SET published_at = CURRENT_TIMESTAMP WHERE id = ? AND published_at IS NULL')
+                ->execute([$eventId]);
+        } catch (Throwable $e) {
+            error_log('could not stamp published_at for event ' . $eventId . ': ' . $e->getMessage());
+        }
+    }
+
     cache_invalidate_all();
     audit_log($pdo, 'admin', 'event_updated', 'event', $eventId, ['slug' => $slug], $ip);
 
