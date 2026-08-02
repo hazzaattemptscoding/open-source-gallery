@@ -3,148 +3,14 @@ $pageTitle = 'Audit Log';
 $currentPage = 'audit-log';
 require_once __DIR__ . '/partials/layout_header.php';
 ?>
-<style>
-.filter-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-}
-.filter-form input,
-.filter-form select {
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 0.95rem;
-}
-.filter-form button {
-    padding: 0.75rem 1.5rem;
-    background-color: #1a1a1a;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-}
-.filter-form button:hover {
-    background-color: #333;
-}
-.clear-filter {
-    background-color: #999 !important;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-}
-.clear-filter:hover {
-    background-color: #666 !important;
-}
-.log-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
-.log-table thead {
-    background-color: #f5f5f5;
-    border-bottom: 2px solid var(--border);
-}
-.log-table th {
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-}
-.log-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border);
-}
-.log-table tr:hover {
-    background-color: #f9f9f9;
-}
-.action-badge {
-    display: inline-block;
-    padding: 0.4rem 0.8rem;
-    border-radius: 3px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-.action-login {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-}
-.action-logout {
-    background-color: #f3e5f5;
-    color: #6a1b9a;
-}
-.action-create {
-    background-color: #e3f2fd;
-    color: #1565c0;
-}
-.action-update {
-    background-color: #fff3e0;
-    color: #e65100;
-}
-.action-delete {
-    background-color: #ffebee;
-    color: #c62828;
-}
-.action-export {
-    background-color: #e0f2f1;
-    color: #00695c;
-}
-.action-webhook {
-    background-color: #f1f8e9;
-    color: #558b2f;
-}
-.action-failed {
-    background-color: #fce4ec;
-    color: #ad1457;
-}
-.action-default {
-    background-color: #eeeeee;
-    color: #424242;
-}
-.pagination {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 2rem;
-    justify-content: center;
-}
-.pagination a,
-.pagination span {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    text-decoration: none;
-    color: inherit;
-}
-.pagination a:hover {
-    background-color: #f5f5f5;
-}
-.pagination .current {
-    background-color: #1a1a1a;
-    color: white;
-    border-color: #1a1a1a;
-}
-.stat-bar {
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    font-size: 0.95rem;
-    color: var(--text-muted);
-}
-</style>
-<link rel="stylesheet" href="/api/styles.css">
 <h1>Audit Log</h1>
 
-  <div class="stat-bar">
+  <div class="audit-stat-bar">
     Showing <?= e((($page - 1) * $perPage) + 1) ?> to <?= e(min($page * $perPage, $totalCount)) ?> of <?= e($totalCount) ?> entries
   </div>
 
   <!-- Filters -->
-  <form method="get" class="filter-form">
+  <form method="get" class="audit-filter-form">
     <div>
       <input type="text" name="action" placeholder="Action (e.g., login, photo_upload)" value="<?= e($filters['action']) ?>">
     </div>
@@ -168,7 +34,7 @@ require_once __DIR__ . '/partials/layout_header.php';
       <input type="date" name="dateTo" value="<?= e($filters['dateTo']) ?>" placeholder="To date">
     </div>
 
-    <div style="display: flex; gap: 0.5rem;">
+    <div class="filter-actions">
       <button type="submit">Filter</button>
       <?php if (array_filter($filters)): ?>
         <a href="?page=1" class="clear-filter">Clear</a>
@@ -177,15 +43,15 @@ require_once __DIR__ . '/partials/layout_header.php';
   </form>
 
   <!-- Table -->
-  <div style="overflow-x: auto;">
+  <div class="table-scroll">
     <table class="log-table">
       <thead>
         <tr>
-          <th style="width: 15%;">When</th>
-          <th style="width: 15%;">Action</th>
-          <th style="width: 15%;">Admin</th>
-          <th style="width: 25%;">Details</th>
-          <th style="width: 15%;">IP Address</th>
+          <th class="log-col-when">When</th>
+          <th class="log-col-action">Action</th>
+          <th class="log-col-admin">Admin</th>
+          <th class="log-col-details">Details</th>
+          <th class="log-col-ip">IP Address</th>
         </tr>
       </thead>
       <tbody>
@@ -205,16 +71,16 @@ require_once __DIR__ . '/partials/layout_header.php';
               <?php if ($log['admin_email']): ?>
                 <?= e($log['admin_email']) ?>
               <?php else: ?>
-                <span style="color: var(--text-muted);">(system)</span>
+                <span class="log-cell-muted">(system)</span>
               <?php endif; ?>
             </td>
-            <td style="color: var(--text-muted); font-size: 0.85rem;">
+            <td class="log-details-cell">
               <?= e(substr($log['details'] ?? '', 0, 80)) ?>
               <?php if (strlen($log['details'] ?? '') > 80): ?>
                 ...
               <?php endif; ?>
             </td>
-            <td style="font-family: monospace; font-size: 0.85rem; color: var(--text-muted);">
+            <td class="log-ip-cell">
               <?= e($log['ip_address'] ?? '—') ?>
             </td>
           </tr>
@@ -224,7 +90,7 @@ require_once __DIR__ . '/partials/layout_header.php';
   </div>
 
   <?php if (empty($logs)): ?>
-    <p style="text-align: center; padding: 2rem; color: var(--text-muted);">
+    <p class="log-empty">
       No audit log entries found matching your filters.
     </p>
   <?php endif; ?>
@@ -263,8 +129,8 @@ require_once __DIR__ . '/partials/layout_header.php';
     </div>
   <?php endif; ?>
 
-  <div style="margin-top: 3rem; padding: 1.5rem; background-color: #f9f9f9; border-radius: 4px;">
-    <h3 style="margin-top: 0;">About Audit Logs</h3>
+  <div class="audit-about">
+    <h3>About Audit Logs</h3>
     <p>
       All mutations, logins, exports, and webhooks are logged here. This is your security and compliance record.
       Keep these logs for regulatory purposes and investigate any unusual activity.
