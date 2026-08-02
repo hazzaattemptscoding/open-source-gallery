@@ -96,7 +96,6 @@ function generate_derivative_gd(string $inputPath, string $outputPath, int $size
     $smallestDim = min($width, $height);
     $longestDim = max($width, $height);
     if ($smallestDim < 100) {
-        imagedestroy($image);
         throw new RuntimeException("Image too small: {$smallestDim}px");
     }
 
@@ -106,17 +105,12 @@ function generate_derivative_gd(string $inputPath, string $outputPath, int $size
 
     $thumb = imagecreatetruecolor($thumbWidth, $thumbHeight);
     if (!$thumb) {
-        imagedestroy($image);
         throw new RuntimeException("Failed to create thumbnail");
     }
 
     if (!imagecopyresampled($thumb, $image, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $width, $height)) {
-        imagedestroy($image);
-        imagedestroy($thumb);
         throw new RuntimeException("Failed to resample image");
     }
-
-    imagedestroy($image);
 
     if ($addWatermark) {
         apply_watermark_gd($thumb, $watermarkSettings);
@@ -125,11 +119,8 @@ function generate_derivative_gd(string $inputPath, string $outputPath, int $size
     imageinterlace($thumb, true); // progressive JPEG, no external binary needed
 
     if (!imagejpeg($thumb, $outputPath, 85)) {
-        imagedestroy($thumb);
         throw new RuntimeException("Failed to save JPEG");
     }
-
-    imagedestroy($thumb);
 }
 
 function apply_watermark_gd(GdImage $image, array $settings): void {

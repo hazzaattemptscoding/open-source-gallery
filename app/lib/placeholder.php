@@ -127,7 +127,6 @@ function write_placeholder_jpeg(string $path, int $width, int $height, string $s
 
     $img = render_placeholder_image($width, $height, $seed, $label);
     $ok = imagejpeg($img, $path, 82);
-    imagedestroy($img);
 
     if (!$ok) {
         error_log("placeholder: imagejpeg failed for {$path}");
@@ -159,5 +158,4 @@ function serve_placeholder_jpeg(int $width, int $height, string $seed): void
     header('Content-Type: image/jpeg');
     header('Cache-Control: no-store, max-age=0');
     imagejpeg($img, null, 78);
-    imagedestroy($img);
 }
