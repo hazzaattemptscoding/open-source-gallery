@@ -17,6 +17,7 @@ $metaDescription = 'Photos of kart #' . ($entrant['number'] ?? '') . ' in '
     . ($entrant['class_name'] ?? '') . ' at ' . ($entrant['event_title'] ?? '') . '.';
 $metaUrl = site_base_url($GLOBALS['config']) . '/e/' . rawurlencode($entrant['event_slug'])
     . '/d/' . rawurlencode($entrant['share_token']);
+$showCart = true; // photo grid with add-to-cart, so the badge and tray belong here
 $pageScripts = '<script src="/assets/js/entrant.js" defer></script>';
 require __DIR__ . '/partials/layout_header.php';
 ?>

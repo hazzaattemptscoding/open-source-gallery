@@ -167,6 +167,11 @@ switch ($path) {
         }
         break;
 
+    case '/cart/summary':
+        require __DIR__ . '/../app/controllers/public/cart.php';
+        public_cart_summary_controller($pdo, $config);
+        break;
+
     case '/cart/remove':
         require __DIR__ . '/../app/controllers/public/cart.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

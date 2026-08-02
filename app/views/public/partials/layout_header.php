@@ -54,6 +54,26 @@ if (isset($event)) {
 <header class="site-header">
   <a href="/" class="site-title"><?= e($siteName) ?></a>
   <?php if (isset($showCart) && $showCart): ?>
-  <a href="/cart" class="cart-badge" id="cartBadge">Cart (<span id="cartCount">0</span>)</a>
+  <?php
+  /*
+   * The count is rendered server-side from the cart cookie, not left at 0 for
+   * JavaScript to correct.
+   *
+   * It used to be hardcoded to 0, and only ever updated by the add-to-cart
+   * handler. The cart itself survived navigation perfectly well (it is a signed
+   * cookie), but the badge reset to "Cart (0)" on every page load, so selecting
+   * three photos and paging to the next screen looked exactly like losing them.
+   * That is the "selection is lost on scroll" complaint: the state was fine and
+   * the display was lying about it.
+   *
+   * cart_get() only parses and verifies the cookie, so this costs no database
+   * work. The priced total is deliberately not computed here: cart_price()
+   * issues one query per item, and a 60-photo cart would add 60 queries to
+   * every gallery page load. The tray fetches that once, asynchronously.
+   */
+  require_once __DIR__ . '/../../../lib/cart.php';
+  $headerCartCount = count(cart_get($GLOBALS['config']));
+  ?>
+  <a href="/cart" class="cart-badge" id="cartBadge">Cart (<span id="cartCount"><?= (int)$headerCartCount ?></span>)</a>
   <?php endif; ?>
 </header>
