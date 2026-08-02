@@ -76,12 +76,12 @@ require_once __DIR__ . '/../admin/partials/minimal_header.php';
                 <div class="step">
                     <h3><span class="step-number">2</span>Check database credentials</h3>
                     <p>In config/config.php, verify:</p>
-                    <ul style="margin-left: 20px; color: #787774;">
-                        <li><code style="background: #F7F6F3; padding: 2px 4px;">host</code> — IP address or hostname</li>
-                        <li><code style="background: #F7F6F3; padding: 2px 4px;">port</code> — Usually 3306</li>
-                        <li><code style="background: #F7F6F3; padding: 2px 4px;">name</code> — Database name (e.g., photo_gallery)</li>
-                        <li><code style="background: #F7F6F3; padding: 2px 4px;">user</code> — Database user</li>
-                        <li><code style="background: #F7F6F3; padding: 2px 4px;">pass</code> — Database password</li>
+                    <ul style="margin-left: 20px; color: var(--text-muted);">
+                        <li><code style="background: var(--bg-alt); padding: 2px 4px;">host</code> — IP address or hostname</li>
+                        <li><code style="background: var(--bg-alt); padding: 2px 4px;">port</code> — Usually 3306</li>
+                        <li><code style="background: var(--bg-alt); padding: 2px 4px;">name</code> — Database name (e.g., photo_gallery)</li>
+                        <li><code style="background: var(--bg-alt); padding: 2px 4px;">user</code> — Database user</li>
+                        <li><code style="background: var(--bg-alt); padding: 2px 4px;">pass</code> — Database password</li>
                     </ul>
                 </div>
 
@@ -89,7 +89,7 @@ require_once __DIR__ . '/../admin/partials/minimal_header.php';
                     <h3><span class="step-number">3</span>Test the connection</h3>
                     <p>Try connecting manually:</p>
                     <div class="code-block">mysql -h localhost -u gallery -p photo_gallery</div>
-                    <p style="margin-top: 12px; color: #787774;">If this fails, your database settings need adjustment.</p>
+                    <p style="margin-top: 12px; color: var(--text-muted);">If this fails, your database settings need adjustment.</p>
                 </div>
 
                 <div class="step">
@@ -109,31 +109,31 @@ require_once __DIR__ . '/../admin/partials/minimal_header.php';
 
         <div class="section">
             <h2 style="margin-bottom: 16px;">Quick Reference</h2>
-            <p style="margin-bottom: 16px; color: #787774;">
+            <p style="margin-bottom: 16px; color: var(--text-muted);">
                 The most common setup paths:
             </p>
 
             <div style="display: grid; gap: 16px;">
-                <div style="border: 1px solid #EAEAEA; border-radius: 8px; padding: 20px;">
+                <div style="border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
                     <h3 style="font-size: 14px; margin-bottom: 12px;">Docker (Fastest)</h3>
                     <div class="code-block" style="margin: 0;">docker-compose up</div>
-                    <p style="margin-top: 12px; font-size: 13px; color: #787774;">
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">
                         Includes database, automatically configured
                     </p>
                 </div>
 
-                <div style="border: 1px solid #EAEAEA; border-radius: 8px; padding: 20px;">
+                <div style="border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
                     <h3 style="font-size: 14px; margin-bottom: 12px;">Interactive Installer</h3>
                     <div class="code-block" style="margin: 0;">php install.php</div>
-                    <p style="margin-top: 12px; font-size: 13px; color: #787774;">
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">
                         Works on any environment, asks for database details
                     </p>
                 </div>
 
-                <div style="border: 1px solid #EAEAEA; border-radius: 8px; padding: 20px;">
+                <div style="border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
                     <h3 style="font-size: 14px; margin-bottom: 12px;">Verify Your Setup</h3>
                     <div class="code-block" style="margin: 0;">php verify-setup.php</div>
-                    <p style="margin-top: 12px; font-size: 13px; color: #787774;">
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">
                         Check environment, permissions, database readiness
                     </p>
                 </div>
@@ -142,7 +142,7 @@ require_once __DIR__ . '/../admin/partials/minimal_header.php';
 
         <hr class="divider">
 
-        <div style="color: #787774; font-size: 13px;">
+        <div style="color: var(--text-muted); font-size: 13px;">
             <p>
                 PowerMedia Gallery is an open-source, self-hosted photo gallery for sports photographers.
                 <br/>
