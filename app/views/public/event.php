@@ -45,6 +45,34 @@ require __DIR__ . '/partials/layout_header.php';
   </div>
 </section>
 
+<?php /*
+  Find-me is the primary path, so it sits above the gallery link rather than
+  inside the filter bar below. Most visitors did not come to browse a few
+  thousand photos; they came to find one driver. The kart/class dropdowns
+  further down still work for browsing, but they cannot express the composite
+  identity (#7 exists in more than one class), which is why this is a separate
+  entry point into /find rather than a relabelled filter.
+*/ ?>
+<section class="find-cta">
+  <form class="find-cta-form" method="get" action="/e/<?= e($event['slug']) ?>/find">
+    <label class="find-cta-label" for="findNumber">Find your photos</label>
+    <div class="find-cta-row">
+      <input
+        type="text"
+        id="findNumber"
+        name="number"
+        class="find-cta-input"
+        inputmode="numeric"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="Your kart number">
+      <button type="submit" class="find-cta-submit">Find</button>
+    </div>
+    <p class="find-cta-hint">No account needed. Enter your number to see just your photos.</p>
+  </form>
+</section>
+
 <!-- Hero CTA block -->
 <section class="hero-cta-block">
   <a href="#photos" class="button hero-cta-primary">View Gallery</a>

@@ -202,6 +202,16 @@ switch ($path) {
         }
         break;
 
+    case '/entrant/review':
+        require __DIR__ . '/../app/controllers/public/entrant.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_entrant_review_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
     case '/api/photos':
         require __DIR__ . '/../app/controllers/public/api_photos.php';
         public_api_photos_controller($pdo, $config);
@@ -422,6 +432,18 @@ switch ($path) {
         } elseif (preg_match('#^/order/([a-z0-9-]+)$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/order_tracking.php';
             public_order_tracking_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/e/([a-z0-9-]+)/find$#', $path, $m)) {
+            // Must precede the generic /e/{event}/{session} pattern below,
+            // which would otherwise match this and go looking for a session
+            // whose slug is literally "find".
+            require __DIR__ . '/../app/controllers/public/entrant.php';
+            public_entrant_find_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/e/([a-z0-9-]+)/d/([0-9a-f]{16})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/entrant.php';
+            public_entrant_page_controller($pdo, $config, $m[1], $m[2]);
+        } elseif (preg_match('#^/driver/([0-9a-f]{16})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/entrant.php';
+            public_driver_season_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);
