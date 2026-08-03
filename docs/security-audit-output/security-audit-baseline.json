@@ -1,19 +1,573 @@
 {
+  "schema_version": 2,
   "skill_version": "2.5.0",
-  "created_at": "2026-07-30T14:13:20Z",
-  "git_head": "ada7753246c68943ad499ca16e250bb2a8a2b326",
-  "ignored": [
-    ".claude/",
-    "vendor/",
-    "node_modules/",
-    ".git/"
+  "audit_id": "osg-2026-08-03-focused",
+  "git_head": "434771b1caa49666f847545118c6ae0a71b5f66b",
+  "git_branch": "claude/planning-context-handoff-vh17vl",
+  "created_at": "2026-08-03T22:05:38Z",
+  "mode": "focused",
+  "scope_warning": "This baseline was produced by a FOCUSED run over the code added in one session, not a full-repository audit. A delta run against it inherits that scope. Run mode: full before treating an empty delta as a clean repository.",
+  "partition_manifest": [
+    {
+      "id": "P1",
+      "name": "advance-credit",
+      "risk": "CRITICAL",
+      "depth": "full"
+    },
+    {
+      "id": "P2",
+      "name": "checkout",
+      "risk": "CRITICAL",
+      "depth": "full"
+    },
+    {
+      "id": "P3",
+      "name": "remote-fetch",
+      "risk": "HIGH",
+      "depth": "full"
+    },
+    {
+      "id": "P4",
+      "name": "webhook",
+      "risk": "HIGH",
+      "depth": "full"
+    },
+    {
+      "id": "P5",
+      "name": "entrant-discovery",
+      "risk": "HIGH",
+      "depth": "full"
+    },
+    {
+      "id": "P6",
+      "name": "consent",
+      "risk": "MEDIUM",
+      "depth": "full"
+    },
+    {
+      "id": "P7",
+      "name": "detections",
+      "risk": "MEDIUM",
+      "depth": "full"
+    },
+    {
+      "id": "P8",
+      "name": "share-image",
+      "risk": "MEDIUM",
+      "depth": "full"
+    }
   ],
-  "findings_count": {
-    "critical": 0,
-    "high": 0,
-    "medium": 1,
-    "low": 2,
-    "info": 2,
-    "fixed": 3
-  }
+  "surface": [
+    {
+      "route": "POST /credit/buy",
+      "method": null,
+      "auth": "none"
+    },
+    {
+      "route": "POST /credit/check",
+      "method": null,
+      "auth": "none"
+    },
+    {
+      "route": "GET /credit/success/{code}",
+      "method": null,
+      "auth": "bearer code in URL"
+    },
+    {
+      "route": "POST /checkout",
+      "method": null,
+      "auth": "none"
+    },
+    {
+      "route": "POST /webhook/stripe",
+      "method": null,
+      "auth": "Stripe HMAC signature"
+    },
+    {
+      "route": "POST /entrant/review",
+      "method": null,
+      "auth": "bearer share_token"
+    },
+    {
+      "route": "GET /e/{slug}/d/{token}",
+      "method": null,
+      "auth": "bearer share_token"
+    },
+    {
+      "route": "GET /driver/{token}",
+      "method": null,
+      "auth": "bearer share_token"
+    },
+    {
+      "route": "POST /unsubscribe",
+      "method": null,
+      "auth": "bearer unsubscribe_token"
+    },
+    {
+      "route": "GET /media/share/{token}.jpg",
+      "method": null,
+      "auth": "none"
+    },
+    {
+      "route": "GET /cart/summary",
+      "method": null,
+      "auth": "cookie cart"
+    },
+    {
+      "route": "POST /admin/detections",
+      "method": null,
+      "auth": "admin session"
+    },
+    {
+      "route": "POST /admin/review",
+      "method": null,
+      "auth": "admin session"
+    },
+    {
+      "route": "POST /admin/events/{id}/entries",
+      "method": null,
+      "auth": "admin session"
+    }
+  ],
+  "keystone_files": [
+    {
+      "path": "public/index.php"
+    },
+    {
+      "path": "app/lib/credit.php"
+    },
+    {
+      "path": "app/lib/remote_fetch.php"
+    },
+    {
+      "path": "app/lib/entrants.php"
+    },
+    {
+      "path": "app/lib/consent.php"
+    },
+    {
+      "path": "config/config.php"
+    }
+  ],
+  "findings_carryover": [
+    {
+      "fingerprint": "66041c955147",
+      "id": "OSG-2026-003",
+      "title": "Credit currency is recorded at purchase but never checked at redemption",
+      "severity": "HIGH",
+      "severity_asserted": "HIGH",
+      "severity_computed": "HIGH",
+      "severity_rubric_initial": "MEDIUM",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "auth",
+      "cwe": "CWE-841",
+      "file": "app/lib/credit.php",
+      "line": 150,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "e98be183b34d",
+      "id": "OSG-2026-005",
+      "title": "Credit code travels in the URL path on the success page",
+      "severity": "MEDIUM",
+      "severity_asserted": "MEDIUM",
+      "severity_computed": "MEDIUM",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "token_scope",
+      "cwe": "CWE-598",
+      "file": "public/index.php",
+      "line": 481,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "b9c1d787b728",
+      "id": "OSG-2026-001",
+      "title": "SSRF guard defeated by DNS rebinding: validated address is not pinned for the connection",
+      "severity": "CRITICAL",
+      "severity_asserted": "CRITICAL",
+      "severity_computed": "CRITICAL",
+      "severity_rubric_initial": "HIGH",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "injection",
+      "cwe": "CWE-918",
+      "file": "app/lib/remote_fetch.php",
+      "line": 113,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "7854f8d9ff7c",
+      "id": "OSG-2026-002",
+      "title": "Truncated remote response is imported as a complete file",
+      "severity": "HIGH",
+      "severity_asserted": "HIGH",
+      "severity_computed": "HIGH",
+      "severity_rubric_initial": "MEDIUM",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "injection",
+      "cwe": "CWE-20",
+      "file": "app/lib/remote_fetch.php",
+      "line": 176,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "87e926102d3d",
+      "id": "OSG-2026-004",
+      "title": "Uploaded sidecar is read fully into memory before its size is checked",
+      "severity": "MEDIUM",
+      "severity_asserted": "MEDIUM",
+      "severity_computed": "MEDIUM",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "injection",
+      "cwe": "CWE-400",
+      "file": "app/controllers/admin/detections.php",
+      "line": 88,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "5a589cca6abb",
+      "id": "OSG-2026-006",
+      "title": "Share card labels a multi-driver photo with an arbitrary entrant",
+      "severity": "MEDIUM",
+      "severity_asserted": "MEDIUM",
+      "severity_computed": "MEDIUM",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "collection_scope",
+      "cwe": "CWE-1076",
+      "file": "app/lib/share_image.php",
+      "line": 246,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "cd6a30697720",
+      "id": "OSG-2026-007",
+      "title": "Cookie Secure flag depends on direct HTTPS detection",
+      "severity": "MEDIUM",
+      "severity_asserted": "MEDIUM",
+      "severity_computed": "MEDIUM",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "crypto",
+      "cwe": "CWE-614",
+      "file": "app/lib/cart.php",
+      "line": 74,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "aafebdfe5eec",
+      "id": "OSG-2026-008",
+      "title": "fetch_credit_redemptions() is unreachable dead code in the money module",
+      "severity": "MEDIUM",
+      "severity_asserted": "MEDIUM",
+      "severity_computed": "MEDIUM",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "supply_chain",
+      "cwe": "CWE-561",
+      "file": "app/lib/credit.php",
+      "line": 453,
+      "first_seen_at": "2026-08-03T22:05:38Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "affa5fb33678",
+      "id": "SEC-01",
+      "title": "api_get_photos()/api_get_photo() did not check events.is_published; fixed in commit ada7753.",
+      "severity": "HIGH",
+      "severity_asserted": "HIGH",
+      "severity_computed": "HIGH",
+      "severity_rubric_initial": "HIGH",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "auth",
+      "cwe": "CWE-862",
+      "file": "app/lib/api.php",
+      "line": 89,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "fixed",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": "ada7753246c68943ad499ca16e250bb2a8a2b326",
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "fbcdc4ea7c7c",
+      "id": "SEC-02",
+      "title": "CSRF verify() result discarded or check missing across 9 admin controllers; fixed in commit ada7753.",
+      "severity": "HIGH",
+      "severity_asserted": "HIGH",
+      "severity_computed": "HIGH",
+      "severity_rubric_initial": "HIGH",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "auth",
+      "cwe": "CWE-352",
+      "file": "app/controllers/admin/events.php",
+      "line": 0,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "fixed",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": "ada7753246c68943ad499ca16e250bb2a8a2b326",
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "c7247047bad2",
+      "id": "SEC-03",
+      "title": "api_get_photo() selected nonexistent p.description column, silently failing closed on every call; fixed in commit ada7753.",
+      "severity": "INFO",
+      "severity_asserted": "INFO",
+      "severity_computed": "INFO",
+      "severity_rubric_initial": "INFO",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "config",
+      "cwe": "CWE-20",
+      "file": "app/lib/api.php",
+      "line": 108,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "fixed",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": "ada7753246c68943ad499ca16e250bb2a8a2b326",
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "31995999aa55",
+      "id": "SEC-04",
+      "title": "check_rate_limit() has a TOCTOU race allowing concurrent requests to exceed the configured cap.",
+      "severity": "MEDIUM",
+      "severity_asserted": "MEDIUM",
+      "severity_computed": "MEDIUM",
+      "severity_rubric_initial": "MEDIUM",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "auth",
+      "cwe": "CWE-367",
+      "file": "app/lib/rate_limit.php",
+      "line": 16,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "333171527af2",
+      "id": "SEC-05",
+      "title": "mark_order_paid() can queue duplicate receipt/zip jobs on overlapping webhook delivery.",
+      "severity": "LOW",
+      "severity_asserted": "LOW",
+      "severity_computed": "LOW",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "config",
+      "cwe": "CWE-362",
+      "file": "app/lib/orders.php",
+      "line": 110,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "355c90d660fd",
+      "id": "SEC-06",
+      "title": "TOTP secret stored in plaintext at rest; inherent to TOTP, not a defect.",
+      "severity": "INFO",
+      "severity_asserted": "INFO",
+      "severity_computed": "INFO",
+      "severity_rubric_initial": "INFO",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "crypto",
+      "cwe": "CWE-312",
+      "file": "app/lib/auth.php",
+      "line": 44,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "accepted",
+        "owner": null,
+        "expiry": null,
+        "rationale": "TOTP secrets are necessarily recoverable at rest; this is inherent to TOTP, not a defect.",
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "22223b1a3e29",
+      "id": "SEC-07",
+      "title": "Outbound Stripe calls rely on curl TLS-verification defaults instead of explicit flags.",
+      "severity": "INFO",
+      "severity_asserted": "INFO",
+      "severity_computed": "INFO",
+      "severity_rubric_initial": "INFO",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "mitm",
+      "cwe": "CWE-295",
+      "file": "app/lib/stripe.php",
+      "line": 89,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    },
+    {
+      "fingerprint": "204a832ca7c4",
+      "id": "SEC-08",
+      "title": "composer.lock gitignored with no pin for suggest-only optional dependencies.",
+      "severity": "LOW",
+      "severity_asserted": "LOW",
+      "severity_computed": "LOW",
+      "severity_rubric_initial": "LOW",
+      "severity_history": [],
+      "confidence": "CONFIRMED",
+      "category": "supply_chain",
+      "cwe": "CWE-1104",
+      "file": "composer.json",
+      "line": 0,
+      "first_seen_at": "2026-07-30T14:13:20Z",
+      "lifecycle": {
+        "state": "open",
+        "owner": null,
+        "expiry": null,
+        "rationale": null,
+        "fix_commit": null,
+        "verified_by_test": null
+      }
+    }
+  ],
+  "methodology_coverage": {
+    "asvs_pct": null,
+    "asvs_note": "Focused scope: V3, V5 and V12 exercised directly; other chapters not re-audited this run",
+    "web_top10_2025_fired": [
+      "A01",
+      "A03",
+      "A05"
+    ],
+    "api_top10_counts": {},
+    "llm_top10_counts": {},
+    "cwe_unique": 8,
+    "cwe_top25_2025_hits": 2,
+    "cwe_top25_2025_top_rank": 18,
+    "egress_sinks_reconciled": 6,
+    "egress_coverage_gate": "PASS",
+    "collections_inventoried": 6,
+    "collections_coverage_gate": "PASS",
+    "collections_raw_flags": 13,
+    "collections_retired": 13,
+    "collections_upheld": 0
+  },
+  "degraded": {
+    "scanners_available": [],
+    "scanners_missing": [
+      "semgrep",
+      "osv-scanner",
+      "gitleaks",
+      "trufflehog",
+      "trivy",
+      "hadolint"
+    ],
+    "consequence": "Phase 4 produces no scanner SARIF; all findings are from manual review only"
+  },
+  "ignored": [],
+  "carried_forward_note": "8 findings from the 2026-07-30 full run are carried forward unchanged. This focused run did not re-audit their files; their absence from a focused run is not evidence they were fixed."
 }

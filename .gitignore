@@ -27,3 +27,6 @@ composer.lock
 
 # Generated share cards, rebuilt on demand like derivatives
 public/media/share/
+
+# Python bytecode from the security-audit skill helpers
+__pycache__/

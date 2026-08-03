@@ -3,16 +3,61 @@
   "specVersion": "1.5",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-07-30T14:13:20Z",
-    "tools": [{"vendor": "velimattiv", "name": "claude-security-audit", "version": "2.5.0"}],
-    "component": {"type": "application", "name": "open-source-gallery", "version": "unreleased"}
+    "timestamp": "2026-08-03T22:03:08Z",
+    "tools": [
+      {
+        "name": "security-audit-skill",
+        "version": "2.5.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "open-source-gallery",
+      "description": "Self-hosted client photo gallery and sales platform (PHP 8.2+, MySQL/SQLite, vanilla JS)"
+    },
+    "properties": [
+      {
+        "name": "sbom:completeness",
+        "value": "INCOMPLETE - no trivy or syft available in this environment. Component list below is hand-derived from Phase 0 and covers runtime dependencies only."
+      }
+    ]
   },
   "components": [
-    {"type": "library", "name": "php", "version": ">=8.2", "scope": "required"},
-    {"type": "library", "name": "phpunit/phpunit", "version": "^11.0", "scope": "excluded", "description": "dev-only, never ships to production"},
-    {"type": "library", "name": "phpseclib/phpseclib", "scope": "optional", "description": "suggest-only, loaded via class_exists() gate, only used when admin_mode=remote"},
-    {"type": "library", "name": "phpmailer/phpmailer", "scope": "optional", "description": "suggest-only, loaded via class_exists() gate, only used when SMTP is configured (added this session alongside app/lib/mailer.php)"}
+    {
+      "type": "platform",
+      "name": "php",
+      "version": ">=8.2",
+      "description": "Runtime. Extensions required: pdo, pdo_mysql or pdo_sqlite, gd, curl, mbstring, json"
+    },
+    {
+      "type": "platform",
+      "name": "mysql",
+      "version": ">=5.7",
+      "description": "Production datastore"
+    },
+    {
+      "type": "platform",
+      "name": "sqlite",
+      "version": "3",
+      "description": "Development datastore"
+    },
+    {
+      "type": "platform",
+      "name": "apache-httpd",
+      "version": "2.4",
+      "description": "With mod_rewrite"
+    },
+    {
+      "type": "library",
+      "name": "stripe-checkout",
+      "version": "hosted",
+      "description": "Payments. Hosted Checkout plus js.stripe.com on the client. No server-side SDK vendored: the integration is direct HTTPS to api.stripe.com."
+    }
   ],
-  "vulnerabilities": [],
-  "properties_note": "No SCA scanner available in this environment (osv-scanner absent, degraded mode per phase-04). This SBOM reflects composer.json's declared dependency surface only, not a vulnerability database match."
+  "properties": [
+    {
+      "name": "third-party-php-packages",
+      "value": "none - the application vendors no Composer runtime dependencies. PHPUnit is a dev-only requirement."
+    }
+  ]
 }
