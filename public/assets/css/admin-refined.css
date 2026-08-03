@@ -2717,3 +2717,43 @@ button.admin-logout-button:hover:not(:disabled) {
     text-align: center;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   17. DETECTION REVIEW QUEUE
+   ═══════════════════════════════════════════════════════════════
+   Grouped by driver, because a group is usually right or wrong as a whole and
+   that is what makes a bulk decision safe. Thumbnails are small on purpose:
+   the question is "is this the right kart number", which is answerable at a
+   glance, and a full-size grid would make a dozen groups unscrollable. */
+
+.review-group { margin-bottom: var(--stack); }
+.review-driver { font-weight: 400; color: var(--text-muted); margin-left: var(--space-2); }
+.review-count { color: var(--text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); }
+
+.review-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.review-thumb { margin: 0; }
+.review-thumb img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+
+.review-thumb figcaption {
+  display: flex; justify-content: space-between; gap: var(--space-2);
+  padding-top: var(--space-1);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.review-source { text-transform: uppercase; letter-spacing: 0.04em; }
+
+.review-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .review-thumbs { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  .review-actions { flex-direction: column; }
+  .review-actions .form-inline, .review-actions button { width: 100%; }
+}

@@ -362,6 +362,12 @@ switch ($path) {
         admin_emails_controller($pdo, $config);
         break;
 
+    case '/admin/detections':
+    case '/admin/review':
+        require __DIR__ . '/../app/controllers/admin/detections.php';
+        admin_detections_controller($pdo, $config);
+        break;
+
     case '/admin/bulk':
         require __DIR__ . '/../app/controllers/admin/bulk.php';
         admin_bulk_controller($pdo, $config);

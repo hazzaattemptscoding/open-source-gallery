@@ -239,10 +239,55 @@ function import_event_entries(PDO $pdo, int $adminId, string $ip, int $eventId):
         $csv = (string)file_get_contents($_FILES['entries_file']['tmp_name']);
     } elseif (trim((string)($_POST['entries_csv'] ?? '')) !== '') {
         $csv = (string)$_POST['entries_csv'];
+    } elseif (trim((string)($_POST['entries_url'] ?? '')) !== '') {
+        /*
+         * Import straight from a published URL, so an organiser's entry list
+         * can be pulled in without downloading and re-uploading it.
+         *
+         * Everything about safety lives in remote_fetch(): this is a
+         * server-side request to an address the admin typed, which is the
+         * shape of an SSRF hole. See app/lib/remote_fetch.php for why each
+         * guard is there, in particular that redirects are followed manually
+         * and re-validated, since curl's own following would check only the
+         * first URL.
+         */
+        require_once __DIR__ . '/../../lib/remote_fetch.php';
+
+        $fetched = remote_fetch(trim((string)$_POST['entries_url']));
+
+        if (!$fetched['ok']) {
+            audit_log($pdo, 'admin', 'event_entries_url_refused', 'event', $eventId, [
+                'url' => substr((string)$_POST['entries_url'], 0, 200),
+                'reason' => $fetched['error'],
+            ], $ip);
+            header("Location: /admin/events/{$eventId}?entries_error=" . urlencode($fetched['error']));
+            exit;
+        }
+
+        $csv = $fetched['body'];
+
+        /*
+         * Only CSV-shaped documents are accepted. An HTML page fetched from a
+         * timing site would be parsed as CSV and produce a screenful of
+         * nonsense rows, so this fails with an explanation instead. Parsing
+         * arbitrary HTML entry lists needs a parser written against the real
+         * markup of each provider, which is a separate piece of work.
+         */
+        if (stripos($fetched['content_type'], 'html') !== false || stripos(ltrim($csv), '<!doctype') === 0 || stripos(ltrim($csv), '<html') === 0) {
+            header("Location: /admin/events/{$eventId}?entries_error=" . urlencode(
+                'That URL returned a web page, not a CSV file. Use a direct link to a .csv export.'
+            ));
+            exit;
+        }
+
+        audit_log($pdo, 'admin', 'event_entries_url_fetched', 'event', $eventId, [
+            'url' => $fetched['final_url'],
+            'bytes' => strlen($csv),
+        ], $ip);
     }
 
     if (trim($csv) === '') {
-        header("Location: /admin/events/{$eventId}?entries_error=" . urlencode('Paste some rows or choose a CSV file.'));
+        header("Location: /admin/events/{$eventId}?entries_error=" . urlencode('Paste some rows, choose a CSV file, or give a CSV URL.'));
         exit;
     }
 
