@@ -8,6 +8,9 @@ A self-hosted photo gallery and sales platform for sports photographers. Plain P
 
 ### For Photographers
 
+- **Entry-list import**: pull number, driver, team and class for a whole event from a pasted CSV, an uploaded file, or a CSV URL, before a single photo is uploaded
+- **Detection ingest**: import kart-number detections from your own off-site pipeline as a JSON sidecar. This application never runs inference
+- **Review queue**: uncertain detections grouped by driver with bulk confirm, so a 3,000-photo weekend is exception-checking rather than tagging
 - **Simple upload workflow**: chunked, resumable uploads for large files
 - **Bulk tagging**: tag photos by kart number and class, in batches, from one screen
 - **Watermarking**: configurable watermark on preview sizes, never on purchased originals
@@ -17,10 +20,16 @@ A self-hosted photo gallery and sales platform for sports photographers. Plain P
 
 ### For Customers
 
+- **Find your photos by kart number**: one search box, a class picker when a number belongs to more than one driver, and a personal page of just your photos
+- **A shareable link**: the personal page URL is durable and safe to post in a group chat, and there is a season link that accumulates across events
 - **No accounts required**: guest checkout via Stripe
 - **Shopping cart**: lightweight, signed cookie-based, prices always read from the database
+- **Selection tray**: what you have picked stays visible and survives scrolling, filtering and navigation
 - **Favourites**: shortlist photos before deciding, no account needed
+- **Bundles**: buy a whole session or a whole event, with the per-photo price worked out for you
 - **Volume discounts**: automatic discounts on larger photo sets, configurable
+- **Advance credit**: buy credit on race day and spend it when the gallery opens
+- **A free image to share**: a branded, social-sized card for any photo, given away. The clean file is the thing that is sold
 - **Instant delivery**: download clean, unwatermarked originals immediately after purchase
 - **Download links**: time-limited, per-customer limits, cryptographically signed, audit-logged
 - **Email receipts**: order confirmation with download link sent automatically
@@ -105,14 +114,45 @@ See [docs/architecture.md](docs/architecture.md) for:
 
 ## Build Stages
 
+**Foundations**
+
 1. **Architecture and schema**: done. Database design, migrations, security requirements
 2. **Admin auth, CRUD, upload, tagging, derivatives**: done. Login, TOTP 2FA, photo management, bulk tagging, image processing
 3. **Public gallery**: done. Hero layout, photo grid, favourites, separate video section, search and filtering
 4. **Cart, Stripe, delivery**: done. Cart, volume discounts, Stripe Checkout, webhook handling, clean-file delivery
 5. **Stats and hardening**: done. Revenue dashboard, order history, rate limiting, audit logging, security headers
-6. **Open source release prep**: in progress. Config-driven branding, commenting standard, LICENSE, TRADEMARK, install guide tested end to end
 
-**What is being built now:** driver discovery. Today a visitor filters by kart number and class using two separate dropdowns, which cannot tell #7 in Cadet from #7 in Senior X30. The work in progress replaces that with a find-me flow keyed on the real composite identity of a driver, returning a shareable personal page. That is the feature this project exists for, and it is not finished yet.
+**Driver discovery**, the feature this project exists for
+
+6. **Driver identity**: done. A driver is modelled as (event, class, number), because a kart number is not unique within an event: #7 in Cadet and #7 in Senior X30 are different people, and the old two-dropdown filter returned both mixed together
+7. **Find-me flow**: done. One search box, a class picker when a number is genuinely ambiguous, and a shareable personal page per driver. Plus an "are there more of you?" step whose answers feed back into the data
+8. **Season identity**: done. One durable link that accumulates a driver's photos across every event
+
+**Selling**
+
+9. **Bundles and selection**: done. Session and event bundles are buyable and lead the pricing, and the selection tray keeps the cart visible while browsing
+10. **Marketing consent**: done. Recorded lawful basis per contact, and a working unsubscribe, before any campaign email existed
+11. **Advance credit**: done. Buy before the event, spend when the gallery opens
+12. **Free share image**: done. A branded 1080x1350 card given away per photo, which is a different product from the clean file that is sold
+
+**Photographer time**
+
+13. **Detection ingest**: done. Results from an off-site detection pipeline are imported from a JSON sidecar. This application never runs inference; see [docs/DETECTION-PIPELINE.md](docs/DETECTION-PIPELINE.md)
+14. **Review queue**: done. Uncertain attributions grouped by driver with bulk confirm, so a batch is exception-checking rather than manual tagging
+15. **Entry-list import**: done. From a pasted CSV, an uploaded file, or a CSV URL
+
+**Still open**
+
+16. **Open source release prep**: in progress. Config-driven branding, commenting standard, LICENSE, TRADEMARK, install guide tested end to end
+
+### Known gaps
+
+Stated plainly, because a feature list that omits its own holes is not much use:
+
+- **Two of the four planned nudge emails are not built.** "Early bird ending" needs a time-limited launch discount and "gallery expiring" needs galleries to expire. Neither concept exists, and an email announcing a deadline that does not exist is a false statement to a customer, so they wait on those features rather than shipping as fiction.
+- **There is no per-driver bundle price.** The bundles that exist cover every photo in a session or event. "All of *your* photos for one price" has no column in the schema yet; today the nearest thing is buying a driver's photos individually with the volume discount applied.
+- **Refunding an order paid partly by credit does not return the credit portion.** The redemption ledger records it so it is recoverable by hand, but the automatic path is not written.
+- **Prices ship unset.** Every amount is configurable and nothing is hardcoded, which also means an install decides its own numbers.
 
 ## Technology Stack
 
@@ -219,6 +259,7 @@ A: Docker is supported for local development and ships in the repo for that purp
 - **[docs/EMAIL.md](docs/EMAIL.md)**: Email configuration
 - **[docs/SECURITY.md](docs/SECURITY.md)**: Security audit and hardening
 - **[docs/PRIVACY-DESIGN.md](docs/PRIVACY-DESIGN.md)**: Why discovery is by number, not by face or name
+- **[docs/DETECTION-PIPELINE.md](docs/DETECTION-PIPELINE.md)**: The sidecar contract between your detection pipeline and this gallery
 - **[docs/architecture.md](docs/architecture.md)**: Technical design and database schema
 
 ## Support
