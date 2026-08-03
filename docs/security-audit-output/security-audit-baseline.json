@@ -166,12 +166,12 @@
       "line": 150,
       "first_seen_at": "2026-08-03T22:05:38Z",
       "lifecycle": {
-        "state": "open",
+        "state": "verified",
         "owner": null,
         "expiry": null,
         "rationale": null,
-        "fix_commit": null,
-        "verified_by_test": null
+        "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+        "verified_by_test": "tests/integration/SecurityFixesTest.php::testSpendRefusesACurrencyMismatchEvenWhenTheCreditIdIsKnown"
       }
     },
     {
@@ -214,12 +214,12 @@
       "line": 113,
       "first_seen_at": "2026-08-03T22:05:38Z",
       "lifecycle": {
-        "state": "open",
+        "state": "verified",
         "owner": null,
         "expiry": null,
         "rationale": null,
-        "fix_commit": null,
-        "verified_by_test": null
+        "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+        "verified_by_test": "tests/integration/SecurityFixesTest.php::testRemoteFetchPinsTheValidatedAddress"
       }
     },
     {
@@ -238,12 +238,12 @@
       "line": 176,
       "first_seen_at": "2026-08-03T22:05:38Z",
       "lifecycle": {
-        "state": "open",
+        "state": "verified",
         "owner": null,
         "expiry": null,
         "rationale": null,
-        "fix_commit": null,
-        "verified_by_test": null
+        "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+        "verified_by_test": "tests/integration/SecurityFixesTest.php::testTruncationIsRecordedRatherThanInferred"
       }
     },
     {

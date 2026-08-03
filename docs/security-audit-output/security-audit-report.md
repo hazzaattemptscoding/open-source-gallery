@@ -15,6 +15,8 @@ endpoints, detection sidecar ingest, and share-image generation.
 was written.
 
 - **Total findings:** 8 — CRITICAL 1 · HIGH 2 · MEDIUM 5 · LOW 0 · INFO 0
+- **Fixed and test-verified since this run:** 3 (OSG-2026-001, -002, -003) in
+  commit `fbd97e9`. **Open: 5, all MEDIUM.**
 - **Confidence mix:** CONFIRMED 8 · LIKELY 0 · POSSIBLE 0
 - **Partitions audited:** 8 at full depth, 0 inventory-only
 - **Attack surface:** 14 entry points, 6 sensitive egress sinks, 6 credential
@@ -53,20 +55,22 @@ Both numbers are in the SARIF (`severity_rubric_initial` and
   they are prerequisites, not capabilities any finding grants.
 - **Nothing here is remotely exploitable by an anonymous visitor.**
 
-The one worth fixing before release is OSG-2026-001.
+The one worth fixing before release was OSG-2026-001. It, and the two HIGHs, are
+now fixed in `fbd97e9`, each with a denial test that fails if the fix is reverted
+(L3). What is still open is the five MEDIUMs, listed below.
 
-### Top Risks
+### Top Risks (all three now fixed, see the Remediation Roadmap)
 
-1. **OSG-2026-001 (CRITICAL, CWE-918)** — the SSRF guard in `remote_fetch.php`
+1. **OSG-2026-001 (CRITICAL, CWE-918)** — FIXED in `fbd97e9`. The SSRF guard in `remote_fetch.php`
    validates a resolved address and then lets curl resolve the name again. A DNS
    answer that changes between the two lookups defeats every guard in the file.
    This is the classic rebinding bypass and the file's own docblock claims to be
    proof against exactly this class.
-2. **OSG-2026-002 (HIGH, CWE-20)** — a remote entry list truncated at the 2 MB cap
+2. **OSG-2026-002 (HIGH, CWE-20)** — FIXED in `fbd97e9`. A remote entry list truncated at the 2 MB cap
    is returned as `ok: true` with a partial body. Drivers past the cut-off
    silently do not exist in a product whose whole value is find-me, and nothing
    tells the photographer.
-3. **OSG-2026-003 (HIGH, CWE-841)** — `credits.currency` is written at purchase
+3. **OSG-2026-003 (HIGH, CWE-841)** — FIXED in `fbd97e9`. `credits.currency` was written at purchase
    and never read again. Credit sold in one currency spends one-for-one in
    another after a config change.
 
@@ -87,7 +91,7 @@ The one worth fixing before release is OSG-2026-001.
 
 ### CRITICAL
 
-#### OSG-2026-001 — SSRF guard defeated by DNS rebinding: validated address is not pinned
+#### OSG-2026-001 (FIXED in `fbd97e9`) — SSRF guard defeated by DNS rebinding: validated address is not pinned
 
 - **Confidence:** CONFIRMED · **Partition:** P3 · **Category:** injection
 - **Location:** `app/lib/remote_fetch.php:113`
@@ -114,7 +118,7 @@ each hop revalidates and each hop is separately rebindable.
 
 ### HIGH
 
-#### OSG-2026-002 — Truncated remote response is imported as a complete file
+#### OSG-2026-002 (FIXED in `fbd97e9`) — Truncated remote response is imported as a complete file
 
 - **Confidence:** CONFIRMED · **Partition:** P3 · **Category:** injection
 - **Location:** `app/lib/remote_fetch.php:176`
@@ -139,7 +143,7 @@ small class holding the buffer) and fail explicitly when it did. Do not infer
 completeness from body length: the length is exactly the thing the truncation
 made wrong.
 
-#### OSG-2026-003 — Credit currency is recorded at purchase but never checked at redemption
+#### OSG-2026-003 (FIXED in `fbd97e9`) — Credit currency is recorded at purchase but never checked at redemption
 
 - **Confidence:** CONFIRMED · **Partition:** P1 · **Category:** auth
 - **Location:** `app/lib/credit.php:150`
@@ -409,6 +413,26 @@ Two limits worth stating outright:
 
 ## Remediation Roadmap
 
+### Done
+
+`fbd97e9` fixes OSG-2026-001, -002 and -003, with 16 tests in
+`tests/integration/SecurityFixesTest.php`. Each is written to fail if its fix is
+reverted, which is what L3 asks for and what the previous run's three "fixed"
+findings still lack.
+
+The truncation fix was measured rather than assumed: with the cap lowered to 1024
+bytes and `CURLOPT_MAXFILESIZE` removed so the write callback is the only bound,
+the pre-fix code returned `ok: true` with a **zero-length** body. An entry list
+could import as empty and be reported as a success.
+
+Fixing the currency check turned up the reason it was reachable at all: seven
+call sites read `$config['currency']['code'] ?? 'GBP'`, which is an offset of a
+string, so PHP yields null, `??` swallows it, and the site behaves as GBP no
+matter what the operator configured. That is now one accessor,
+`config_currency_code()`, with a test that fails if any call site drifts back.
+
+### Still open
+
 **Trivial (under 30 minutes each)**
 
 - OSG-2026-004 — `filesize()` before `file_get_contents()`.
@@ -418,12 +442,6 @@ Two limits worth stating outright:
 
 **Small (an hour or two each)**
 
-- **OSG-2026-001 — do this one first.** `CURLOPT_RESOLVE` pinning, re-pinned per
-  redirect hop. Add a test that asserts the pin is set, not just that a private
-  URL is refused: the refusal test passes today and the bug is still there.
-- OSG-2026-002 — abort flag on the write callback, explicit failure when set.
-- OSG-2026-003 — thread currency through `find_spendable_credit()` and
-  `spend_credit()`, refuse on mismatch.
 - OSG-2026-007 — honour `X-Forwarded-Proto` behind a trusted proxy, or make the
   flag configurable.
 

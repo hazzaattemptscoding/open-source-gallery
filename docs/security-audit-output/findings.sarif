@@ -192,132 +192,6 @@
       ],
       "results": [
         {
-          "ruleId": "OSG-2026-001",
-          "level": "error",
-          "message": {
-            "text": "SSRF guard defeated by DNS rebinding: validated address is not pinned for the connection. remote_fetch_validate_url() resolves the host with gethostbynamel() at line 113 and checks every returned address. remote_fetch() then calls curl_init($url) at line 164, which resolves the same name again, independently. Nothing carries the validated address into the connection."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "app/lib/remote_fetch.php"
-                },
-                "region": {
-                  "startLine": 113
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "primary": "b9c1d787b728"
-          },
-          "properties": {
-            "security-severity": "9.0",
-            "cwe": "CWE-918",
-            "category": "injection",
-            "confidence": "CONFIRMED",
-            "partition": "P3",
-            "severity_asserted": "CRITICAL",
-            "severity_computed": "CRITICAL",
-            "severity_rubric_initial": "HIGH",
-            "trust_zone": "internal",
-            "preconditions": [
-              "role:admin",
-              "env:attacker_controlled_dns"
-            ],
-            "postconditions": [
-              "reads:any_internal_http_content"
-            ],
-            "escalation_rules": [],
-            "first_seen_at": "2026-08-03",
-            "cwe_top25_2025_rank": 22
-          }
-        },
-        {
-          "ruleId": "OSG-2026-002",
-          "level": "error",
-          "message": {
-            "text": "Truncated remote response is imported as a complete file. The CURLOPT_WRITEFUNCTION callback returns 0 to abort once REMOTE_FETCH_MAX_BYTES is passed, without echoing the chunk that crossed it. curl_exec() then returns false, but $body holds everything received so far. The only failure guard is ($ok === false && $body === ''), so a non-empty partial body falls through; CURLINFO_RESPONSE_CODE is 200 because headers arrived; and strlen($body) > MAX is false because the over-limit chunk was never appended. The function returns ok:true with a truncated body."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "app/lib/remote_fetch.php"
-                },
-                "region": {
-                  "startLine": 176
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "primary": "7854f8d9ff7c"
-          },
-          "properties": {
-            "security-severity": "7.0",
-            "cwe": "CWE-20",
-            "category": "injection",
-            "confidence": "CONFIRMED",
-            "partition": "P3",
-            "severity_asserted": "HIGH",
-            "severity_computed": "HIGH",
-            "severity_rubric_initial": "MEDIUM",
-            "trust_zone": "internal",
-            "preconditions": [
-              "role:admin"
-            ],
-            "postconditions": [
-              "bypasses:import_completeness"
-            ],
-            "escalation_rules": [],
-            "first_seen_at": "2026-08-03",
-            "cwe_top25_2025_rank": 18
-          }
-        },
-        {
-          "ruleId": "OSG-2026-003",
-          "level": "error",
-          "message": {
-            "text": "Credit currency is recorded at purchase but never checked at redemption. credits.currency is written by create_pending_credit() (line 78) and never read again. find_spendable_credit() selects on code/status/balance only and does not filter on currency; spend_credit() is not passed a currency at all; the checkout path applies the credit against $priced['total_pence'] without comparing the two."
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "app/lib/credit.php"
-                },
-                "region": {
-                  "startLine": 150
-                }
-              }
-            }
-          ],
-          "partialFingerprints": {
-            "primary": "66041c955147"
-          },
-          "properties": {
-            "security-severity": "7.0",
-            "cwe": "CWE-841",
-            "category": "auth",
-            "confidence": "CONFIRMED",
-            "partition": "P1",
-            "severity_asserted": "HIGH",
-            "severity_computed": "HIGH",
-            "severity_rubric_initial": "MEDIUM",
-            "trust_zone": "public",
-            "preconditions": [
-              "env:currency_reconfigured"
-            ],
-            "postconditions": [
-              "writes:any_credit_balance"
-            ],
-            "escalation_rules": [],
-            "first_seen_at": "2026-08-03"
-          }
-        },
-        {
           "ruleId": "OSG-2026-005",
           "level": "warning",
           "message": {
@@ -523,7 +397,26 @@
             "first_seen_at": "2026-08-03"
           }
         }
-      ]
+      ],
+      "properties": {
+        "fixed_this_run": [
+          {
+            "id": "OSG-2026-001",
+            "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+            "verified_by_test": "tests/integration/SecurityFixesTest.php::testRemoteFetchPinsTheValidatedAddress"
+          },
+          {
+            "id": "OSG-2026-002",
+            "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+            "verified_by_test": "tests/integration/SecurityFixesTest.php::testTruncationIsRecordedRatherThanInferred"
+          },
+          {
+            "id": "OSG-2026-003",
+            "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+            "verified_by_test": "tests/integration/SecurityFixesTest.php::testSpendRefusesACurrencyMismatchEvenWhenTheCreditIdIsKnown"
+          }
+        ]
+      }
     },
     {
       "tool": {
