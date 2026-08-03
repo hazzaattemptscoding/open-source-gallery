@@ -87,6 +87,17 @@ return [
     // Example: 10+ photos = 15% off, 20+ photos = 20% off.
     // Discount is calculated at checkout time from actual cart contents;
     // cannot be reverse-engineered by adding items then removing them.
+    // Advance credit: the amounts a customer may buy before an event, in the
+    // smallest currency unit. Sold on race day, spent when the gallery opens.
+    //
+    // This list is the only thing that decides what can be bought: the buy
+    // endpoint rejects any amount not in it, so an edited request cannot
+    // purchase credit at a value you never offered. Set to an empty array to
+    // stop selling credit without removing the feature.
+    'credit' => [
+        'amounts_pence' => [1000, 2000, 5000],
+    ],
+
     'discounts' => [
         10 => 0.15,  // 10+ photos: 15% off
         20 => 0.20,  // 20+ photos: 20% off
