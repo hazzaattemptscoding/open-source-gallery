@@ -82,6 +82,20 @@ require __DIR__ . '/partials/layout_header.php';
               height="<?= (int)$photo['height'] ?>"
               loading="lazy">
             <button type="button" class="add-to-cart" data-photo-id="<?= (int)$photo['id'] ?>" aria-label="Add to cart">+</button>
+            <?php /*
+              The free share card. A different product from the file on sale:
+              social-sized, branded and watermarked, given away deliberately
+              because it travels and brings people back. download forces a save
+              rather than a navigation, so the tap does not lose their place in
+              the gallery.
+            */ ?>
+            <a
+              class="photo-share"
+              href="/media/share/<?= e($photo['public_token']) ?>.jpg"
+              download="<?= e($photo['public_token']) ?>-share.jpg"
+              aria-label="Download a free image to share">
+              Share
+            </a>
           </li>
         <?php endforeach; ?>
       </ul>

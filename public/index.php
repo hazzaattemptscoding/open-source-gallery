@@ -471,6 +471,12 @@ switch ($path) {
         } elseif ($path === '/api/v1/photos') {
             require __DIR__ . '/../app/controllers/api/photos.php';
             api_v1_photos_controller($pdo);
+        } elseif (preg_match('#^/media/share/([a-z0-9]+)\.jpg$#', $path, $m)) {
+            // Only reached on a cache miss: .htaccess routes to index.php only
+            // for paths that are not real files, so once generated Apache
+            // serves the card directly.
+            require __DIR__ . '/../app/controllers/public/share.php';
+            public_share_image_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/media/d/([a-z0-9]+)-(400|800|1600)\.jpg$#', $path, $m)) {
             // Only reached when the derivative is absent: .htaccess serves the
             // real file directly when it exists. That gap is normal in

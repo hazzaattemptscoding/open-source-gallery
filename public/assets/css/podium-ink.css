@@ -3491,3 +3491,41 @@ body:has(.cart-tray.is-visible) { padding-bottom: 5.5rem; }
   .buy-option-pricing { align-items: flex-start; flex: 1; }
   .buy-option-add, .buy-option-note { width: 100%; text-align: center; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FREE SHARE IMAGE
+   ═══════════════════════════════════════════════════════════════
+   Sits opposite the add-to-cart control on a tile. Deliberately quieter than
+   it: the share card is free and the sale is the clean file, so the buy action
+   keeps the accent and this stays a plain chip. */
+
+.photo-tile { position: relative; }
+
+.photo-share {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-on-media);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 150ms var(--ease-out), background-color 150ms var(--ease-out);
+}
+
+.photo-tile:hover .photo-share,
+.photo-share:focus-visible { opacity: 1; }
+
+.photo-share:hover { background: var(--surface-on-media-hover); }
+
+/* No hover on touch, so the control has to be permanently visible or it is
+   unreachable on the devices where sharing actually happens. */
+@media (hover: none) {
+  .photo-share { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-share { transition: none; }
+}
