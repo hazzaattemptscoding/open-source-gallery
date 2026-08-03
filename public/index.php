@@ -167,6 +167,11 @@ switch ($path) {
         }
         break;
 
+    case '/cart/summary':
+        require __DIR__ . '/../app/controllers/public/cart.php';
+        public_cart_summary_controller($pdo, $config);
+        break;
+
     case '/cart/remove':
         require __DIR__ . '/../app/controllers/public/cart.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -196,6 +201,51 @@ switch ($path) {
         require __DIR__ . '/../app/controllers/public/favorites.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             public_favorites_remove_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
+    case '/unsubscribe':
+        require __DIR__ . '/../app/controllers/public/unsubscribe.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_unsubscribe_submit_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
+    case '/credit':
+        require __DIR__ . '/../app/controllers/public/credit.php';
+        public_credit_page_controller($pdo, $config);
+        break;
+
+    case '/credit/buy':
+        require __DIR__ . '/../app/controllers/public/credit.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_credit_buy_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
+    case '/credit/check':
+        require __DIR__ . '/../app/controllers/public/credit.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_credit_check_controller($pdo, $config);
+        } else {
+            http_response_code(405);
+            echo 'Method Not Allowed';
+        }
+        break;
+
+    case '/entrant/review':
+        require __DIR__ . '/../app/controllers/public/entrant.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            public_entrant_review_controller($pdo, $config);
         } else {
             http_response_code(405);
             echo 'Method Not Allowed';
@@ -312,6 +362,12 @@ switch ($path) {
         admin_emails_controller($pdo, $config);
         break;
 
+    case '/admin/detections':
+    case '/admin/review':
+        require __DIR__ . '/../app/controllers/admin/detections.php';
+        admin_detections_controller($pdo, $config);
+        break;
+
     case '/admin/bulk':
         require __DIR__ . '/../app/controllers/admin/bulk.php';
         admin_bulk_controller($pdo, $config);
@@ -422,6 +478,24 @@ switch ($path) {
         } elseif (preg_match('#^/order/([a-z0-9-]+)$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/order_tracking.php';
             public_order_tracking_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/credit/success/([0-9a-f]{16})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/credit.php';
+            public_credit_success_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/unsubscribe/([0-9a-f]{32})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/unsubscribe.php';
+            public_unsubscribe_page_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/e/([a-z0-9-]+)/find$#', $path, $m)) {
+            // Must precede the generic /e/{event}/{session} pattern below,
+            // which would otherwise match this and go looking for a session
+            // whose slug is literally "find".
+            require __DIR__ . '/../app/controllers/public/entrant.php';
+            public_entrant_find_controller($pdo, $config, $m[1]);
+        } elseif (preg_match('#^/e/([a-z0-9-]+)/d/([0-9a-f]{16})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/entrant.php';
+            public_entrant_page_controller($pdo, $config, $m[1], $m[2]);
+        } elseif (preg_match('#^/driver/([0-9a-f]{16})$#', $path, $m)) {
+            require __DIR__ . '/../app/controllers/public/entrant.php';
+            public_driver_season_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/e/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $path, $m)) {
             require __DIR__ . '/../app/controllers/public/event.php';
             public_event_controller($pdo, $config, $m[1], $m[2] ?? null);
@@ -431,6 +505,12 @@ switch ($path) {
         } elseif ($path === '/api/v1/photos') {
             require __DIR__ . '/../app/controllers/api/photos.php';
             api_v1_photos_controller($pdo);
+        } elseif (preg_match('#^/media/share/([a-z0-9]+)\.jpg$#', $path, $m)) {
+            // Only reached on a cache miss: .htaccess routes to index.php only
+            // for paths that are not real files, so once generated Apache
+            // serves the card directly.
+            require __DIR__ . '/../app/controllers/public/share.php';
+            public_share_image_controller($pdo, $config, $m[1]);
         } elseif (preg_match('#^/media/d/([a-z0-9]+)-(400|800|1600)\.jpg$#', $path, $m)) {
             // Only reached when the derivative is absent: .htaccess serves the
             // real file directly when it exists. That gap is normal in

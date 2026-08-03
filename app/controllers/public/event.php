@@ -143,10 +143,29 @@ function public_event_controller(PDO $pdo, array $config, string $eventSlug, ?st
         // Stats are non-critical; ignore.
     }
 
+    /*
+     * The buying options for this page, widest bundle first.
+     *
+     * Bundles have been supported by the cart, pricing, order_items and
+     * checkout since the initial schema, but nothing ever rendered a way to buy
+     * one, so the only reachable product was a single photo. Failing softly
+     * here rather than fataling: if pricing cannot be worked out for some
+     * reason, the gallery should still render and photos should still be
+     * individually buyable.
+     */
+    $purchaseOptions = [];
+    try {
+        require_once __DIR__ . '/../../lib/purchase_options.php';
+        $purchaseOptions = build_purchase_options($pdo, $config, $event, $activeSession, $currencyCode);
+    } catch (Throwable $e) {
+        error_log('purchase options failed for event ' . $eventId . ': ' . $e->getMessage());
+    }
+
     render(__DIR__ . '/../../views/public/event.php', compact(
         'siteName', 'currencyCode', 'event', 'sessions', 'activeSession', 'sessionId',
         'filters', 'heroToken', 'photos', 'videos', 'kartOptions', 'classOptions',
-        'basePath', 'cartCount', 'page', 'totalPhotos', 'hasMorePhotos', 'favoritedIds'
+        'basePath', 'cartCount', 'page', 'totalPhotos', 'hasMorePhotos', 'favoritedIds',
+        'purchaseOptions'
     ));
 }
 

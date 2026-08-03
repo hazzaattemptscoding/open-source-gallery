@@ -48,7 +48,7 @@ Checklist and guide for deploying PowerMedia Gallery to production.
 
 - [ ] **Storage space monitored** — Understand your limits
   - Shared hosting: ~200GB typical limit
-  - Derivatives auto-cleanup after 7 days (saves 40% of storage)
+  - All derivative sizes are kept for the life of the photo, so budget for them
   - Monitor: Check `storage/` folder size regularly
 
 - [ ] **Database optimized** — If hosting high-traffic event

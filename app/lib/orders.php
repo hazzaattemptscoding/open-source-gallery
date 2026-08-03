@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/signer.php';
+require_once __DIR__ . '/currency.php';
 
 /**
  * Order lifecycle: created as 'pending' when the customer initiates checkout.
@@ -14,7 +15,7 @@ require_once __DIR__ . '/signer.php';
 
 function create_order(PDO $pdo, array $config, string $email, array $lines, int $totalPence): array {
     $token = bin2hex(random_bytes(11));
-    $currencyCode = $config['currency'] ?? 'GBP';
+    $currencyCode = config_currency_code($config);
 
     $pdo->beginTransaction();
     try {

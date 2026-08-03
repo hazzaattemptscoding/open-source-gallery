@@ -87,11 +87,24 @@ function attachCheckoutHandler() {
 
     hideFormError(errorDiv);
 
+    // Read the box rather than assuming: consent has to reflect what the
+    // customer actually did. The element is absent on any page that does not
+    // offer the option, so guard before touching .checked.
+    const consentBox = checkoutForm.elements.marketing_consent;
+    const marketingConsent = Boolean(consentBox && consentBox.checked);
+
+    // Advance credit code, if they have one. Sent as typed; the server decides
+    // whether it is valid and what it is worth. Nothing here may assume a
+    // balance, because the only authoritative value is the one the atomic
+    // spend confirms it took.
+    const creditField = checkoutForm.elements.credit_code;
+    const creditCode = creditField ? creditField.value.trim() : '';
+
     try {
       const response = await fetch('/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, marketing_consent: marketingConsent, credit_code: creditCode }),
         credentials: 'same-origin',
       });
 
@@ -101,6 +114,14 @@ function attachCheckoutHandler() {
       }
 
       const data = await response.json();
+
+      // Fully covered by credit: no Stripe step exists, because the money was
+      // taken when the credit was bought. The server has already marked the
+      // order paid and tells us where to go.
+      if (data.paid_by_credit && data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
       if (!data.session_id || !data.publishable_key) {
         throw new Error('Invalid response from server');
       }

@@ -316,8 +316,9 @@ If this shows errors, derivatives have a problem. Check error output.
 
 **Check:**
 - [ ] How large is the database? `SHOW TABLE STATUS;` in phpMyAdmin
-- [ ] Are derivatives being cleaned up? (1600px images deleted after 7 days)
-  - Check: `php verify-setup.php` → cron status
+- [ ] How much space are derivatives using? All sizes are kept for the life of the
+  photo, so they grow with the library rather than being pruned
+  - Check: `du -sh public/media/d`
 - [ ] Are audit logs filling up?
   - Audit logs grow with every action (can be trimmed if needed)
 

@@ -472,7 +472,7 @@ migrations/                      # Database schema
 
 **Ready to deploy to production?** Use the deployment guide:
 
-→ **[docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md)** — Complete pre-launch checklist and go-live guide
+→ **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Complete pre-launch checklist and go-live guide
 
 This guide covers:
 - [ ] Security checklist (HTTPS, 2FA, keys, Stripe, email)
@@ -484,7 +484,7 @@ This guide covers:
 
 **Running into issues?** See:
 
-→ **[docs/TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md)** — Quick reference for common problems
+→ **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — Quick reference for common problems
 
 ---
 

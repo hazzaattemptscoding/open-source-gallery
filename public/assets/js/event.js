@@ -358,3 +358,65 @@ if (searchInput) {
     }
   });
 }
+
+/**
+ * Bundle purchase buttons in the "Ways to buy" block.
+ *
+ * Bundles go through the same /cart/add endpoint as a single photo, just with a
+ * different type, so there is no separate bundle cart path to keep in sync. The
+ * server re-validates the type and refuses any bundle the event has not priced,
+ * which is why nothing here needs to check that.
+ *
+ * The selection tray notices the /cart/add and updates itself, so this does not
+ * touch the cart badge or the tray directly.
+ */
+function initBundleButtons() {
+  const buyOptions = document.getElementById('buyOptions');
+  if (!buyOptions) return;
+
+  buyOptions.addEventListener('click', async event => {
+    const button = event.target.closest('.buy-option-add');
+    if (!button) return;
+
+    const type = button.dataset.bundleType;
+    const id = parseInt(button.dataset.bundleId, 10);
+    if (!type || !id) return;
+
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Adding…';
+
+    try {
+      const response = await fetch('/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ type, id })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        // A duplicate is not a failure worth shouting about: the thing they
+        // wanted is already in the cart.
+        const already = data.error && data.error.indexOf('already') !== -1;
+        showToast(already ? 'That is already in your cart.' : (data.error || 'Could not add that.'));
+        button.textContent = originalLabel;
+        button.disabled = false;
+        return;
+      }
+
+      button.textContent = 'Added';
+      showToast('Added to your cart.');
+
+      // Leave it disabled and reading "Added": a bundle is a single item, so
+      // pressing it again can only ever produce the duplicate error above.
+    } catch (err) {
+      showToast('Could not add that. Check your connection and try again.');
+      button.textContent = originalLabel;
+      button.disabled = false;
+    }
+  });
+}
+
+initBundleButtons();

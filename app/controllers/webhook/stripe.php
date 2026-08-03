@@ -73,6 +73,23 @@ function handle_checkout_completed(PDO $pdo, array $session): void {
         return;
     }
 
+    /*
+     * An advance-credit purchase, rather than an order.
+     *
+     * This is the only place credit becomes spendable. Until Stripe confirms
+     * the money arrived, the credit row sits at status 'pending' with a zero
+     * balance, so an abandoned purchase leaves nothing anyone can spend.
+     *
+     * activate_credit() is idempotent: Stripe retries webhooks, and a repeat
+     * delivery finds the row already active and changes nothing. That guard
+     * matters more than it looks. Without it a retry would reset the balance
+     * back to full face value after the customer had already spent some of it.
+     */
+    require_once __DIR__ . '/../../lib/credit.php';
+    if (activate_credit($pdo, $checkoutId, $paymentIntentId ?: null)) {
+        return;
+    }
+
     $order = get_order_by_checkout_id($pdo, $checkoutId);
     if (!$order) {
         return;

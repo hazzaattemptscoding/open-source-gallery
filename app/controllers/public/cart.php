@@ -88,6 +88,76 @@ function public_cart_remove_controller(PDO $pdo, array $config): void {
     }
 }
 
+/**
+ * GET /cart/summary
+ *
+ * Everything the selection tray needs: count, priced total, and the lines
+ * behind it for the "view selected" panel.
+ *
+ * Deliberately a separate endpoint rather than folding the total into every
+ * /cart/add response. cart_price() runs one query per item, so pricing on each
+ * add turns a 60-photo "buy all my photos" into roughly 1,800 queries as the
+ * cart grows. The tray instead takes the free count straight from the add
+ * response and refreshes this, debounced, so a bulk add costs one pricing pass
+ * at the end instead of sixty.
+ *
+ * Prices are always read fresh from the database here, never from the cookie,
+ * for the same reason checkout does: the cookie is a list of ids, not a list of
+ * prices, so nothing a customer can edit can change what they are charged.
+ */
+function public_cart_summary_controller(PDO $pdo, array $config): void {
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store');
+
+    $currency = config_currency_code($config);
+
+    try {
+        $items = cart_get($config);
+
+        if (empty($items)) {
+            echo json_encode([
+                'ok' => true,
+                'count' => 0,
+                'total_pence' => 0,
+                'total_formatted' => format_pence(0, $currency),
+                'discount_pence' => 0,
+                'lines' => [],
+            ]);
+            return;
+        }
+
+        $priced = cart_price($pdo, $items, $config);
+
+        $lines = [];
+        foreach ($priced['lines'] as $line) {
+            $lines[] = [
+                'type' => $line['type'],
+                'id' => (int)$line['id'],
+                'public_token' => $line['public_token'] ?? null,
+                'description' => $line['description'],
+                'price_formatted' => format_pence((int)$line['unit_price_pence'], $currency),
+            ];
+        }
+
+        echo json_encode([
+            'ok' => true,
+            // Counted from priced lines, not from the cookie: an item that has
+            // since been unpublished drops out of pricing, and the tray should
+            // agree with what checkout will actually charge for.
+            'count' => count($lines),
+            'total_pence' => (int)$priced['total_pence'],
+            'total_formatted' => format_pence((int)$priced['total_pence'], $currency),
+            'discount_pence' => (int)($priced['discount_pence'] ?? 0),
+            'discount_formatted' => format_pence((int)($priced['discount_pence'] ?? 0), $currency),
+            'lines' => $lines,
+        ]);
+    } catch (Throwable $e) {
+        error_log('cart summary failed: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['error' => 'Cart unavailable']);
+    }
+}
+
 function cart_item_exists(PDO $pdo, string $type, int $id): bool {
     if ($type === 'photo') {
         $stmt = $pdo->prepare('SELECT id FROM photos WHERE id = ? AND status = ? AND media_type = ?');

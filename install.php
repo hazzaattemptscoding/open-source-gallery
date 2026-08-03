@@ -362,4 +362,4 @@ if (!getenv('DOCKER_CONTAINER')) {
     echo "  Or: " . color("php " . __DIR__ . "/cron/run.php", 'bold') . NEWLINE . NEWLINE;
 }
 
-echo "Questions? See " . color("INSTALL.md", 'bold') . " or " . color("QUICKSTART.md", 'bold') . NEWLINE;
+echo "Questions? See " . color("INSTALL.md", 'bold') . " or " . color("QUICK-START.md", 'bold') . NEWLINE;

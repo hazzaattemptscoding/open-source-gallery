@@ -92,7 +92,8 @@ All audit logs include:
 - [x] **No direct access**: Files served via controller, never via web server
 - [x] **MIME type validation**: Photos stored with media_type in database
 - [x] **Size validation**: Chunked uploads validate chunk size and total size
-- [x] **Derivative deletion**: 1600px versions auto-deleted after 7 days (tiering)
+- [x] **Derivative retention**: all sizes kept for the life of the photo; only the
+  clean original is access-controlled, and it is never served from the web root
 
 ## Third-party Integration
 

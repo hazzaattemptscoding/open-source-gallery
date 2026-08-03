@@ -78,6 +78,14 @@ require_once __DIR__ . '/../partials/layout_header.php';
         <label for="entries_file">Or upload a CSV</label>
         <input type="file" id="entries_file" name="entries_file" accept=".csv,text/csv">
 
+        <label for="entries_url">Or fetch a CSV from a URL</label>
+        <input type="url" id="entries_url" name="entries_url"
+               placeholder="https://example.com/entries.csv">
+        <p class="hint">
+          Must be a direct link to a CSV file. A link to a normal web page will
+          be refused rather than parsed into nonsense rows.
+        </p>
+
         <fieldset class="entries-mode">
           <legend>If entries already exist</legend>
           <label><input type="radio" name="import_mode" value="replace" checked> Replace them</label>

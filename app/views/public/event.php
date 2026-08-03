@@ -45,11 +45,90 @@ require __DIR__ . '/partials/layout_header.php';
   </div>
 </section>
 
+<?php /*
+  Find-me is the primary path, so it sits above the gallery link rather than
+  inside the filter bar below. Most visitors did not come to browse a few
+  thousand photos; they came to find one driver. The kart/class dropdowns
+  further down still work for browsing, but they cannot express the composite
+  identity (#7 exists in more than one class), which is why this is a separate
+  entry point into /find rather than a relabelled filter.
+*/ ?>
+<section class="find-cta">
+  <form class="find-cta-form" method="get" action="/e/<?= e($event['slug']) ?>/find">
+    <label class="find-cta-label" for="findNumber">Find your photos</label>
+    <div class="find-cta-row">
+      <input
+        type="text"
+        id="findNumber"
+        name="number"
+        class="find-cta-input"
+        inputmode="numeric"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="Your kart number">
+      <button type="submit" class="find-cta-submit">Find</button>
+    </div>
+    <p class="find-cta-hint">No account needed. Enter your number to see just your photos.</p>
+  </form>
+</section>
+
 <!-- Hero CTA block -->
 <section class="hero-cta-block">
   <a href="#photos" class="button hero-cta-primary">View Gallery</a>
   <a href="/" class="hero-cta-secondary">View all events</a>
 </section>
+
+<?php if (!empty($purchaseOptions) && count($purchaseOptions) > 1): ?>
+  <?php /*
+    Buying options, widest bundle first and the single photo last.
+
+    Only rendered when there is more than one option: if the photographer has
+    not priced any bundle, the list collapses to "a single photo" on its own,
+    which is a price list of one and just noise above the grid.
+
+    Each option shows its effective per-photo price because that is the sum the
+    customer would otherwise do in their head. Nothing here is hardcoded; it all
+    comes from the event's own price columns.
+  */ ?>
+  <section class="buy-options" id="buyOptions">
+    <h2 class="buy-options-title">Ways to buy</h2>
+    <ul class="buy-options-list">
+      <?php foreach ($purchaseOptions as $index => $option): ?>
+        <li class="buy-option<?= $index === 0 ? ' is-headline' : '' ?>">
+          <div class="buy-option-main">
+            <span class="buy-option-label"><?= e($option['label']) ?></span>
+            <?php if ((int)$option['covers'] > 1): ?>
+              <span class="buy-option-covers"><?= number_format((int)$option['covers']) ?> photos</span>
+            <?php endif; ?>
+          </div>
+
+          <div class="buy-option-pricing">
+            <span class="buy-option-price"><?= e($option['price_formatted']) ?></span>
+            <?php if ((int)$option['covers'] > 1): ?>
+              <span class="buy-option-each"><?= e($option['effective_each_formatted']) ?> a photo</span>
+            <?php endif; ?>
+            <?php if (!empty($option['saving_formatted'])): ?>
+              <span class="buy-option-saving">Save <?= e($option['saving_formatted']) ?></span>
+            <?php endif; ?>
+          </div>
+
+          <?php if ($option['type'] === 'single'): ?>
+            <span class="buy-option-note">Tap any photo below</span>
+          <?php else: ?>
+            <button
+              type="button"
+              class="buy-option-add"
+              data-bundle-type="<?= e($option['type']) ?>"
+              data-bundle-id="<?= (int)$option['id'] ?>">
+              Add to cart
+            </button>
+          <?php endif; ?>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </section>
+<?php endif; ?>
 
 <!-- Meta tags: date, venue, session/class -->
 <nav class="session-nav">

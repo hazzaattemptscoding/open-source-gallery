@@ -40,6 +40,28 @@ function run_cron_drain(PDO $pdo, float $budget = 50.0): int {
     $processed = 0;
     $startTime = microtime(true);
 
+    /*
+     * Campaign scans run before the job queue, not as queued jobs.
+     *
+     * They are scans over current state ("which galleries went live recently",
+     * "which checkouts were abandoned") rather than units of work someone
+     * enqueued, so there is nothing to put in the queue in the first place, and
+     * enqueueing them would need a scheduler this app does not have.
+     *
+     * Running first means they cannot be starved by a long backlog of
+     * derivative jobs eating the whole budget. They are cheap: two indexed
+     * queries when the campaigns are switched off, which is the default.
+     *
+     * Wrapped because nothing about marketing email is important enough to stop
+     * derivative generation, which is what customers are actually waiting for.
+     */
+    try {
+        require_once __DIR__ . '/campaigns.php';
+        run_campaign_scans($pdo, $GLOBALS['config'] ?? []);
+    } catch (Throwable $e) {
+        error_log('campaign scans failed: ' . $e->getMessage());
+    }
+
     while ((microtime(true) - $startTime) < $budget) {
         $jobId = claim_next_job($pdo);
         if ($jobId === null) {
@@ -300,8 +322,19 @@ function process_zip_build_job(PDO $pdo, array $payload): bool {
 }
 
 /**
- * Image tiering: deletes 1600px derivatives for photos older than 7 days
- * to save storage space. Smaller 400/800px versions remain for gallery display.
+ * Deletes the 1600px derivative for one photo.
+ *
+ * Retained as a handler, but nothing enqueues 'cleanup' jobs any more and
+ * nothing should. Derivative generation used to queue one of these per photo
+ * to delete the 1600px version after 7 days, which was a conversion leak:
+ * motorsport galleries are frequently discovered late by word of mouth, and a
+ * degraded preview at the moment of discovery loses the sale. That policy was
+ * dropped in Stage 2.4.2 (all sizes now kept for the life of the photo) and
+ * migration 011_purge_cleanup_jobs cleared the queued rows.
+ *
+ * This remains only so that any 'cleanup' row still sitting in an old database
+ * drains cleanly instead of failing the job forever. Do not wire it back up
+ * without revisiting the retention decision above.
  */
 function process_cleanup_job(PDO $pdo, array $payload): bool {
     $photoId = (int)($payload['photo_id'] ?? 0);

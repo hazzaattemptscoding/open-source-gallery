@@ -1,34 +1,671 @@
 {
-  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
   "version": "2.1.0",
   "runs": [
     {
       "tool": {
         "driver": {
-          "name": "security-audit",
+          "name": "security-audit-skill",
           "version": "2.5.0",
           "informationUri": "https://github.com/velimattiv/claude-security-audit",
           "rules": [
-            {"id": "SEC-01", "name": "collection-scope-gap", "shortDescription": {"text": "REST API photo endpoints missing events.is_published check"}},
-            {"id": "SEC-02", "name": "csrf-verify-ignored-or-missing", "shortDescription": {"text": "CSRF verification result discarded or check absent"}},
-            {"id": "SEC-03", "name": "fail-closed-on-bad-column", "shortDescription": {"text": "Query references nonexistent column, silently fails closed"}},
-            {"id": "SEC-04", "name": "rate-limit-toctou", "shortDescription": {"text": "Check-then-increment race in rate limiter"}},
-            {"id": "SEC-05", "name": "webhook-duplicate-job-race", "shortDescription": {"text": "Unconditional UPDATE allows duplicate job queuing on overlapping webhook delivery"}},
-            {"id": "SEC-06", "name": "plaintext-totp-secret", "shortDescription": {"text": "TOTP secret stored unencrypted at rest"}},
-            {"id": "SEC-07", "name": "implicit-tls-verification", "shortDescription": {"text": "TLS verification relies on library defaults, not explicit flags"}},
-            {"id": "SEC-08", "name": "unpinned-optional-dependency", "shortDescription": {"text": "No lockfile pin for suggest-only Composer dependencies"}}
+            {
+              "id": "OSG-2026-001",
+              "name": "injection",
+              "shortDescription": {
+                "text": "SSRF guard defeated by DNS rebinding: validated address is not pinned for the connection"
+              },
+              "fullDescription": {
+                "text": "An admin pastes a URL on a host the attacker controls. Its DNS answers with a public address (TTL 0) for the validation lookup, then a private address such as 127.0.0.1 or 169.254.169.254 for curl's lookup moments later. Every guard in the file passes and the request is made to the internal target anyway, returning its body into the CSV importer."
+              },
+              "help": {
+                "text": "Pin the address that was validated: set CURLOPT_RESOLVE to host:port:validated_ip (or CURLOPT_CONNECT_TO) so curl connects to the checked address rather than re-resolving. Re-pin on every redirect hop."
+              },
+              "properties": {
+                "security-severity": "9.0",
+                "tags": [
+                  "CWE-918",
+                  "injection",
+                  "V12.6.1"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-002",
+              "name": "injection",
+              "shortDescription": {
+                "text": "Truncated remote response is imported as a complete file"
+              },
+              "fullDescription": {
+                "text": "An entry list larger than 2 MB, or any response truncated by the cap, is imported as if complete. Drivers past the cut-off silently do not exist: they cannot be found by number, and detections naming them are reported as unknown entrants. Nothing tells the photographer the list was cut."
+              },
+              "help": {
+                "text": "Have the callback record that it aborted (a flag by reference or a small class), and fail explicitly when it did, rather than inferring completeness from body length."
+              },
+              "properties": {
+                "security-severity": "7.0",
+                "tags": [
+                  "CWE-20",
+                  "injection",
+                  "V5.1.3"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-003",
+              "name": "auth",
+              "shortDescription": {
+                "text": "Credit currency is recorded at purchase but never checked at redemption"
+              },
+              "fullDescription": {
+                "text": "An operator changes currency.code in config after selling credit (or runs an install whose currency changes). Credit sold as 2000 GBP pence is then spent as 2000 units of the new currency, one for one, because nothing compares them. The customer either gains or loses real value depending on direction."
+              },
+              "help": {
+                "text": "Pass the order currency into find_spendable_credit()/spend_credit() and refuse a credit whose currency differs. Refusing is correct: silently converting would need an exchange rate this application has no business holding."
+              },
+              "properties": {
+                "security-severity": "7.0",
+                "tags": [
+                  "CWE-841",
+                  "auth",
+                  "V5.1.4"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-005",
+              "name": "token_scope",
+              "shortDescription": {
+                "text": "Credit code travels in the URL path on the success page"
+              },
+              "fullDescription": {
+                "text": "Anyone with access to web server logs, or to the buyer's browser history, obtains a spendable credit code."
+              },
+              "help": {
+                "text": "Partly mitigated already: Referrer-Policy is strict-origin-when-cross-origin and the success page loads no third-party resources, so the code does not leak via Referer. Residual exposure is logs and history. Consider showing the code after a POST/redirect against a short-lived session key instead of keying the page on the code itself."
+              },
+              "properties": {
+                "security-severity": "5.0",
+                "tags": [
+                  "CWE-598",
+                  "token_scope",
+                  "V3.5.3"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-004",
+              "name": "injection",
+              "shortDescription": {
+                "text": "Uploaded sidecar is read fully into memory before its size is checked"
+              },
+              "fullDescription": {
+                "text": "An admin uploads a file far larger than the 8 MB contract; memory is consumed before the limit applies. PHP's own upload_max_filesize bounds this in practice, so this is defence in depth rather than a live hole."
+              },
+              "help": {
+                "text": "Check filesize($_FILES['sidecar']['tmp_name']) before reading."
+              },
+              "properties": {
+                "security-severity": "5.0",
+                "tags": [
+                  "CWE-400",
+                  "injection",
+                  "V12.1.1"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-006",
+              "name": "collection_scope",
+              "shortDescription": {
+                "text": "Share card labels a multi-driver photo with an arbitrary entrant"
+              },
+              "fullDescription": {
+                "text": "A public, shareable card is stamped with #7 Cadet when the photo is primarily of #12 in another class. Wrong attribution published on an artifact designed to be posted widely."
+              },
+              "help": {
+                "text": "Order deterministically (highest confidence, then lowest entrant id) or omit the identity line when a photo has more than one confident entrant."
+              },
+              "properties": {
+                "security-severity": "5.0",
+                "tags": [
+                  "CWE-1076",
+                  "collection_scope",
+                  "V5.1.4"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-007",
+              "name": "crypto",
+              "shortDescription": {
+                "text": "Cookie Secure flag depends on direct HTTPS detection"
+              },
+              "fullDescription": {
+                "text": "On a proxied deployment the cart and favourites cookies are sent without Secure, so a downgrade to http on the first request before HSTS is pinned would expose them."
+              },
+              "help": {
+                "text": "Also honour X-Forwarded-Proto when the proxy is trusted, or make the flag configurable. Note HSTS is already sent in production mode, which bounds this to the pre-pin request."
+              },
+              "properties": {
+                "security-severity": "5.0",
+                "tags": [
+                  "CWE-614",
+                  "crypto",
+                  "V3.4.1"
+                ]
+              }
+            },
+            {
+              "id": "OSG-2026-008",
+              "name": "supply_chain",
+              "shortDescription": {
+                "text": "fetch_credit_redemptions() is unreachable dead code in the money module"
+              },
+              "fullDescription": {
+                "text": "Not exploitable while unreachable. The hazard is that an unreviewed, untested query in a module handling money is available for a future caller to wire up without anyone re-examining it."
+              },
+              "help": {
+                "text": "Either wire it into the admin credit view it was intended for, or delete it. Do not leave it dormant."
+              },
+              "properties": {
+                "security-severity": "5.0",
+                "tags": [
+                  "CWE-561",
+                  "supply_chain",
+                  "V1.1.4"
+                ]
+              }
+            }
           ]
         }
       },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "/security-audit mode: focused",
+          "properties": {
+            "degraded": true,
+            "degraded_reason": "no external scanners installed (semgrep, osv-scanner, gitleaks, trufflehog, trivy, hadolint); all findings are manual review only"
+          }
+        }
+      ],
       "results": [
-        {"ruleId": "SEC-01", "level": "error", "message": {"text": "api_get_photos()/api_get_photo() did not check events.is_published; fixed in commit ada7753."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/api.php"}, "region": {"startLine": 89}}}], "properties": {"severity": "HIGH", "status": "fixed"}},
-        {"ruleId": "SEC-02", "level": "error", "message": {"text": "CSRF verify() result discarded or check missing across 9 admin controllers; fixed in commit ada7753."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/controllers/admin/events.php"}}}], "properties": {"severity": "HIGH", "status": "fixed"}},
-        {"ruleId": "SEC-03", "level": "note", "message": {"text": "api_get_photo() selected nonexistent p.description column, silently failing closed on every call; fixed in commit ada7753."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/api.php"}, "region": {"startLine": 108}}}], "properties": {"severity": "INFO", "status": "fixed"}},
-        {"ruleId": "SEC-04", "level": "warning", "message": {"text": "check_rate_limit() has a TOCTOU race allowing concurrent requests to exceed the configured cap."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/rate_limit.php"}, "region": {"startLine": 16}}}], "properties": {"severity": "MEDIUM", "status": "deferred"}},
-        {"ruleId": "SEC-05", "level": "note", "message": {"text": "mark_order_paid() can queue duplicate receipt/zip jobs on overlapping webhook delivery."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/orders.php"}, "region": {"startLine": 110}}}], "properties": {"severity": "LOW", "status": "deferred"}},
-        {"ruleId": "SEC-06", "level": "note", "message": {"text": "TOTP secret stored in plaintext at rest; inherent to TOTP, not a defect."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/auth.php"}, "region": {"startLine": 44}}}], "properties": {"severity": "INFO", "status": "accepted"}},
-        {"ruleId": "SEC-07", "level": "note", "message": {"text": "Outbound Stripe calls rely on curl TLS-verification defaults instead of explicit flags."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "app/lib/stripe.php"}, "region": {"startLine": 89}}}], "properties": {"severity": "INFO", "status": "deferred"}},
-        {"ruleId": "SEC-08", "level": "note", "message": {"text": "composer.lock gitignored with no pin for suggest-only optional dependencies."}, "locations": [{"physicalLocation": {"artifactLocation": {"uri": "composer.json"}}}], "properties": {"severity": "LOW", "status": "deferred"}}
+        {
+          "ruleId": "OSG-2026-005",
+          "level": "warning",
+          "message": {
+            "text": "Credit code travels in the URL path on the success page. GET /credit/success/{code} places a bearer instrument in the request path, so it lands in browser history, any intermediary access log, and the server's own access log."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "public/index.php"
+                },
+                "region": {
+                  "startLine": 481
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "e98be183b34d"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "cwe": "CWE-598",
+            "category": "token_scope",
+            "confidence": "CONFIRMED",
+            "partition": "P1",
+            "severity_asserted": "MEDIUM",
+            "severity_computed": "MEDIUM",
+            "severity_rubric_initial": "LOW",
+            "trust_zone": "public",
+            "preconditions": [
+              "env:log_or_history_access"
+            ],
+            "postconditions": [
+              "knows:any_credit_code"
+            ],
+            "escalation_rules": [],
+            "first_seen_at": "2026-08-03"
+          }
+        },
+        {
+          "ruleId": "OSG-2026-004",
+          "level": "warning",
+          "message": {
+            "text": "Uploaded sidecar is read fully into memory before its size is checked. file_get_contents() reads the uploaded temp file in full at line 88; DETECTION_MAX_BYTES is only enforced afterwards by strlen() inside parse_detection_sidecar()."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/controllers/admin/detections.php"
+                },
+                "region": {
+                  "startLine": 88
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "87e926102d3d"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "cwe": "CWE-400",
+            "category": "injection",
+            "confidence": "CONFIRMED",
+            "partition": "P7",
+            "severity_asserted": "MEDIUM",
+            "severity_computed": "MEDIUM",
+            "severity_rubric_initial": "LOW",
+            "trust_zone": "internal",
+            "preconditions": [
+              "role:admin"
+            ],
+            "postconditions": [
+              "bypasses:upload_size_limit"
+            ],
+            "escalation_rules": [],
+            "first_seen_at": "2026-08-03"
+          }
+        },
+        {
+          "ruleId": "OSG-2026-006",
+          "level": "warning",
+          "message": {
+            "text": "Share card labels a multi-driver photo with an arbitrary entrant. fetch_share_image_meta() LEFT JOINs photo_entrants and takes LIMIT 1 with no ORDER BY. A photo attributed to more than one entrant (a battle shot with two karts in frame) yields whichever row the planner returns."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/share_image.php"
+                },
+                "region": {
+                  "startLine": 246
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "5a589cca6abb"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "cwe": "CWE-1076",
+            "category": "collection_scope",
+            "confidence": "CONFIRMED",
+            "partition": "P8",
+            "severity_asserted": "MEDIUM",
+            "severity_computed": "MEDIUM",
+            "severity_rubric_initial": "LOW",
+            "trust_zone": "public",
+            "preconditions": [
+              "env:multi_entrant_photo"
+            ],
+            "postconditions": [
+              "writes:any_photo_public_attribution"
+            ],
+            "escalation_rules": [],
+            "first_seen_at": "2026-08-03"
+          }
+        },
+        {
+          "ruleId": "OSG-2026-007",
+          "level": "warning",
+          "message": {
+            "text": "Cookie Secure flag depends on direct HTTPS detection. Both the cart cookie (cart.php:74) and the favourites cookie (wishlist.php:34) compute 'secure' from ($_SERVER['HTTPS'] !== '') || SERVER_PORT === '443'. Behind a TLS-terminating proxy that sets neither, the flag is omitted."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/cart.php"
+                },
+                "region": {
+                  "startLine": 74
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "cd6a30697720"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "cwe": "CWE-614",
+            "category": "crypto",
+            "confidence": "CONFIRMED",
+            "partition": "P2",
+            "severity_asserted": "MEDIUM",
+            "severity_computed": "MEDIUM",
+            "severity_rubric_initial": "LOW",
+            "trust_zone": "public",
+            "preconditions": [
+              "env:proxied_tls_no_forwarded_proto",
+              "env:network_position"
+            ],
+            "postconditions": [
+              "knows:any_cart_token"
+            ],
+            "escalation_rules": [],
+            "first_seen_at": "2026-08-03"
+          }
+        },
+        {
+          "ruleId": "OSG-2026-008",
+          "level": "warning",
+          "message": {
+            "text": "fetch_credit_redemptions() is unreachable dead code in the money module. Grep across app/ and public/ finds no caller. It was written for an admin/support view that was not built."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/credit.php"
+                },
+                "region": {
+                  "startLine": 453
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "aafebdfe5eec"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "cwe": "CWE-561",
+            "category": "supply_chain",
+            "confidence": "CONFIRMED",
+            "partition": "P1",
+            "severity_asserted": "MEDIUM",
+            "severity_computed": "MEDIUM",
+            "severity_rubric_initial": "LOW",
+            "trust_zone": "internal",
+            "preconditions": [
+              "env:future_code_change"
+            ],
+            "postconditions": [
+              "bypasses:money_module_review"
+            ],
+            "escalation_rules": [],
+            "first_seen_at": "2026-08-03"
+          }
+        }
+      ],
+      "properties": {
+        "fixed_this_run": [
+          {
+            "id": "OSG-2026-001",
+            "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+            "verified_by_test": "tests/integration/SecurityFixesTest.php::testRemoteFetchPinsTheValidatedAddress"
+          },
+          {
+            "id": "OSG-2026-002",
+            "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+            "verified_by_test": "tests/integration/SecurityFixesTest.php::testTruncationIsRecordedRatherThanInferred"
+          },
+          {
+            "id": "OSG-2026-003",
+            "fix_commit": "fbd97e99e86a972c7925905fcc6e15eb8a9ead24",
+            "verified_by_test": "tests/integration/SecurityFixesTest.php::testSpendRefusesACurrencyMismatchEvenWhenTheCreditIdIsKnown"
+          }
+        ]
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "security-audit-skill-carryover",
+          "version": "2.5.0",
+          "rules": [
+            {
+              "id": "SEC-04",
+              "name": "auth",
+              "shortDescription": {
+                "text": "check_rate_limit() has a TOCTOU race allowing concurrent requests to exceed the configured cap."
+              },
+              "properties": {
+                "security-severity": "5.0",
+                "tags": [
+                  "CWE-367",
+                  "auth",
+                  "carried-forward"
+                ]
+              }
+            },
+            {
+              "id": "SEC-05",
+              "name": "config",
+              "shortDescription": {
+                "text": "mark_order_paid() can queue duplicate receipt/zip jobs on overlapping webhook delivery."
+              },
+              "properties": {
+                "security-severity": "3.0",
+                "tags": [
+                  "CWE-362",
+                  "config",
+                  "carried-forward"
+                ]
+              }
+            },
+            {
+              "id": "SEC-06",
+              "name": "crypto",
+              "shortDescription": {
+                "text": "TOTP secret stored in plaintext at rest; inherent to TOTP, not a defect."
+              },
+              "properties": {
+                "security-severity": "1.0",
+                "tags": [
+                  "CWE-312",
+                  "crypto",
+                  "carried-forward"
+                ]
+              }
+            },
+            {
+              "id": "SEC-07",
+              "name": "mitm",
+              "shortDescription": {
+                "text": "Outbound Stripe calls rely on curl TLS-verification defaults instead of explicit flags."
+              },
+              "properties": {
+                "security-severity": "1.0",
+                "tags": [
+                  "CWE-295",
+                  "mitm",
+                  "carried-forward"
+                ]
+              }
+            },
+            {
+              "id": "SEC-08",
+              "name": "supply_chain",
+              "shortDescription": {
+                "text": "composer.lock gitignored with no pin for suggest-only optional dependencies."
+              },
+              "properties": {
+                "security-severity": "3.0",
+                "tags": [
+                  "CWE-1104",
+                  "supply_chain",
+                  "carried-forward"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "properties": {
+            "note": "Open findings from the previous full audit (2026-07-30, ada7753). Present so a SARIF upload does not silently resolve them."
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "SEC-04",
+          "level": "warning",
+          "message": {
+            "text": "check_rate_limit() has a TOCTOU race allowing concurrent requests to exceed the configured cap. [carried forward from the 2026-07-30 run; not re-audited by this focused run]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/rate_limit.php"
+                },
+                "region": {
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "31995999aa55"
+          },
+          "properties": {
+            "security-severity": "5.0",
+            "cwe": "CWE-367",
+            "category": "auth",
+            "confidence": "CONFIRMED",
+            "first_seen_at": "2026-07-30T14:13:20Z",
+            "lifecycle_state": "open",
+            "carried_from_run": "2026-07-30T14:13:20Z"
+          }
+        },
+        {
+          "ruleId": "SEC-05",
+          "level": "note",
+          "message": {
+            "text": "mark_order_paid() can queue duplicate receipt/zip jobs on overlapping webhook delivery. [carried forward from the 2026-07-30 run; not re-audited by this focused run]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/orders.php"
+                },
+                "region": {
+                  "startLine": 110
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "333171527af2"
+          },
+          "properties": {
+            "security-severity": "3.0",
+            "cwe": "CWE-362",
+            "category": "config",
+            "confidence": "CONFIRMED",
+            "first_seen_at": "2026-07-30T14:13:20Z",
+            "lifecycle_state": "open",
+            "carried_from_run": "2026-07-30T14:13:20Z"
+          }
+        },
+        {
+          "ruleId": "SEC-06",
+          "level": "note",
+          "message": {
+            "text": "TOTP secret stored in plaintext at rest; inherent to TOTP, not a defect. [carried forward from the 2026-07-30 run; not re-audited by this focused run]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/auth.php"
+                },
+                "region": {
+                  "startLine": 44
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "355c90d660fd"
+          },
+          "properties": {
+            "security-severity": "1.0",
+            "cwe": "CWE-312",
+            "category": "crypto",
+            "confidence": "CONFIRMED",
+            "first_seen_at": "2026-07-30T14:13:20Z",
+            "lifecycle_state": "accepted",
+            "carried_from_run": "2026-07-30T14:13:20Z"
+          }
+        },
+        {
+          "ruleId": "SEC-07",
+          "level": "note",
+          "message": {
+            "text": "Outbound Stripe calls rely on curl TLS-verification defaults instead of explicit flags. [carried forward from the 2026-07-30 run; not re-audited by this focused run]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/lib/stripe.php"
+                },
+                "region": {
+                  "startLine": 89
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "22223b1a3e29"
+          },
+          "properties": {
+            "security-severity": "1.0",
+            "cwe": "CWE-295",
+            "category": "mitm",
+            "confidence": "CONFIRMED",
+            "first_seen_at": "2026-07-30T14:13:20Z",
+            "lifecycle_state": "open",
+            "carried_from_run": "2026-07-30T14:13:20Z"
+          }
+        },
+        {
+          "ruleId": "SEC-08",
+          "level": "note",
+          "message": {
+            "text": "composer.lock gitignored with no pin for suggest-only optional dependencies. [carried forward from the 2026-07-30 run; not re-audited by this focused run]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "composer.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primary": "204a832ca7c4"
+          },
+          "properties": {
+            "security-severity": "3.0",
+            "cwe": "CWE-1104",
+            "category": "supply_chain",
+            "confidence": "CONFIRMED",
+            "first_seen_at": "2026-07-30T14:13:20Z",
+            "lifecycle_state": "open",
+            "carried_from_run": "2026-07-30T14:13:20Z"
+          }
+        }
       ]
     }
   ]

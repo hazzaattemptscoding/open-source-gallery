@@ -23,6 +23,8 @@ $navGroups = [
     'Photo Management' => [
         ['upload', '/admin/upload', 'Upload photos'],
         ['bulk', '/admin/bulk', 'Bulk operations'],
+        ['detections', '/admin/detections', 'Import detections'],
+        ['review', '/admin/review', 'Review detections'],
         ['watermarks', '/admin/watermarks', 'Watermarks'],
     ],
     'Event Management' => [
