@@ -2,7 +2,7 @@
 
 A self-hosted photo gallery and sales platform for sports photographers. Plain PHP, MySQL and Apache. No Node, no build step, no daemons.
 
-**Status: pre-production.** This is being built and proven on the maintainer's own motorsport gallery before a tagged release. The schema and the checkout path are stable. Driver discovery, the feature the project exists for, is actively being built. There is no public demo yet.
+**Status: pre-production.** Feature-complete for a first release and not yet proven on a real event. Driver discovery, selling, and the detection-ingest workflow are all built; what remains before a tagged release is packaging work, listed under [Build Stages](#build-stages). The next milestone is a full race weekend run on the maintainer's own motorsport gallery, which is what will decide whether any of this survives contact with 3,000 photos and a paddock full of parents. There is no public demo, and nothing here has taken real money yet.
 
 ## Features
 
