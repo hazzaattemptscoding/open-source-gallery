@@ -137,29 +137,57 @@ function activate_credit(PDO $pdo, string $checkoutId, ?string $paymentIntentId 
 }
 
 /**
- * Look up a spendable credit by code.
+ * Look up a spendable credit by code, in a given currency.
  *
  * Returns null for anything not currently spendable, without saying why: a code
  * is a bearer token, and distinguishing "wrong code" from "already spent" for
  * an anonymous caller helps someone probing for valid codes more than it helps
  * a customer.
  *
+ * Why currency is a required argument
+ * -----------------------------------
+ * A balance is a number of minor units and nothing else. Applying 2000 units of
+ * credit sold in one currency against an order priced in another is not a
+ * conversion, it is a one-for-one swap at whatever rate the two currencies
+ * happen to differ by, and the customer gains or loses real money depending on
+ * which direction the operator changed it.
+ *
+ * The mismatch is refused rather than converted. Converting needs an exchange
+ * rate, a rate needs a source and a date, and none of that belongs in a
+ * self-hosted gallery. Refusing is a support conversation; converting silently
+ * is a wrong number in someone's books.
+ *
+ * Making the argument required rather than optional is deliberate: an optional
+ * currency check is a check that is off by default, and this one existing but
+ * being unused is exactly the bug it fixes.
+ *
+ * @param string $currency ISO 4217 code the spend will be denominated in.
  * @return array<string,mixed>|null
  */
-function find_spendable_credit(PDO $pdo, string $code): ?array
+function find_spendable_credit(PDO $pdo, string $code, string $currency): ?array
 {
     $code = strtolower(trim($code));
     if (preg_match('/^[0-9a-f]{16}$/', $code) !== 1) {
         return null;
     }
 
+    $currency = strtoupper(trim($currency));
+    if ($currency === '') {
+        return null;
+    }
+
     try {
+        // Compared in SQL rather than in PHP so there is no path that fetches
+        // the row and then forgets to look at the currency.
         $stmt = $pdo->prepare(
             "SELECT * FROM credits
-              WHERE code = ? AND status = 'active' AND balance_pence > 0
+              WHERE code = ?
+                AND UPPER(currency) = ?
+                AND status = 'active'
+                AND balance_pence > 0
               LIMIT 1"
         );
-        $stmt->execute([$code]);
+        $stmt->execute([$code, $currency]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row === false ? null : $row;
     } catch (Throwable $e) {
@@ -255,9 +283,14 @@ function credit_cart_matches_event(PDO $pdo, array $lines, array $credit): bool
  * (credit_id, order_id), so a retried checkout for the same order cannot
  * double-count even if it somehow reached this twice.
  */
-function spend_credit(PDO $pdo, int $creditId, int $orderId, int $requestedPence): int
+function spend_credit(PDO $pdo, int $creditId, int $orderId, int $requestedPence, string $currency): int
 {
     if ($requestedPence <= 0) {
+        return 0;
+    }
+
+    $currency = strtoupper(trim($currency));
+    if ($currency === '') {
         return 0;
     }
 
@@ -284,10 +317,16 @@ function spend_credit(PDO $pdo, int $creditId, int $orderId, int $requestedPence
                 SET balance_pence = balance_pence - {$least}(balance_pence, CAST(:amount AS INTEGER))
               WHERE id = :id
                 AND status = 'active'
-                AND balance_pence > 0"
+                AND balance_pence > 0
+                AND UPPER(currency) = :currency"
         );
         $stmt->bindValue(':amount', $requestedPence, PDO::PARAM_INT);
         $stmt->bindValue(':id', $creditId, PDO::PARAM_INT);
+        // The currency belongs in the WHERE clause, not in a PHP check before
+        // it. The caller found this credit with one lookup and spends it with
+        // another; putting the condition on the write means no state can change
+        // in between and no future caller can skip it.
+        $stmt->bindValue(':currency', $currency);
         $stmt->execute();
 
         if ($stmt->rowCount() === 0) {

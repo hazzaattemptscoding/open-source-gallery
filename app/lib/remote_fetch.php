@@ -88,7 +88,11 @@ function remote_fetch_address_is_blocked(string $ip): bool
 /**
  * Validate a URL and resolve it to an address that is safe to connect to.
  *
- * @return array{ok:bool, error?:string, host?:string, ip?:string}
+ * Returns the port as well as the address, because the caller has to pin both:
+ * CURLOPT_RESOLVE is keyed on host:port, and an entry for the wrong port simply
+ * does not apply, leaving curl to resolve the name itself. See remote_fetch().
+ *
+ * @return array{ok:bool, error?:string, host?:string, ip?:string, port?:int}
  */
 function remote_fetch_validate_url(string $url): array
 {
@@ -104,6 +108,7 @@ function remote_fetch_validate_url(string $url): array
     }
 
     $host = $parts['host'];
+    $port = isset($parts['port']) ? (int) $parts['port'] : ($scheme === 'https' ? 443 : 80);
 
     // A literal IP is checked directly; a name is resolved first, because the
     // name tells us nothing about where it points.
@@ -130,7 +135,7 @@ function remote_fetch_validate_url(string $url): array
         return ['ok' => false, 'error' => 'That address is not allowed.'];
     }
 
-    return ['ok' => true, 'host' => $host, 'ip' => $ip];
+    return ['ok' => true, 'host' => $host, 'ip' => $ip, 'port' => $port];
 }
 
 /**
@@ -161,6 +166,19 @@ function remote_fetch(string $url): array
         }
         $seen[$url] = true;
 
+        /*
+         * Whether the size cap cut this response short.
+         *
+         * Held by reference rather than inferred afterwards, because every
+         * signal that would let you infer it lies: curl_exec() returns false
+         * (so does a network error), the status is 200 (the headers did
+         * arrive), and strlen($body) is under the cap (the chunk that crossed
+         * it was never appended). Without this flag a truncated entry list is
+         * imported as a complete one and the drivers past the cut-off silently
+         * do not exist.
+         */
+        $truncated = false;
+
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -170,13 +188,34 @@ function remote_fetch(string $url): array
             CURLOPT_MAXFILESIZE => REMOTE_FETCH_MAX_BYTES,
             CURLOPT_USERAGENT => 'open-source-gallery entry-list importer',
             CURLOPT_HEADER => false,
+            /*
+             * Connect to the address that was actually validated.
+             *
+             * This is the line that makes the checks above mean anything.
+             * curl_init($url) resolves the hostname itself, independently of
+             * the gethostbynamel() call in remote_fetch_validate_url(). A DNS
+             * server that answers with a public address for the first lookup
+             * and 127.0.0.1 for the second passes every guard in this file and
+             * gets the request anyway. That is DNS rebinding, and it is the
+             * standard way SSRF protection that validates a name is defeated.
+             *
+             * CURLOPT_RESOLVE pre-seeds curl's DNS cache for this handle, so no
+             * second lookup happens. It is keyed on host:port, which is why
+             * remote_fetch_validate_url() returns the port: an entry for the
+             * wrong port does not apply and curl resolves as normal.
+             *
+             * Re-applied on every hop, because each redirect is separately
+             * revalidated and separately rebindable.
+             */
+            CURLOPT_RESOLVE => ["{$check['host']}:{$check['port']}:{$check['ip']}"],
             // Stop reading as soon as the cap is passed. MAXFILESIZE only acts
             // on a declared Content-Length, so a response without one needs
             // this to be bounded at all.
-            CURLOPT_WRITEFUNCTION => function ($ch, $chunk) {
+            CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$truncated) {
                 static $total = 0;
                 $total += strlen($chunk);
                 if ($total > REMOTE_FETCH_MAX_BYTES) {
+                    $truncated = true;
                     return 0; // aborts the transfer
                 }
                 echo $chunk;
@@ -194,7 +233,20 @@ function remote_fetch(string $url): array
         $error = curl_error($ch);
         curl_close($ch);
 
-        if ($ok === false && $body === '') {
+        // Checked before anything else looks at the body, because a truncated
+        // body is not a small body: it is a wrong one that looks fine.
+        if ($truncated) {
+            return ['ok' => false, 'error' => 'That file is too large to import.'];
+        }
+
+        /*
+         * Any curl failure is a failure, even one that arrived with a partial
+         * body. The old test was ($ok === false && $body === ''), which let a
+         * connection dropped mid-transfer through as a complete document for
+         * the same reason truncation got through: some bytes had arrived and
+         * the status line said 200. Half an entry list parses perfectly.
+         */
+        if ($ok === false) {
             return ['ok' => false, 'error' => 'Could not fetch that URL: ' . ($error ?: 'no response')];
         }
 

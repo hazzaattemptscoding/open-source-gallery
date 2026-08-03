@@ -25,6 +25,7 @@ require_once __DIR__ . '/../../lib/entrants.php';
 require_once __DIR__ . '/../../lib/view.php';
 require_once __DIR__ . '/../../lib/csrf.php';
 require_once __DIR__ . '/../../lib/rate_limit.php';
+require_once __DIR__ . '/../../lib/currency.php';
 
 /**
  * GET /e/{event-slug}/find
@@ -72,7 +73,7 @@ function public_entrant_find_controller(PDO $pdo, array $config, string $eventSl
         'number'      => $number,
         'matches'     => $matches,
         'searched'    => $searched,
-        'currencyCode'=> $config['currency']['code'] ?? 'GBP',
+        'currencyCode'=> config_currency_code($config),
     ]);
 }
 
@@ -114,7 +115,7 @@ function public_entrant_page_controller(PDO $pdo, array $config, string $eventSl
         'sessions'     => fetch_entrant_session_breakdown($pdo, $entrant['id']),
         'maybePhotos'  => fetch_entrant_maybe_photos($pdo, $entrant['id']),
         'csrfToken'    => csrf_token(),
-        'currencyCode' => $config['currency']['code'] ?? 'GBP',
+        'currencyCode' => config_currency_code($config),
     ]);
 }
 

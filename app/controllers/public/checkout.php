@@ -119,7 +119,12 @@ function public_checkout_controller(PDO $pdo, array $config): void {
 
     if ($creditCode !== '') {
         require_once __DIR__ . '/../../lib/credit.php';
-        $credit = find_spendable_credit($pdo, $creditCode);
+
+        // The order's currency, not the site's, so a credit is always checked
+        // against what this specific order is actually denominated in.
+        $orderCurrency = (string) ($order['currency'] ?? config_currency_code($config));
+
+        $credit = find_spendable_credit($pdo, $creditCode, $orderCurrency);
 
         if ($credit === null) {
             http_response_code(400);
@@ -135,7 +140,13 @@ function public_checkout_controller(PDO $pdo, array $config): void {
             return;
         }
 
-        $creditApplied = spend_credit($pdo, (int) $credit['id'], (int) $order['id'], (int) $priced['total_pence']);
+        $creditApplied = spend_credit(
+            $pdo,
+            (int) $credit['id'],
+            (int) $order['id'],
+            (int) $priced['total_pence'],
+            $orderCurrency
+        );
 
         if ($creditApplied > 0) {
             $pdo->prepare('UPDATE orders SET credit_applied_pence = ?, credit_id = ? WHERE id = ?')
@@ -190,7 +201,7 @@ function public_checkout_controller(PDO $pdo, array $config): void {
         $stripeLines = $creditApplied > 0
             ? [[
                 'description' => count($priced['lines']) . ' item(s), less '
-                    . format_pence($creditApplied, $config['currency']['code'] ?? 'GBP') . ' credit',
+                    . format_pence($creditApplied, config_currency_code($config)) . ' credit',
                 'unit_price_pence' => $amountToCharge,
               ]]
             : $priced['lines'];

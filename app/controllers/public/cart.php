@@ -109,7 +109,7 @@ function public_cart_summary_controller(PDO $pdo, array $config): void {
     header('Content-Type: application/json');
     header('Cache-Control: no-store');
 
-    $currency = $config['currency']['code'] ?? 'GBP';
+    $currency = config_currency_code($config);
 
     try {
         $items = cart_get($config);

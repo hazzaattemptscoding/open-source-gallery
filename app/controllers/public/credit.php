@@ -18,7 +18,7 @@ require_once __DIR__ . '/../../lib/consent.php';
 /** GET /credit — the page explaining and selling advance credit. */
 function public_credit_page_controller(PDO $pdo, array $config): void
 {
-    $currency = $config['currency']['code'] ?? 'GBP';
+    $currency = config_currency_code($config);
 
     // Offered amounts come from config so a photographer can price their own
     // ladder. Falls back to a sensible spread rather than hardcoding a price
@@ -89,7 +89,7 @@ function public_credit_buy_controller(PDO $pdo, array $config): void
         return;
     }
 
-    $currency = $config['currency']['code'] ?? 'GBP';
+    $currency = config_currency_code($config);
     $credit = create_pending_credit($pdo, $email, $amount, $currency, null);
 
     if ($credit === null) {
@@ -161,7 +161,7 @@ function public_credit_success_controller(PDO $pdo, array $config, string $code)
         'pageTitle' => 'Your photo credit',
         'siteName' => $config['site']['name'] ?? 'Gallery',
         'credit' => $credit,
-        'currencyCode' => $credit['currency'] ?? ($config['currency']['code'] ?? 'GBP'),
+        'currencyCode' => $credit['currency'] ?? (config_currency_code($config)),
     ]);
 }
 
@@ -190,7 +190,11 @@ function public_credit_check_controller(PDO $pdo, array $config): void
         return;
     }
 
-    $credit = find_spendable_credit($pdo, $code);
+    // Checked in the site's currency, the same one checkout will spend it in.
+    // A balance shown here that checkout then refuses would be worse than the
+    // uniform "not valid" message, because the customer would have been told
+    // the money was there.
+    $credit = find_spendable_credit($pdo, $code, config_currency_code($config));
 
     if ($credit === null) {
         // Deliberately one message for every failure mode. Telling an anonymous
