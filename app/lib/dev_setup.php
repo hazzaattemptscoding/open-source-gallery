@@ -321,6 +321,18 @@ function dev_seed_dummy_data(PDO $pdo): void {
                 }
             }
 
+            /*
+             * Turn the roster into searchable identities.
+             *
+             * Migration 016 derives classes and entrants from event_entries,
+             * but it runs before this seeder, against an empty table. Without
+             * this call a fresh dev install has entry lists and no entrants at
+             * all, so typing a kart number finds nothing and the feature looks
+             * broken on the one box a new contributor is most likely to try it.
+             */
+            require_once __DIR__ . '/entrants.php';
+            sync_event_entrants($pdo, $eventId);
+
             // 1-3 sessions per event
             $sessionIds = [];
             for ($s = 0, $numSessions = random_int(1, 3); $s < $numSessions; $s++) {

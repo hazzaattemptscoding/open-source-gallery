@@ -311,6 +311,8 @@ function import_event_entries(PDO $pdo, int $adminId, string $ip, int $eventId):
     audit_log($pdo, 'admin', 'event_entries_imported', 'event', $eventId, [
         'inserted' => $result['inserted'],
         'skipped' => $result['skipped'],
+        'classes_created' => $result['classes_created'],
+        'entrants_created' => $result['entrants_created'],
         'mode' => $replace ? 'replace' : 'append',
     ], $ip);
 
@@ -320,6 +322,13 @@ function import_event_entries(PDO $pdo, int $adminId, string $ip, int $eventId):
     }
     if ($result['skipped'] > 0) {
         $notes[] = $result['skipped'] . ' row(s) already present.';
+    }
+    // Say this out loud. It is the difference between an entry list that sits
+    // in a table and one drivers can actually search, and if it reads zero on a
+    // list full of classes something is wrong and the admin should see it.
+    if ($result['entrants_created'] > 0) {
+        $notes[] = $result['entrants_created'] . ' driver(s) are now searchable across '
+            . ($result['classes_created'] > 0 ? $result['classes_created'] . ' new class(es).' : 'existing classes.');
     }
 
     $query = 'entries_ok=' . $result['inserted'];

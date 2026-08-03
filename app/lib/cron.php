@@ -62,6 +62,29 @@ function run_cron_drain(PDO $pdo, float $budget = 50.0): int {
         error_log('campaign scans failed: ' . $e->getMessage());
     }
 
+    /*
+     * Finish what migration 016 deliberately left undone.
+     *
+     * That migration backfills entrants from existing entry lists with no share
+     * token, because SQL has no source of randomness worth trusting for a
+     * bearer token that is the only thing protecting a child's photo page. The
+     * tokens are minted here instead, from random_bytes().
+     *
+     * Runs before the job queue for the same reason the campaign scans do: it
+     * must not be starved by a long backlog. It is a single indexed query
+     * returning nothing once the backfill is done, which is the normal case,
+     * so the steady-state cost is one query per cron run.
+     */
+    try {
+        require_once __DIR__ . '/entrants.php';
+        $minted = mint_missing_entrant_share_tokens($pdo);
+        if ($minted > 0) {
+            error_log("minted {$minted} entrant share token(s)");
+        }
+    } catch (Throwable $e) {
+        error_log('entrant share token minting failed: ' . $e->getMessage());
+    }
+
     while ((microtime(true) - $startTime) < $budget) {
         $jobId = claim_next_job($pdo);
         if ($jobId === null) {

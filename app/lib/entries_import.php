@@ -16,6 +16,10 @@
 
 declare(strict_types=1);
 
+// Needed by save_event_entries(): an import is not finished until the searchable
+// identities have been derived from it. See sync_event_entrants().
+require_once __DIR__ . '/entrants.php';
+
 /** Column limits mirror migrations/001_initial_schema.sql. */
 const ENTRY_MAX_KART = 8;
 const ENTRY_MAX_DRIVER = 120;
@@ -166,7 +170,14 @@ function save_event_entries(PDO $pdo, int $eventId, array $rows, bool $replace):
     $inserted = 0;
     $skipped = 0;
 
-    $pdo->beginTransaction();
+    // Only own the transaction if there isn't one already. beginTransaction()
+    // throws when nested, and commit()/rollBack() on somebody else's
+    // transaction would end it early. Same pattern as release_credit().
+    $ownTransaction = !$pdo->inTransaction();
+
+    if ($ownTransaction) {
+        $pdo->beginTransaction();
+    }
     try {
         if ($replace) {
             $pdo->prepare('DELETE FROM event_entries WHERE event_id = ?')->execute([$eventId]);
@@ -192,11 +203,35 @@ function save_event_entries(PDO $pdo, int $eventId, array $rows, bool $replace):
             $inserted++;
         }
 
-        $pdo->commit();
+        if ($ownTransaction) {
+            $pdo->commit();
+        }
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        if ($ownTransaction && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 
-    return ['inserted' => $inserted, 'skipped' => $skipped];
+    /*
+     * Derive the searchable identities from what was just imported.
+     *
+     * event_entries alone does nothing for a visitor: the find-me flow searches
+     * classes and entrants, which are a different shape. Without this an entry
+     * list imports cleanly and then no kart number finds a single photo, which
+     * is a silent failure of the one feature this whole project is for.
+     *
+     * Outside the transaction above deliberately. The entries are saved and
+     * that is the operation the admin asked for; if deriving identities hits a
+     * problem it must not roll back the import. sync_event_entrants() is
+     * additive and safe to re-run, so the recovery is to import again.
+     */
+    $derived = sync_event_entrants($pdo, $eventId);
+
+    return [
+        'inserted' => $inserted,
+        'skipped' => $skipped,
+        'classes_created' => $derived['classes'],
+        'entrants_created' => $derived['entrants'],
+    ];
 }

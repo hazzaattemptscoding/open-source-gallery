@@ -68,7 +68,14 @@ CREATE TABLE entrants (
     number       VARCHAR(8) NOT NULL,              -- '23', '7a': text, not int
     driver_name  VARCHAR(120) NOT NULL DEFAULT '', -- admin-only, never public
     team         VARCHAR(120) NOT NULL DEFAULT '',
-    share_token  CHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    -- Nullable on purpose. A token is minted by PHP with random_bytes(), never
+    -- by SQL, so a row inserted by the backfill below starts with no token and
+    -- one is filled in by mint_missing_entrant_share_tokens() on the next cron
+    -- run. A NULL token cannot be reached: find_entrant_by_token() requires 16
+    -- hex characters before it queries at all, so the gap fails closed.
+    -- UNIQUE permits many NULLs in both MySQL and SQLite, so the constraint
+    -- still holds for every token that exists.
+    share_token  CHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL,
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_entrants_identity (event_id, class_id, number),
     UNIQUE KEY uq_entrants_share_token (share_token),
@@ -140,14 +147,25 @@ ALTER TABLE sessions ADD CONSTRAINT fk_sessions_class FOREIGN KEY (class_id)
 -- inventing an entrant from them: a typo'd tag should surface in the review
 -- queue, not silently become a driver who was never entered.
 --
--- share_token has to be unguessable, so it is generated from UUID() rather than
--- hashed from the row's own identity. Hashing (event_id, class_id, number)
--- would have been simpler and deterministic, but those are small integers and a
--- short numeric string: anyone could enumerate plausible identities offline and
--- compute the matching tokens, which defeats the entire point of the token. The
--- migration only runs once, recorded in the migrations table, so determinism
--- buys nothing here anyway. Tokens minted after this point come from
--- random_bytes() in app/lib/entrants.php.
+-- share_token is deliberately left NULL here, and minted by PHP afterwards.
+--
+-- The first version of this migration generated it in SQL, as
+-- SUBSTRING(MD5(UUID()), 1, 16). That is not an unguessable token. MySQL's
+-- UUID() is a version 1 UUID: a timestamp and the host's MAC address, not a
+-- random number. MD5 of it is a deterministic function of two things an
+-- attacker can narrow down, so a backfilled entrant's token would have been
+-- meaningfully weaker than one minted by random_bytes() while looking
+-- identical. That token is the only thing protecting a personal page, and the
+-- people behind those pages are frequently children.
+--
+-- Hashing the row's own identity would have been worse still: (event_id,
+-- class_id, number) is two small integers and a short numeric string, so anyone
+-- could enumerate plausible identities offline and compute every token.
+--
+-- So no token is generated in SQL at all. mint_missing_entrant_share_tokens()
+-- in app/lib/entrants.php fills them in from random_bytes() on the next cron
+-- run, which is the same source every token minted after this point uses.
+-- One generator, one place to audit it.
 -- ---------------------------------------------------------------------------
 -- Grouped by the slug, not by the class text, and this matters: two different
 -- spellings in one organiser's CSV ("Junior X30" and "Junior/X30") normalise to
@@ -172,7 +190,7 @@ SELECT
     ee.kart_number,
     ee.driver_name,
     '',
-    SUBSTRING(MD5(UUID()), 1, 16)
+    NULL
 FROM event_entries ee
 JOIN classes c
   ON c.event_id = ee.event_id

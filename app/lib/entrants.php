@@ -49,6 +49,207 @@ function generate_entrant_share_token(): string
 }
 
 /**
+ * Give a token to every entrant that does not have one yet.
+ *
+ * Migration 016 backfills entrants from the existing entry lists and leaves
+ * share_token NULL, because SQL has no good source of randomness for this. The
+ * obvious SQL spellings are all worse than they look: MySQL's UUID() is a
+ * timestamp plus a MAC address rather than a random number, and anything hashed
+ * from the row's own identity is enumerable offline. This token is the only
+ * thing protecting a personal page, and the people behind those pages are
+ * frequently children, so it comes from random_bytes() or it does not exist.
+ *
+ * Safe to call as often as you like: it only touches rows where the token is
+ * still missing, and the UPDATE is guarded on that too, so two cron runs
+ * overlapping cannot hand the same entrant two different tokens (the loser
+ * updates nothing and moves on).
+ *
+ * Batched rather than done in one statement because a season's entry lists can
+ * be thousands of rows and this runs inside the five-minute cron budget
+ * alongside derivative generation, which is what customers are actually
+ * waiting for.
+ *
+ * @param int $limit Most rows to mint in one call.
+ * @return int How many tokens were written.
+ */
+function mint_missing_entrant_share_tokens(PDO $pdo, int $limit = 500): int
+{
+    $minted = 0;
+
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT id FROM entrants
+              WHERE share_token IS NULL OR share_token = ''
+              ORDER BY id ASC
+              LIMIT ?"
+        );
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $ids = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $update = $pdo->prepare(
+            "UPDATE entrants
+                SET share_token = ?
+              WHERE id = ?
+                AND (share_token IS NULL OR share_token = '')"
+        );
+
+        foreach ($ids as $id) {
+            /*
+             * Retry on collision rather than giving up on the row.
+             *
+             * 64 bits makes a collision vanishingly unlikely, but "vanishingly
+             * unlikely" is not "impossible", and the failure mode without a
+             * retry is an entrant permanently without a token, which means a
+             * driver whose photos can never be found. Three attempts turns a
+             * once-in-a-lifetime event into a non-event.
+             */
+            for ($attempt = 0; $attempt < 3; $attempt++) {
+                try {
+                    $update->execute([generate_entrant_share_token(), (int) $id]);
+                    if ($update->rowCount() > 0) {
+                        $minted++;
+                    }
+                    break;
+                } catch (PDOException $e) {
+                    // Unique violation: 23000 on both MySQL and SQLite.
+                    if ($e->getCode() !== '23000' || $attempt === 2) {
+                        throw $e;
+                    }
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('mint_missing_entrant_share_tokens failed: ' . $e->getMessage());
+    }
+
+    return $minted;
+}
+
+/**
+ * Normalise a class name into the slug used to identify it within an event.
+ *
+ * Kept in one function because three places have to agree exactly: this, the
+ * classes backfill in migration 016, and the join in the photo_entrants
+ * backfill. "Junior X30" and "Junior/X30" are one class typed two ways, and if
+ * any of the three normalises differently they silently stop matching.
+ */
+function entrant_class_slug(string $class): string
+{
+    return strtolower(str_replace([' ', '/'], ['-', '-'], trim($class)));
+}
+
+/**
+ * Derive classes and entrants for one event from its entry list.
+ *
+ * Why this exists
+ * ---------------
+ * event_entries is what the organiser imports: a flat list of kart number,
+ * driver and class. classes and entrants are what the find-me flow searches,
+ * and they are a different shape, because a driver's real identity is
+ * (event, class, number) and a class needs an id a session can point at.
+ *
+ * Migration 016 derives them once for the entry lists that already existed. Any
+ * event created after that point needs the same derivation, or its entry list
+ * imports fine and then nobody can find a single photo. This is that step, run
+ * after every import.
+ *
+ * Additive on purpose
+ * -------------------
+ * Nothing here deletes. An entrant's share_token is a durable public URL that
+ * has been posted into group chats, so re-importing an entry list must not
+ * revoke it, and removing a row from the CSV must not break a link somebody is
+ * still using. An entrant whose entry disappears simply stops gaining photos.
+ *
+ * Entries with no class are skipped rather than guessed at. A number without a
+ * class is not an identity in this sport: #7 could be any of several children.
+ *
+ * @return array{classes:int, entrants:int} How many of each were created.
+ */
+function sync_event_entrants(PDO $pdo, int $eventId): array
+{
+    $classesMade = 0;
+    $entrantsMade = 0;
+
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT kart_number, driver_name, class FROM event_entries WHERE event_id = ?'
+        );
+        $stmt->execute([$eventId]);
+        $entries = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        // slug => id, for classes this event already has.
+        $stmt = $pdo->prepare('SELECT id, slug FROM classes WHERE event_id = ?');
+        $stmt->execute([$eventId]);
+        $classIds = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $classIds[(string) $row['slug']] = (int) $row['id'];
+        }
+
+        // "class_id\0number" for entrants this event already has, so a re-import
+        // is a no-op rather than a duplicate-key error.
+        $stmt = $pdo->prepare('SELECT class_id, number FROM entrants WHERE event_id = ?');
+        $stmt->execute([$eventId]);
+        $seen = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $seen[$row['class_id'] . "\0" . $row['number']] = true;
+        }
+
+        $insertClass = $pdo->prepare(
+            'INSERT INTO classes (event_id, name, slug, sort_order) VALUES (?, ?, ?, 0)'
+        );
+        $insertEntrant = $pdo->prepare(
+            'INSERT INTO entrants (event_id, class_id, number, driver_name, team, share_token)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        );
+
+        foreach ($entries as $entry) {
+            $class = trim((string) $entry['class']);
+            $number = trim((string) $entry['kart_number']);
+            if ($class === '' || $number === '') {
+                continue;
+            }
+
+            $slug = entrant_class_slug($class);
+            if ($slug === '') {
+                continue;
+            }
+
+            if (!isset($classIds[$slug])) {
+                $insertClass->execute([$eventId, $class, $slug]);
+                $classIds[$slug] = (int) $pdo->lastInsertId();
+                $classesMade++;
+            }
+            $classId = $classIds[$slug];
+
+            $key = $classId . "\0" . $number;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $insertEntrant->execute([
+                $eventId,
+                $classId,
+                $number,
+                (string) $entry['driver_name'],
+                '',
+                generate_entrant_share_token(),
+            ]);
+            $entrantsMade++;
+        }
+    } catch (Throwable $e) {
+        error_log('sync_event_entrants failed: ' . $e->getMessage());
+    }
+
+    return ['classes' => $classesMade, 'entrants' => $entrantsMade];
+}
+
+/**
  * Find every entrant at one event carrying a given kart number.
  *
  * Returns a list because the number is genuinely ambiguous until a class is
@@ -97,8 +298,41 @@ function find_entrants_by_number(PDO $pdo, int $eventId, string $number): array
         $row['id'] = (int) $row['id'];
         $row['class_id'] = (int) $row['class_id'];
         $row['photo_count'] = (int) $row['photo_count'];
+        $row['share_token'] = (string) ($row['share_token'] ?? '');
     }
-    return $rows;
+    unset($row);
+
+    /*
+     * Close the gap between migration 016 and the first cron run.
+     *
+     * The migration leaves backfilled entrants with no share_token, and cron
+     * mints them within five minutes. A search landing inside that window would
+     * otherwise render a link to /e/{event}/d/ with nothing on the end. This is
+     * a write on a read path, which is normally worth avoiding, but it runs
+     * only while that backlog exists, only for the handful of rows a single
+     * search returned, and the alternative is a broken link on the one journey
+     * the whole feature is for.
+     */
+    if (array_filter($rows, static fn(array $r): bool => $r['share_token'] === '') !== []) {
+        mint_missing_entrant_share_tokens($pdo, 100);
+
+        $stmt->execute([ENTRANT_CONFIDENCE_THRESHOLD, $eventId, $number]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$reread) {
+            $reread['id'] = (int) $reread['id'];
+            $reread['class_id'] = (int) $reread['class_id'];
+            $reread['photo_count'] = (int) $reread['photo_count'];
+            $reread['share_token'] = (string) ($reread['share_token'] ?? '');
+        }
+        unset($reread);
+    }
+
+    // Anything still without a token cannot be linked to, so it is not a usable
+    // match. Dropping it is better than offering a dead link.
+    return array_values(array_filter(
+        $rows,
+        static fn(array $r): bool => $r['share_token'] !== ''
+    ));
 }
 
 /**

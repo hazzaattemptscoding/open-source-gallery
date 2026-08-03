@@ -14,8 +14,11 @@
 --    and copying every row. The column is written only by admin code that has
 --    the class in hand, and MySQL is the production target where the real
 --    constraint applies.
---  * share_token uses randomblob() rather than UUID(). Same 16 hex characters,
---    same unguessability, and it is a better source of randomness than MySQL's.
+--  * share_token is left NULL by the backfill and minted by PHP, exactly as in
+--    the MySQL variant. SQLite's randomblob() would have been fine on its own,
+--    but having the two drivers mint tokens by different routes means the one
+--    that matters is only tested on one of them. One generator, one place to
+--    audit it: mint_missing_entrant_share_tokens() in app/lib/entrants.php.
 
 CREATE TABLE IF NOT EXISTS classes (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +40,12 @@ CREATE TABLE IF NOT EXISTS entrants (
     number       TEXT NOT NULL,
     driver_name  TEXT NOT NULL DEFAULT '',   -- admin-only, never public
     team         TEXT NOT NULL DEFAULT '',
-    share_token  TEXT NOT NULL,
+    -- Nullable: a token comes from random_bytes() in PHP, never from SQL. A
+    -- NULL cannot be reached, because find_entrant_by_token() requires 16 hex
+    -- characters before it queries, so the gap between backfill and mint fails
+    -- closed. UNIQUE permits many NULLs, so every token that exists is still
+    -- unique.
+    share_token  TEXT NULL,
     created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (event_id, class_id, number),
     UNIQUE (share_token),
@@ -91,7 +99,7 @@ SELECT
     ee.kart_number,
     ee.driver_name,
     '',
-    LOWER(HEX(RANDOMBLOB(8)))
+    NULL
 FROM event_entries ee
 JOIN classes c
   ON c.event_id = ee.event_id
